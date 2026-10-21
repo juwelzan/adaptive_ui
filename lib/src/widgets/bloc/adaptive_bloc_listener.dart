@@ -27,3 +27,7 @@ class AdaptiveBlocListener<B extends StateStreamable<S>, S>
     );
   }
 }
+
+/// Ergonomic alias for [AdaptiveBlocListener] targeting [Cubit] state streamables.
+typedef AdaptiveCubitListener<C extends StateStreamable<S>, S>
+    = AdaptiveBlocListener<C, S>;

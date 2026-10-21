@@ -53,3 +53,7 @@ class AdaptiveBlocConsumer<B extends StateStreamable<S>, S>
     );
   }
 }
+
+/// Ergonomic alias for [AdaptiveBlocConsumer] targeting [Cubit] state streamables.
+typedef AdaptiveCubitConsumer<C extends StateStreamable<S>, S>
+    = AdaptiveBlocConsumer<C, S>;

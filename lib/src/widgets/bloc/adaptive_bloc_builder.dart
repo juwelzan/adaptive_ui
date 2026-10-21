@@ -51,3 +51,7 @@ class AdaptiveBlocBuilder<B extends StateStreamable<S>, S>
     );
   }
 }
+
+/// Ergonomic alias for [AdaptiveBlocBuilder] targeting [Cubit] state streamables.
+typedef AdaptiveCubitBuilder<C extends StateStreamable<S>, S>
+    = AdaptiveBlocBuilder<C, S>;

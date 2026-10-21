@@ -1,9 +1,13 @@
 import 'package:flutter/widgets.dart';
 
+import '../../core/adaptive_context.dart';
 import '../../core/adaptive_layout_data.dart';
-import '../adaptive_builder.dart';
 
 /// A flex child that automatically demotes from [Expanded] to an unconstrained child on collapsed or compact viewports.
+///
+/// Uses [AdaptiveContext.maybeOf] to inspect ambient layout without inserting intermediate
+/// [LayoutBuilder] elements between this widget and its parent [Flex], preserving Flutter's
+/// strict [ParentDataWidget] hierarchy contract.
 class AdaptiveExpanded extends StatelessWidget {
   const AdaptiveExpanded({
     super.key,
@@ -27,13 +31,11 @@ class AdaptiveExpanded extends StatelessWidget {
       return Expanded(flex: flex, child: child);
     }
 
-    return AdaptiveBuilder(
-      builder: (BuildContext ctx, AdaptiveLayoutData layout) {
-        if (layout.isCompact) {
-          return child;
-        }
-        return Expanded(flex: flex, child: child);
-      },
-    );
+    final AdaptiveLayoutData? layout = AdaptiveContext.maybeOf(context);
+    if (layout != null && layout.isCompact) {
+      return child;
+    }
+
+    return Expanded(flex: flex, child: child);
   }
 }

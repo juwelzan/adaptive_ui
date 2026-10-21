@@ -7,6 +7,8 @@ Widget wrapWithAdaptive({
   required Widget child,
   Size size = const Size(390.0, 844.0),
   TextScaler textScaler = TextScaler.noScaling,
+  EdgeInsets viewInsets = EdgeInsets.zero,
+  EdgeInsets viewPadding = EdgeInsets.zero,
   AdaptiveConfig config = AdaptiveConfig.fallback,
   AdaptiveThemeData? theme,
 }) {
@@ -14,6 +16,8 @@ Widget wrapWithAdaptive({
     data: MediaQueryData(
       size: size,
       textScaler: textScaler,
+      viewInsets: viewInsets,
+      viewPadding: viewPadding,
     ),
     child: AdaptiveApp(
       config: config,
@@ -34,6 +38,8 @@ extension AdaptiveTesterExtension on WidgetTester {
     required Widget child,
     Size size = const Size(390.0, 844.0),
     TextScaler textScaler = TextScaler.noScaling,
+    EdgeInsets viewInsets = EdgeInsets.zero,
+    EdgeInsets viewPadding = EdgeInsets.zero,
     AdaptiveConfig config = AdaptiveConfig.fallback,
     AdaptiveThemeData? theme,
   }) async {
@@ -45,6 +51,8 @@ extension AdaptiveTesterExtension on WidgetTester {
         child: child,
         size: size,
         textScaler: textScaler,
+        viewInsets: viewInsets,
+        viewPadding: viewPadding,
         config: config,
         theme: theme,
       ),

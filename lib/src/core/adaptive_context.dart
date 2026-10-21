@@ -36,6 +36,11 @@ class AdaptiveContext {
     );
   }
 
+  /// Safely queries ambient [AdaptiveLayoutData] if available in [context].
+  static AdaptiveLayoutData? maybeOf(BuildContext context) {
+    return AdaptiveScope.layoutOf(context);
+  }
+
   /// Extracts ambient layout data or resolves fallback data from [context].
   static AdaptiveLayoutData of(BuildContext context) {
     final AdaptiveLayoutData? ambient = AdaptiveScope.layoutOf(context);

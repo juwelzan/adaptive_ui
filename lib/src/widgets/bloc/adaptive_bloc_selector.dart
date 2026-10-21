@@ -12,7 +12,19 @@ typedef AdaptiveBlocSelectorBuilder<T> = Widget Function(
 );
 
 /// A reactive widget that rebuilds strictly when a targeted state slice changes,
-/// preventing full-screen layout recalculations.
+/// preventing full-screen layout recalculations and unnecessary child rebuilds.
+///
+/// ### Equality Semantics
+/// [AdaptiveBlocSelector] relies on Dart's standard `==` equality operator between
+/// successive evaluated slices returned by [selector].
+/// - If [selector] produces a value equal (`==`) to the previous value, the [builder]
+///   is **not** called.
+/// - When unrelated state fields in [S] change, this widget remains unaffected and does
+///   not rebuild.
+/// - Unrelated siblings in the widget tree do not rebuild when this selector updates.
+///
+/// For optimal performance, [T] should be an immutable value type (such as [int],
+/// [String], [bool], a Dart 3 Record, or an object implementing value equality via `Equatable`).
 class AdaptiveBlocSelector<B extends StateStreamable<S>, S, T>
     extends StatelessWidget {
   const AdaptiveBlocSelector({
@@ -23,7 +35,10 @@ class AdaptiveBlocSelector<B extends StateStreamable<S>, S, T>
   })  : _builder = builder,
         _adaptiveBuilder = null;
 
-  /// Creates a selector that supplies both the selected state slice and the current [AdaptiveLayoutData].
+  /// Creates a selector that supplies both the selected state slice and ambient [AdaptiveLayoutData].
+  ///
+  /// Use this constructor when rendering of the selected slice depends on responsive layout
+  /// metrics (e.g. breakpoint, columns, readable line bounds).
   const AdaptiveBlocSelector.adaptive({
     super.key,
     required this.selector,
@@ -32,9 +47,16 @@ class AdaptiveBlocSelector<B extends StateStreamable<S>, S, T>
   })  : _builder = null,
         _adaptiveBuilder = adaptiveBuilder;
 
+  /// Selector function extracting a targeted slice [T] from state [S].
   final BlocWidgetSelector<S, T> selector;
+
+  /// Builder invoked when the selected value changes.
   final BlocWidgetBuilder<T>? _builder;
+
+  /// Adaptive builder receiving both the selected value and [AdaptiveLayoutData].
   final AdaptiveBlocSelectorBuilder<T>? _adaptiveBuilder;
+
+  /// The optional [B] instance. If omitted, looked up via [BuildContext].
   final B? bloc;
 
   @override
@@ -53,3 +75,7 @@ class AdaptiveBlocSelector<B extends StateStreamable<S>, S, T>
     );
   }
 }
+
+/// Ergonomic alias for [AdaptiveBlocSelector] targeting [Cubit] state streamables.
+typedef AdaptiveCubitSelector<C extends StateStreamable<S>, S, T>
+    = AdaptiveBlocSelector<C, S, T>;
