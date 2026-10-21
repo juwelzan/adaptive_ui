@@ -11,10 +11,11 @@ import 'adaptive_value.dart';
 class AdaptiveEngine {
   const AdaptiveEngine._();
 
-  /// Calculates dynamic grid column count to fit within [availableWidth] given [minItemWidth] and [spacing].
+  /// Calculates dynamic grid column count to fit within [availableWidth] given [minItemWidth], optional [maxItemWidth], and [spacing].
   static int calculateColumns(
     double availableWidth, {
     required double minItemWidth,
+    double? maxItemWidth,
     double spacing = 16.0,
     int maxColumns = 12,
     int minColumns = 1,
@@ -26,7 +27,18 @@ class AdaptiveEngine {
     // columns <= (availableWidth + spacing) / (minItemWidth + spacing)
     final double theoretical =
         (availableWidth + spacing) / (minItemWidth + spacing);
-    final int count = theoretical.floor();
+    int count = theoretical.floor();
+
+    // If maxItemWidth is specified and items would exceed maxItemWidth, increase column count if possible:
+    if (maxItemWidth != null && maxItemWidth > 0) {
+      final double theoreticalMinCols =
+          (availableWidth + spacing) / (maxItemWidth + spacing);
+      final int requiredCols = theoreticalMinCols.ceil();
+      if (requiredCols > count) {
+        count = requiredCols;
+      }
+    }
+
     return math.max(minColumns, math.min(maxColumns, count));
   }
 

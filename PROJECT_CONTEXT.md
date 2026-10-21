@@ -46,6 +46,15 @@ All thresholds are immutable, equatable, and customizable per application or sub
 - [AdaptiveExpanded](lib/src/widgets/layout/adaptive_expanded.dart) inspects ambient constraints via [AdaptiveContext.maybeOf(context)](lib/src/core/adaptive_context.dart) instead of inserting an intermediate `LayoutBuilder`.
 - Preserves Flutter's strict `ParentDataWidget<FlexParentData>` contract, preventing framework assertion errors inside `Row` and `Column`.
 
+### G. Declarative Slot-Based Layouts (`AdaptiveLayoutBuilder`)
+- Implements slot-based builders (`compact`, `medium`, `expanded`, `large`, `extraLarge`, `fallback`, `builder`) with automatic cascading fallbacks.
+- Accepts an optional static `child` widget to avoid rebuilding expensive subtrees during layout transitions.
+- Supports local `breakpoints` override for component-specific responsive rules.
+
+### H. Policy-Driven Flex Containers (`AdaptiveFlex`) & Enhanced Grid (`AdaptiveGrid`)
+- **`AdaptiveFlex`**: Reusable policy engine for switching arrangements (`row`, `column`, `wrap`, `rowOrColumn`). Safely unwraps `Expanded` children in unconstrained height environments to prevent `RenderFlex children have non-zero flex but incoming height constraints are unbounded` assertions.
+- **`AdaptiveGrid`**: Enhanced with `maxItemWidth` (ensures cells don't overstretch on wide displays), `maxContentWidth` (centers content on desktop), and `mainAxisExtent` (fixed vertical cell heights).
+
 ---
 
 ## 3. Package Structure
@@ -81,8 +90,10 @@ adaptive_ui/
 │       │   │   ├── adaptive_constrained_box.dart
 │       │   │   ├── adaptive_container.dart
 │       │   │   ├── adaptive_expanded.dart
+│       │   │   ├── adaptive_flex.dart             # Policy-driven flex container (Row/Col/Wrap switching)
 │       │   │   ├── adaptive_gap.dart
-│       │   │   ├── adaptive_grid.dart
+│       │   │   ├── adaptive_grid.dart             # Dynamic grid with maxItemWidth, maxContentWidth & extent
+│       │   │   ├── adaptive_layout_builder.dart   # Slot-based builder (compact, medium, expanded, large, xl)
 │       │   │   ├── adaptive_padding.dart
 │       │   │   ├── adaptive_row.dart
 │       │   │   ├── adaptive_safe_area.dart

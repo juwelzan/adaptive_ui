@@ -10,18 +10,24 @@ class AdaptiveContext {
   const AdaptiveContext._();
 
   /// Resolves an [AdaptiveLayoutData] snapshot combining parent [constraints] with environment [MediaQueryData].
+  ///
+  /// If [breakpoints] is specified, it overrides the ambient config breakpoints.
   static AdaptiveLayoutData resolve(
-      BuildContext context, BoxConstraints constraints) {
+    BuildContext context,
+    BoxConstraints constraints, {
+    AdaptiveBreakpoints? breakpoints,
+  }) {
     final MediaQueryData media = MediaQuery.maybeOf(context) ??
         MediaQueryData.fromView(View.of(context));
     final AdaptiveConfig config = AdaptiveScope.configOf(context);
-    final AdaptiveBreakpoints breakpoints = config.breakpoints;
+    final AdaptiveBreakpoints effectiveBreakpoints =
+        breakpoints ?? config.breakpoints;
 
     final double effectiveWidth =
         constraints.hasBoundedWidth ? constraints.maxWidth : media.size.width;
 
-    final Breakpoint containerBp = breakpoints.resolve(effectiveWidth);
-    final Breakpoint windowBp = breakpoints.resolve(media.size.width);
+    final Breakpoint containerBp = effectiveBreakpoints.resolve(effectiveWidth);
+    final Breakpoint windowBp = effectiveBreakpoints.resolve(media.size.width);
 
     return AdaptiveLayoutData(
       constraints: constraints,

@@ -92,10 +92,62 @@ class AdaptiveLayoutData {
   bool get isExpanded => containerBreakpoint == Breakpoint.expanded;
 
   /// True if parent container width falls in [Breakpoint.large].
+  /// True if parent container width falls in [Breakpoint.large].
   bool get isLarge => containerBreakpoint == Breakpoint.large;
 
   /// True if parent container width falls in [Breakpoint.extraLarge].
   bool get isExtraLarge => containerBreakpoint == Breakpoint.extraLarge;
+
+  /// Semantic alias indicating a mobile/compact container environment ([Breakpoint.compact]).
+  bool get isMobile => isCompact;
+
+  /// Semantic alias indicating a tablet environment ([Breakpoint.medium] or [Breakpoint.expanded]).
+  bool get isTablet => isMedium || isExpanded;
+
+  /// Semantic alias indicating a desktop/large-screen environment ([Breakpoint.large] or [Breakpoint.extraLarge]).
+  bool get isDesktop => isLarge || isExtraLarge;
+
+  /// Resolves a value by invoking the callback matching [containerBreakpoint].
+  ///
+  /// Falls back to smaller breakpoint handlers if an exact match is omitted:
+  /// - [extraLarge] falls back to [large] -> [expanded] -> [medium] -> [compact]
+  /// - [large] falls back to [expanded] -> [medium] -> [compact]
+  /// - [expanded] falls back to [medium] -> [compact]
+  /// - [medium] falls back to [compact]
+  T when<T>({
+    required T Function() compact,
+    T Function()? medium,
+    T Function()? expanded,
+    T Function()? large,
+    T Function()? extraLarge,
+  }) {
+    return containerBreakpoint.when<T>(
+      compact: compact,
+      medium: medium,
+      expanded: expanded,
+      large: large,
+      extraLarge: extraLarge,
+    );
+  }
+
+  /// Resolves a constant or evaluated value matching [containerBreakpoint].
+  ///
+  /// Falls back to smaller breakpoint values if an exact match is omitted.
+  T value<T>({
+    required T compact,
+    T? medium,
+    T? expanded,
+    T? large,
+    T? extraLarge,
+  }) {
+    return containerBreakpoint.value<T>(
+      compact: compact,
+      medium: medium,
+      expanded: expanded,
+      large: large,
+      extraLarge: extraLarge,
+    );
+  }
 
   /// True if container width is at least [breakpoint].
   bool isAtLeast(Breakpoint breakpoint) =>

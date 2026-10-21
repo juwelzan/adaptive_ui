@@ -545,6 +545,70 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           ),
           const SizedBox(height: 24.0),
 
+          // AdaptiveLayoutBuilder Demonstration
+          const AdaptiveText(
+            'AdaptiveLayoutBuilder Slots',
+            baseFontSize: 16.0,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8.0),
+          AdaptiveLayoutBuilder(
+            compact: (ctx, l) => const AdaptiveCard(
+              child: ListTile(
+                leading: Icon(Icons.phone_android, color: Colors.blue),
+                title: Text('Compact Slot Active'),
+                subtitle: Text('Optimized single-column view (<600dp)'),
+              ),
+            ),
+            medium: (ctx, l) => const AdaptiveCard(
+              child: ListTile(
+                leading: Icon(Icons.tablet, color: Colors.teal),
+                title: Text('Medium Slot Active'),
+                subtitle: Text('Tablet two-pane view (600-839dp)'),
+              ),
+            ),
+            large: (ctx, l) => const AdaptiveCard(
+              child: ListTile(
+                leading: Icon(Icons.desktop_windows, color: Colors.purple),
+                title: Text('Large Desktop Slot Active'),
+                subtitle: Text('Expanded multi-column canvas (>=1200dp)'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24.0),
+
+          // AdaptiveFlex with Layout Policy & Scrollable Fallback
+          const AdaptiveText(
+            'AdaptiveFlex Layout Policy',
+            baseFontSize: 16.0,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8.0),
+          const AdaptiveFlex(
+            arrangement: AdaptiveFlexArrangement.rowOrColumn,
+            minRowWidth: 460.0,
+            spacing: 12.0,
+            children: [
+              Expanded(
+                child: AdaptiveCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('Policy Pane A (Auto-Row/Column)'),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: AdaptiveCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text('Policy Pane B (Safe Flex Unwrapping)'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24.0),
+
           // Nested Local Theme Override
           AdaptiveTheme(
             data: const AdaptiveThemeData(

@@ -151,7 +151,38 @@ AdaptiveAutoSizeText(
 )
 ```
 
-### 3. Auto-Collapsing Row
+### 3. Declarative Slot-Based Layouts with `AdaptiveLayoutBuilder`
+Select layouts explicitly per breakpoint tier with automatic graceful downward fallback and static child subtree reuse:
+
+```dart
+AdaptiveLayoutBuilder(
+  compact: (context, layout) => const MobileLayout(),
+  medium: (context, layout) => const TabletLayout(),
+  large: (context, layout) => const DesktopLayout(),
+  // Optional static child passed to builder avoiding expensive rebuilds
+  child: const ExpensiveChartSubtree(),
+  builder: (context, layout, child) => CustomSlot(child: child),
+)
+```
+
+### 4. Policy-Driven Flex Containers with `AdaptiveFlex`
+Switch arrangements seamlessly between `Row`, `Column`, and `Wrap`. Enforce maximum content widths and prevent RenderFlex assertion errors by safely unwrapping flex children when vertical height is unbounded:
+
+```dart
+AdaptiveFlex(
+  arrangement: AdaptiveFlexArrangement.rowOrColumn,
+  minRowWidth: 500.0, // switches from Row to Column below 500dp
+  maxContentWidth: 1200.0, // clamps and centers on ultra-wide screens
+  scrollableFallback: true, // wraps in SingleChildScrollView on tight viewports
+  spacing: 16.0,
+  children: [
+    Expanded(child: MainContentCard()),
+    Expanded(child: SideDetailsCard()),
+  ],
+)
+```
+
+### 5. Auto-Collapsing Row
 Renders side-by-side on wide screens, and automatically collapses to a vertical column on compact viewports:
 
 ```dart
@@ -166,19 +197,21 @@ AdaptiveRow(
 )
 ```
 
-### 4. Dynamic Grid
-Automatically calculates the optimal number of columns based on available parent space and target cell width:
+### 6. Dynamic Responsive Grid
+Automatically calculates the optimal number of columns based on available parent space, cell constraints, and maximum bounds:
 
 ```dart
 AdaptiveGrid.builder(
   minItemWidth: 240.0,
-  childAspectRatio: 1.4,
+  maxItemWidth: 360.0,      // increases column count so cells don't overstretch
+  maxContentWidth: 1200.0,  // centers and limits content width on desktop
+  mainAxisExtent: 180.0,    // fixed item height in logical pixels
   itemCount: items.length,
   itemBuilder: (context, index) => ItemCard(items[index]),
 )
 ```
 
-### 5. Adaptive Container & Surfaces
+### 7. Adaptive Container & Surfaces
 Responsive padding, rounded corners, and elevation:
 
 ```dart
@@ -194,7 +227,7 @@ AdaptiveCard(
 )
 ```
 
-### 6. Interactive Controls
+### 8. Interactive Controls
 Guarantees minimum 48x48dp accessible touch targets on mobile touchscreens while providing compact ergonomics on desktop mouse environments:
 
 ```dart
@@ -213,7 +246,7 @@ AdaptiveSwitch(
 )
 ```
 
-### 7. Diagnostics & Debug Overlay
+### 9. Diagnostics & Debug Overlay
 Inspect parent constraints, active breakpoints, and text scale factors live:
 
 ```dart
@@ -225,15 +258,33 @@ AdaptiveDebugOverlay(
 
 ---
 
-## Breakpoints
+## Centralized Breakpoint System
 
-| Breakpoint | Range | Representative Devices |
+`adaptive_ui` uses mathematically defined half-open intervals `[min, max)` where lower bounds are inclusive and upper bounds are exclusive:
+
+| Breakpoint | Interval | Representative Viewports |
 | :--- | :--- | :--- |
-| `compact` | `< 600dp` | Phones in portrait, narrow split views |
-| `medium` | `600dp – 839dp` | Tablets in portrait, foldables, phones in landscape |
-| `expanded`| `840dp – 1199dp` | Tablets in landscape, small laptops |
-| `large` | `1200dp – 1599dp`| Typical desktop monitors, large laptops |
-| `extraLarge`| $\ge$ 1600dp | Ultra-wide monitors, 4K workstations |
+| `compact` | `[0.0, 600.0)` | Handheld phones in portrait, narrow split views |
+| `medium` | `[600.0, 840.0)` | Tablets in portrait, foldables, phones in landscape |
+| `expanded`| `[840.0, 1200.0)` | Tablets in landscape, small laptop windows |
+| `large` | `[1200.0, 1600.0)`| Standard desktop monitors, large laptops |
+| `extraLarge`| `[1600.0, ∞)` | Ultra-wide displays, 4K multi-window monitors |
+
+### Pattern-Matching & Operators
+Breakpoints support type-safe pattern matching with downward cascading fallbacks:
+
+```dart
+final String label = layout.containerBreakpoint.when(
+  compact: () => 'Phone View',
+  medium: () => 'Tablet View',
+  large: () => 'Desktop View',
+);
+
+// Or direct operator comparisons:
+if (layout.containerBreakpoint >= Breakpoint.medium) {
+  // Show side rail
+}
+```
 
 ---
 

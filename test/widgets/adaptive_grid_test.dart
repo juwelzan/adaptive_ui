@@ -48,6 +48,61 @@ void main() {
       expect(find.text('Cell 0'), findsOneWidget);
     });
 
+    testWidgets('enforces maxItemWidth by increasing columns on wide screens',
+        (tester) async {
+      // With width 1000 and minItemWidth 200, default columns would be 4:
+      // (1000 - 3*16) / 4 = 952 / 4 = 238
+      // If maxItemWidth is 220, 238 > 220 so it forces 5 columns:
+      // (1000 - 4*16) / 5 = 936 / 5 = 187.2 <= 220
+      await tester.pumpAdaptive(
+        size: const Size(1000.0, 800.0),
+        child: AdaptiveGrid(
+          minItemWidth: 250.0,
+          maxItemWidth: 220.0,
+          spacing: 16.0,
+          children: List.generate(6, (index) => Text('Item $index')),
+        ),
+      );
+
+      final GridView grid = tester.widget(find.byType(GridView));
+      final SliverGridDelegateWithFixedCrossAxisCount delegate =
+          grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+      expect(delegate.crossAxisCount, equals(5));
+    });
+
+    testWidgets('constrains to maxContentWidth and centers on wide screens',
+        (tester) async {
+      await tester.pumpAdaptive(
+        size: const Size(1600.0, 900.0),
+        child: AdaptiveGrid(
+          minItemWidth: 200.0,
+          maxContentWidth: 1000.0,
+          children: List.generate(4, (index) => Text('Item $index')),
+        ),
+      );
+
+      expect(find.byType(ConstrainedBox), findsWidgets);
+      final ConstrainedBox constrainedBox =
+          tester.widget(find.byType(ConstrainedBox).last);
+      expect(constrainedBox.constraints.maxWidth, equals(1000.0));
+    });
+
+    testWidgets('applies mainAxisExtent when specified', (tester) async {
+      await tester.pumpAdaptive(
+        size: const Size(800.0, 600.0),
+        child: AdaptiveGrid(
+          minItemWidth: 200.0,
+          mainAxisExtent: 140.0,
+          children: List.generate(4, (index) => Text('Item $index')),
+        ),
+      );
+
+      final GridView grid = tester.widget(find.byType(GridView));
+      final SliverGridDelegateWithFixedCrossAxisCount delegate =
+          grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+      expect(delegate.mainAxisExtent, equals(140.0));
+    });
+
     testWidgets(
         'dynamically adjusts effective childAspectRatio when itemWidth < minItemWidth',
         (tester) async {

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
 import '../../core/adaptive_engine.dart';
@@ -11,11 +12,14 @@ class AdaptiveGrid extends StatelessWidget {
   const AdaptiveGrid({
     super.key,
     this.minItemWidth = 240.0,
+    this.maxItemWidth,
+    this.maxContentWidth,
     this.columns,
     this.spacing = 16.0,
     this.mainAxisSpacing,
     this.crossAxisSpacing,
     this.childAspectRatio = 1.0,
+    this.mainAxisExtent,
     this.shrinkWrap = false,
     this.physics,
     this.padding,
@@ -27,11 +31,14 @@ class AdaptiveGrid extends StatelessWidget {
   const AdaptiveGrid.builder({
     super.key,
     this.minItemWidth = 240.0,
+    this.maxItemWidth,
+    this.maxContentWidth,
     this.columns,
     this.spacing = 16.0,
     this.mainAxisSpacing,
     this.crossAxisSpacing,
     this.childAspectRatio = 1.0,
+    this.mainAxisExtent,
     this.shrinkWrap = false,
     this.physics,
     this.padding,
@@ -41,6 +48,18 @@ class AdaptiveGrid extends StatelessWidget {
 
   /// Minimum width required for an individual grid cell before adding another column.
   final double minItemWidth;
+
+  /// Optional maximum width for an individual grid cell.
+  ///
+  /// When specified, if wide parent constraints would cause cell width to exceed
+  /// [maxItemWidth], additional columns will be automatically introduced.
+  final double? maxItemWidth;
+
+  /// Optional maximum content width for the entire grid.
+  ///
+  /// When parent constraints exceed this value, the grid is constrained to [maxContentWidth]
+  /// and centered horizontally.
+  final double? maxContentWidth;
 
   /// Explicit responsive column override. If null, columns are calculated dynamically via [AdaptiveEngine].
   final AdaptiveValue<int>? columns;
@@ -55,7 +74,14 @@ class AdaptiveGrid extends StatelessWidget {
   final double? crossAxisSpacing;
 
   /// Aspect ratio (width / height) of grid cells. Defaults to 1.0.
+  ///
+  /// Ignored if [mainAxisExtent] is explicitly specified.
   final double childAspectRatio;
+
+  /// Specific fixed height (in logical pixels) for grid items along the main axis.
+  ///
+  /// When provided, this overrides [childAspectRatio].
+  final double? mainAxisExtent;
 
   /// Whether the grid should shrink-wrap its content height.
   final bool shrinkWrap;
@@ -79,24 +105,32 @@ class AdaptiveGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return AdaptiveBuilder(
       builder: (BuildContext ctx, AdaptiveLayoutData layout) {
+        final double rawWidth = layout.availableWidth > 0
+            ? layout.availableWidth
+            : layout.screenSize.width;
+
+        final double effectiveGridWidth = maxContentWidth != null
+            ? math.min(rawWidth, maxContentWidth!)
+            : rawWidth;
+
         final int resolvedColumns = columns?.resolve(layout) ??
             AdaptiveEngine.calculateColumns(
-              layout.availableWidth,
+              effectiveGridWidth,
               minItemWidth: minItemWidth,
+              maxItemWidth: maxItemWidth,
               spacing: crossAxisSpacing ?? spacing,
             );
 
         final double resolvedSpacing = crossAxisSpacing ?? spacing;
-        final double availableCrossAxis = layout.availableWidth > 0
-            ? layout.availableWidth
-            : layout.screenSize.width;
         final double itemWidth = resolvedColumns > 0
-            ? (availableCrossAxis - (resolvedSpacing * (resolvedColumns - 1))) /
+            ? (effectiveGridWidth - (resolvedSpacing * (resolvedColumns - 1))) /
                 resolvedColumns
-            : availableCrossAxis;
+            : effectiveGridWidth;
 
         double effectiveAspectRatio = childAspectRatio;
-        if (itemWidth > 0 && itemWidth < minItemWidth) {
+        if (mainAxisExtent == null &&
+            itemWidth > 0 &&
+            itemWidth < minItemWidth) {
           final double ratioFactor =
               (itemWidth / minItemWidth).clamp(0.55, 1.0);
           effectiveAspectRatio = childAspectRatio * ratioFactor;
@@ -108,10 +142,12 @@ class AdaptiveGrid extends StatelessWidget {
           mainAxisSpacing: mainAxisSpacing ?? spacing,
           crossAxisSpacing: resolvedSpacing,
           childAspectRatio: effectiveAspectRatio,
+          mainAxisExtent: mainAxisExtent,
         );
 
+        Widget grid;
         if (itemBuilder != null && itemCount != null) {
-          return GridView.builder(
+          grid = GridView.builder(
             gridDelegate: delegate,
             itemCount: itemCount!,
             itemBuilder: itemBuilder!,
@@ -119,15 +155,27 @@ class AdaptiveGrid extends StatelessWidget {
             physics: physics,
             padding: padding,
           );
+        } else {
+          grid = GridView(
+            gridDelegate: delegate,
+            shrinkWrap: shrinkWrap,
+            physics: physics,
+            padding: padding,
+            children: children,
+          );
         }
 
-        return GridView(
-          gridDelegate: delegate,
-          shrinkWrap: shrinkWrap,
-          physics: physics,
-          padding: padding,
-          children: children,
-        );
+        if (maxContentWidth != null && rawWidth > maxContentWidth!) {
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxContentWidth!),
+              child: grid,
+            ),
+          );
+        }
+
+        return grid;
       },
     );
   }
