@@ -191,5 +191,26 @@ void main() {
       expect(find.byType(NavigationRail), findsNothing);
       expect(find.text('No Destinations'), findsOneWidget);
     });
+
+    testWidgets(
+        'reproduces ListTile constraint failure under extremely narrow rail container',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Material(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: 0.6,
+                child: ListTile(
+                  leading: CircleAvatar(child: Text('1')),
+                  title: Text('Title'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    });
   });
 }

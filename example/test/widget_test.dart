@@ -145,5 +145,26 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('POPULATED'), findsOneWidget);
     });
+
+    testWidgets('reproduce resize from desktop to narrow window while on States tab',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(const AdaptiveShowcaseApp());
+      await tester.pumpAndSettle();
+
+      // Navigate to States (Tab 2)
+      await tester.tap(find.byIcon(Icons.swap_horiz_outlined));
+      await tester.pumpAndSettle();
+
+      // Now simulate a window resize down to narrow width
+      tester.view.physicalSize = const Size(289.6, 600);
+      await tester.pump();
+    });
   });
 }
