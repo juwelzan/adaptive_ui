@@ -134,6 +134,15 @@ class AdaptiveScaffold extends StatelessWidget {
 
   AdaptiveNavigationType _resolveType(AdaptiveLayoutData layout) {
     if (navigationType != AdaptiveNavigationType.auto) {
+      if ((navigationType == AdaptiveNavigationType.extendedRail ||
+              navigationType == AdaptiveNavigationType.rail) &&
+          layout.availableWidth > 0 &&
+          layout.availableWidth <
+              (navigationType == AdaptiveNavigationType.extendedRail
+                  ? 360.0
+                  : 200.0)) {
+        return AdaptiveNavigationType.bottom;
+      }
       return navigationType;
     }
     if (destinations.isEmpty) {

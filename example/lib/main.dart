@@ -164,14 +164,29 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           label: 'Tokens',
         ),
       ],
-      body: IndexedStack(
-        index: _currentTabIndex,
-        children: [
-          _buildResponsiveDashboardTab(context, layout),
-          _buildGranularRebuildLabTab(context, layout),
-          _buildStateTransitionsTab(context, layout),
-          _buildConstrainedBoxTab(context, layout),
-        ],
+      body: AdaptiveCubitListener<ShowcaseCubit, ShowcaseState>.adaptive(
+        listenWhen: (prev, curr) =>
+            prev.notificationsCount != curr.notificationsCount,
+        adaptiveListener: (ctx, state, l) {
+          ScaffoldMessenger.of(ctx).hideCurrentSnackBar();
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Notification #${state.notificationsCount} received on ${l.containerBreakpoint.name} view',
+              ),
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        },
+        child: IndexedStack(
+          index: _currentTabIndex,
+          children: [
+            _buildResponsiveDashboardTab(context, layout),
+            _buildGranularRebuildLabTab(context, layout),
+            _buildStateTransitionsTab(context, layout),
+            _buildConstrainedBoxTab(context, layout),
+          ],
+        ),
       ),
     );
   }

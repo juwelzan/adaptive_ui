@@ -193,24 +193,36 @@ void main() {
     });
 
     testWidgets(
-        'reproduces ListTile constraint failure under extremely narrow rail container',
+        'forced rail navigation modes safely fall back to bottom bar when availableWidth is critically small',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Material(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: SizedBox(
-                width: 0.6,
-                child: ListTile(
-                  leading: CircleAvatar(child: Text('1')),
-                  title: Text('Title'),
+      await tester.pumpWidget(const MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 150.0,
+            height: 400.0,
+            child: AdaptiveScaffold(
+              navigationType: AdaptiveNavigationType.extendedRail,
+              destinations: <AdaptiveNavigationDestination>[
+                AdaptiveNavigationDestination(
+                  icon: Icon(Icons.home),
+                  label: 'Home',
                 ),
-              ),
+                AdaptiveNavigationDestination(
+                  icon: Icon(Icons.settings),
+                  label: 'Settings',
+                ),
+              ],
+              body: Center(child: Text('Safe Body Content')),
             ),
           ),
         ),
-      );
+      ));
+      await tester.pumpAndSettle();
+
+      // On 150dp width, extendedRail would starve the body; AdaptiveScaffold falls back to bottom bar
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
+      expect(find.text('Safe Body Content'), findsOneWidget);
     });
   });
 }

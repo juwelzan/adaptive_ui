@@ -16,6 +16,8 @@ class AdaptiveCard extends StatelessWidget {
     this.color,
     this.elevation = 1.0,
     this.borderRadius,
+    this.minContentWidth,
+    this.horizontalScrollableOnConstrained = true,
     this.onTap,
     required this.child,
   });
@@ -34,6 +36,14 @@ class AdaptiveCard extends StatelessWidget {
 
   /// Corner radius override.
   final BorderRadius? borderRadius;
+
+  /// Optional minimum content width. When bounded incoming width is smaller than this threshold,
+  /// the card content is safely preserved inside a horizontal scroll view rather than crushing children.
+  final double? minContentWidth;
+
+  /// Whether to gracefully scroll content horizontally if parent width is critically narrow (< 72dp).
+  /// Defaults to `true`.
+  final bool horizontalScrollableOnConstrained;
 
   /// Optional click/tap callback.
   final VoidCallback? onTap;
@@ -77,11 +87,27 @@ class AdaptiveCard extends StatelessWidget {
           }
         }
 
+        Widget innerContent = child;
+        if (horizontalScrollableOnConstrained &&
+            layout.constraints.hasBoundedWidth &&
+            layout.constraints.maxWidth > 0) {
+          final double effectiveMin = minContentWidth ?? 180.0;
+          if (layout.constraints.maxWidth < effectiveMin) {
+            innerContent = SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: effectiveMin,
+                child: child,
+              ),
+            );
+          }
+        }
+
         Widget content = Padding(
           padding: safePadding,
           child: ClipRect(
             clipBehavior: Clip.antiAlias,
-            child: child,
+            child: innerContent,
           ),
         );
 

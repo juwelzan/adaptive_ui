@@ -121,10 +121,24 @@ class StudentSummary extends AdaptiveStatelessWidget {
 ## Core Components
 
 ### 1. Granular Reactive Widgets
-- **`AdaptiveBlocSelector<B, S, T>` / `AdaptiveCubitSelector<C, S, T>`**: Subscribes to a slice of state and rebuilds strictly when that slice changes (verified by `==` equality).
-- **`AdaptiveBlocBuilder<B, S>` / `AdaptiveCubitBuilder<C, S>`**: Rebuilds widget on state changes with optional `buildWhen` and access to ambient `AdaptiveLayoutData`.
-- **`AdaptiveBlocConsumer<B, S>` / `AdaptiveCubitConsumer<C, S>`**: Combines reactive listener and builder.
-- **`AdaptiveBlocListener<B, S>` / `AdaptiveCubitListener<C, S>`**: Executes side effects without triggering UI rebuilds.
+- **`AdaptiveBlocSelector<B, S, T>` / `AdaptiveCubitSelector<C, S, T>`**: Subscribes to a slice of state and rebuilds strictly when that slice changes (verified by `==` equality). Supports `.adaptive` constructor delivering ambient `AdaptiveLayoutData`.
+- **`AdaptiveBlocBuilder<B, S>` / `AdaptiveCubitBuilder<C, S>`**: Rebuilds widget on state changes with optional `buildWhen` and access to ambient `AdaptiveLayoutData` via `.adaptive`.
+- **`AdaptiveBlocConsumer<B, S>` / `AdaptiveCubitConsumer<C, S>`**: Combines reactive listener and builder. Supports `.adaptive` delivering `AdaptiveLayoutData` to both `adaptiveBuilder` and `adaptiveListener`.
+- **`AdaptiveBlocListener<B, S>` / `AdaptiveCubitListener<C, S>`**: Executes side effects without triggering UI rebuilds. Supports `.adaptive` delivering `AdaptiveLayoutData` for responsive side-effects (e.g. mobile bottom sheet vs desktop dialog).
+
+```dart
+// Responsive side-effects with AdaptiveBlocListener.adaptive
+AdaptiveBlocListener<OrderCubit, OrderState>.adaptive(
+  adaptiveListener: (context, state, layout) {
+    if (layout.isCompact) {
+      showModalBottomSheet(context: context, builder: (_) => OrderSheet(state));
+    } else {
+      showDialog(context: context, builder: (_) => OrderDialog(state));
+    }
+  },
+  child: const OrderView(),
+)
+```
 
 ### 2. Adaptive Typography
 Responsive font scaling that strictly respects system accessibility settings:

@@ -81,6 +81,12 @@ abstract class AdaptiveState<T extends AdaptiveStatefulWidget>
     });
   }
 
+  @override
+  void dispose() {
+    _cachedProviders = null;
+    super.dispose();
+  }
+
   /// Builds the widget with resolved [layout] constraints and responsive metrics.
   Widget buildAdaptive(BuildContext context, AdaptiveLayoutData layout);
 

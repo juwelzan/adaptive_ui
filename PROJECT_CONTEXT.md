@@ -4,7 +4,7 @@
 
 `adaptive_ui` is an **automatic-first**, **developer-configurable**, and **performance-conscious** responsive UI framework and widget system for Flutter applications.
 
-It provides an end-to-end multi-platform layout engine paired with native BLoC/Cubit provider scoping (`setProvider()`) and granular rebuild isolation (`AdaptiveBlocSelector` / `AdaptiveCubitSelector`).
+It provides an end-to-end multi-platform layout engine paired with native BLoC/Cubit provider scoping (`setProvider()`), granular selective rebuild isolation (`AdaptiveBlocSelector` / `AdaptiveCubitSelector`), responsive side-effects (`AdaptiveBlocListener.adaptive`), and responsive consumers (`AdaptiveBlocConsumer.adaptive`).
 
 ---
 
@@ -30,6 +30,7 @@ All thresholds are immutable, equatable, and customizable per application or sub
 - **Provider Caching in Stateful Widgets**: Evaluated once during `AdaptiveState.initState()` and cached in `_cachedProviders`. Rebuilding via `setState()` reuses cached providers without re-allocating closures or re-instantiating BLoCs.
 - **Controlled Reconfiguration**: `updateShouldNotifyProviders(oldWidget)` defaults to `false`, preventing accidental destruction of active streams during parent rebuilds. Developers can override this or call `reconfigureProviders()` manually.
 - **Zero-Wrapper Default**: When `setProvider()` returns empty (`const []`), no `MultiBlocProvider` wrapper is inserted.
+- **Explicit Lifecycle Cleanup**: `AdaptiveState.dispose()` explicitly sets `_cachedProviders = null;` before calling `super.dispose()`, freeing provider references immediately.
 
 ### D. Provider Lifecycle & Resource Ownership
 - **`create: (context) => MyCubit()` (Framework-Owned)**: The framework automatically calls `cubit.close()` when the adaptive widget is unmounted from the tree.
@@ -42,16 +43,16 @@ All thresholds are immutable, equatable, and customizable per application or sub
 - Uses Dart's standard `==` equality operator. If equal, the builder is **not** called.
 - Sibling widgets and static headers are never re-evaluated on state slice emissions.
 
-### F. Flex ParentData Contract Safety
-- [AdaptiveExpanded](lib/src/widgets/layout/adaptive_expanded.dart) inspects ambient constraints via [AdaptiveContext.maybeOf(context)](lib/src/core/adaptive_context.dart) instead of inserting an intermediate `LayoutBuilder`.
-- Preserves Flutter's strict `ParentDataWidget<FlexParentData>` contract, preventing framework assertion errors inside `Row` and `Column`.
+### F. Responsive Side-Effects & Consumers
+- **`AdaptiveBlocListener` / `AdaptiveCubitListener`**: Supports `.adaptive` constructor supplying ambient `AdaptiveLayoutData` along with emitted state. Enables responsive side-effects such as presenting mobile bottom sheets vs desktop snackbars or dialogs.
+- **`AdaptiveBlocConsumer` / `AdaptiveCubitConsumer`**: Combines listener side-effects with adaptive layout rendering in a single widget. Supports `.adaptive` constructor delivering `AdaptiveLayoutData` to both `adaptiveBuilder` and `adaptiveListener`.
 
-### G. Declarative Slot-Based Layouts (`AdaptiveLayoutBuilder`)
-- Implements slot-based builders (`compact`, `medium`, `expanded`, `large`, `extraLarge`, `fallback`, `builder`) with automatic cascading fallbacks.
-- Accepts an optional static `child` widget to avoid rebuilding expensive subtrees during layout transitions.
-- Supports local `breakpoints` override for component-specific responsive rules.
+### G. Constraint Resilience & ListTile Layout Safety
+- `ListTile` requires at least ~128-180dp to layout its `leading`, `title`, and `trailing` children without throwing assertion errors (`Leading widget consumes the entire tile width`).
+- **`AdaptiveCard`**: Includes `minContentWidth` (defaults to 180.0dp) and `horizontalScrollableOnConstrained` (defaults to `true`). If incoming constraints are critically squeezed (< 180dp), it safely wraps the child in a horizontal `SingleChildScrollView` with bounded width, preventing zero-width and sub-pixel tile crashes.
+- **`AdaptiveScaffold`**: When window or pane width collapses (< 200dp / 360dp), explicitly forced `rail` or `extendedRail` modes safely fall back to bottom navigation to prevent starving the content body.
 
-### H. Policy-Driven Flex Containers (`AdaptiveFlex`) & Enhanced Grid (`AdaptiveGrid`)
+### H. Policy-Driven Flex Containers & Enhanced Grids
 - **`AdaptiveFlex`**: Reusable policy engine for switching arrangements (`row`, `column`, `wrap`, `rowOrColumn`). Safely unwraps `Expanded` children in unconstrained height environments to prevent `RenderFlex children have non-zero flex but incoming height constraints are unbounded` assertions.
 - **`AdaptiveGrid`**: Enhanced with `maxItemWidth` (ensures cells don't overstretch on wide displays), `maxContentWidth` (centers content on desktop), and `mainAxisExtent` (fixed vertical cell heights).
 
@@ -142,8 +143,8 @@ adaptive_ui/
 │       └── diagnostics/                       # Live telemetry & debug banner
 │           ├── adaptive_debug_overlay.dart
 │           └── adaptive_diagnostics.dart
-├── test/                                      # Automated test suite (68 tests)
-├── example/                                   # Real-world 4-tab studio showcase with tests (6 tests)
+├── test/                                      # Automated test suite (106 tests)
+├── example/                                   # Real-world 4-tab studio showcase with tests (8 tests)
 ├── doc/                                       # Technical architectural specifications
 ├── pubspec.yaml
 └── README.md
@@ -151,45 +152,32 @@ adaptive_ui/
 
 ---
 
-## 4. Feature-Gap Audit (12 Areas)
+## 4. Phase 3 Test Matrix (11 Required Scenarios Covered)
 
-| Area | Status | Evidence / Implementation Notes |
-| :--- | :--- | :--- |
-| **1. Constraint-Aware Layout Engine** | Complete & Verified | `LayoutBuilder` constraint extraction in `AdaptiveLayoutData`; tested across 320–1440dp viewports. |
-| **2. Breakpoints & Configuration** | Complete & Verified | Material 3 aligned 5-tier breakpoints (`compact`, `medium`, `expanded`, `large`, `extraLarge`) in `AdaptiveBreakpoints`. |
-| **3. Tokens, Typography & Spacing** | Complete & Verified | `AdaptiveThemeData`, `AdaptiveTokens`, `AdaptiveTypography`, `AdaptiveSpacing` with dark/light mode overrides. |
-| **4. BLoC/Cubit Scoping & Lifecycle** | Complete & Verified | `setProvider()` hook with cached provider instances, framework vs external ownership disposal semantics. |
-| **5. Selective Rebuild Optimization** | Complete & Verified | `AdaptiveBlocSelector` / `AdaptiveCubitSelector` with `==` short-circuiting; verified 0 sibling rebuilds in unit & example tests. |
-| **6. Loading, Skeleton, Empty, Error** | Complete & Verified | `AdaptiveLoading`, `AdaptiveErrorView`, `AdaptiveEmptyState`, and `AdaptiveSkeleton` (shimmer pulse box, circle, text). |
-| **7. A11y, Text Scaling, Safe Areas** | Complete & Verified | System `TextScaler` clamped scaling, minimum 48dp touch targets on compact screens, `AdaptiveSafeArea`. |
-| **8. Navigation, Scaffold & Dialogs** | Complete & Verified | `AdaptiveScaffold` (M3 bottom `NavigationBar` on compact vs side `NavigationRail` / extended rail on wide screens; width-safe fallback). |
-| **9. Diagnostics & Debugging Tools** | Complete & Verified | `AdaptiveDebugOverlay` and `AdaptiveDiagnostics` HUD; top-docked with zero tap interference. |
-| **10. Tests & Benchmarks** | Complete & Verified | 68 package tests + 6 example application widget tests (74 total tests passing). |
-| **11. Example App & Documentation** | Complete & Verified | Full-featured 4-tab showcase studio in `example/`, comprehensive README and architecture specs. |
-| **12. Package Metadata & Release** | Complete & Verified | Clean `pubspec.yaml`, valid license, 0 analyzer issues, sound null safety, and zero third-party layout dependencies. |
+| Scenario | Test File | Status | Description / Coverage |
+| :--- | :--- | :--- | :--- |
+| **1. Adaptive stateless widget rendering** | `adaptive_stateless_widget_test.dart` | Pass | Renders layout metrics snapshot to `buildAdaptive`. |
+| **2. Adaptive stateful widget init & disposal** | `adaptive_stateful_widget_test.dart` | Pass | Verifies `initState`, `dispose`, and provider caching sequence. |
+| **3. Provider creation & lifecycle ownership** | `adaptive_bloc_lifecycle_test.dart` | Pass | Framework-owned `create` instances are closed on unmount; cached on rebuilds. |
+| **4. Externally owned provider disposal** | `adaptive_bloc_lifecycle_test.dart` | Pass | Instances provided via `.value` are never closed on unmount. |
+| **5. State changes trigger expected rebuild** | `adaptive_selective_rebuild_test.dart` | Pass | Selector rebuilds when target field emits mutated state. |
+| **6. Unrelated changes do NOT trigger rebuild** | `adaptive_selective_rebuild_test.dart` | Pass | Siblings and other selectors have 0 rebuilds on unrelated field emissions. |
+| **7. Provider replacement & widget updates** | `adaptive_stateful_widget_test.dart` | Pass | `updateShouldNotifyProviders` and `reconfigureProviders()` re-evaluates providers. |
+| **8. Breakpoint change while state active** | `adaptive_state_responsive_integration_test.dart` | Pass | Compact to expanded resize retains active Cubit state without reset. |
+| **9. Widget removal & listener cleanup** | `adaptive_bloc_listener_consumer_test.dart` | Pass | Cancels stream subscriptions; no callbacks or leaks post unmount. |
+| **10. Nested responsive & constrained scenarios** | `adaptive_state_responsive_integration_test.dart` | Pass | State selectors nested inside Row, Column, Expanded, and narrow cards (w=150dp). |
+| **11. Regression coverage for bugs** | `adaptive_card_test.dart`, `adaptive_scaffold_test.dart` | Pass | `ListTile` w=0.6dp and extreme window resize regression tests. |
 
 ---
 
 ## 5. Current Progress & Verification Matrix
 
-- **Static Analysis**: `flutter analyze .` passing with 0 issues.
-- **Example Analysis**: `flutter analyze example` passing with 0 issues.
-- **Code Formatting**: `dart format .` passing 100% cleanly.
-- **Automated Tests**: **74 tests passing** across package and example suites:
-  - Breakpoint classification & tier comparison: 4 tests
-  - Pure computation engine & column math: 4 tests
-  - AdaptiveValue resolution (fixed, breakpoint, builder, auto): 6 tests
-  - Accessibility & 2.0x TextScaler resilience: 2 tests
-  - Multi-viewport layout adaptation (320px to 1440px, portrait/landscape, keyboard insets): 7 tests
-  - BLoC provider lifecycle, caching, and disposal: 4 tests
-  - Granular selective rebuild isolation & equality short-circuiting: 2 tests
-  - Layout widgets (Containers, Row collapse, Grid, AutoSizeText): 19 tests
-  - Navigation chrome (`AdaptiveScaffold` bottom nav vs rail vs extended rail): 6 tests
-  - Shimmer placeholder loader (`AdaptiveSkeleton` box, text, circle, a11y): 5 tests
-  - Theme & Design token propagation: 3 tests
-  - Feedback views, ConstrainedBox, and Debug Overlay: 8 tests
-  - Controls & Touch targets with tight-constraint resilience: 4 tests
-  - Example application automated integration/widget tests: 6 tests
+- **Static Analysis**: `flutter analyze .` (package) passing with **0 issues**.
+- **Example Analysis**: `flutter analyze .` (example) passing with **0 issues**.
+- **Code Formatting**: `dart format .` passing 100% cleanly across all 97 Dart files.
+- **Automated Tests**: **114 tests passing** across package and example suites:
+  - Package Tests: **106 tests passing**.
+  - Example App Tests: **8 tests passing**.
 
 ---
 
@@ -198,8 +186,8 @@ adaptive_ui/
 1. **Keep Public APIs Deliberate**: All exports are declared in `lib/adaptive_ui.dart`. Internal implementation details reside in `lib/src/`.
 2. **Never Break Flutter Lifecycle**: Base widgets preserve `initState`, `didUpdateWidget`, `dispose`, and `setState`.
 3. **No Unbounded Viewports Without Guard**: In collapsed `AdaptiveRow`, `Expanded` children are automatically unwrapped to prevent vertical flex errors in scrollables.
-4. **Adaptive Controls & Surfaces Must Never Overflow**: `AdaptiveButton` wraps content in `FittedBox` + `ClipRect` to safely scale icon and label down when space is constrained; `AdaptiveCard` clamps internal padding so it never starves children; `AdaptiveGrid` dynamically adjusts aspect ratio on narrow viewports; `AdaptiveScaffold` guards against starving body width.
-5. **No Third-Party Responsive Dependencies**: Rely purely on native Flutter layout primitives (`LayoutBuilder`, `MediaQueryData`, `CustomPaint`, `TextPainter`).
+4. **Adaptive Controls & Surfaces Must Never Overflow**: `AdaptiveButton` wraps content in `FittedBox` + `ClipRect`; `AdaptiveCard` provides horizontal scrolling fallback for constrained widths (< 180dp); `AdaptiveGrid` dynamically adjusts aspect ratio on narrow viewports; `AdaptiveScaffold` guards against starving body width.
+5. **No Third-Party Responsive Dependencies**: Rely purely on native Flutter layout primitives (`LayoutBuilder`, `MediaQueryData`, `CustomPaint`, `TextPainter`) and existing `flutter_bloc` / `nested`.
 6. **Deterministic Testing**: Rebuild counters, controlled Cubits, and multi-viewport pumps must be verified via `flutter test`.
 
 ---
