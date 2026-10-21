@@ -131,8 +131,8 @@ adaptive_ui/
 │       └── diagnostics/                       # Live telemetry & debug banner
 │           ├── adaptive_debug_overlay.dart
 │           └── adaptive_diagnostics.dart
-├── test/                                      # Automated test suite (66 tests)
-├── example/                                   # Real-world 4-tab studio showcase with tests (5 tests)
+├── test/                                      # Automated test suite (68 tests)
+├── example/                                   # Real-world 4-tab studio showcase with tests (6 tests)
 ├── doc/                                       # Technical architectural specifications
 ├── pubspec.yaml
 └── README.md
@@ -149,11 +149,11 @@ adaptive_ui/
 | **3. Tokens, Typography & Spacing** | Complete & Verified | `AdaptiveThemeData`, `AdaptiveTokens`, `AdaptiveTypography`, `AdaptiveSpacing` with dark/light mode overrides. |
 | **4. BLoC/Cubit Scoping & Lifecycle** | Complete & Verified | `setProvider()` hook with cached provider instances, framework vs external ownership disposal semantics. |
 | **5. Selective Rebuild Optimization** | Complete & Verified | `AdaptiveBlocSelector` / `AdaptiveCubitSelector` with `==` short-circuiting; verified 0 sibling rebuilds in unit & example tests. |
-| **6. Loading, Skeleton, Empty, Error** | Complete & Verified | `AdaptiveLoading`, `AdaptiveErrorView`, `AdaptiveEmptyState`, and newly added `AdaptiveSkeleton` (shimmer pulse box, circle, text). |
+| **6. Loading, Skeleton, Empty, Error** | Complete & Verified | `AdaptiveLoading`, `AdaptiveErrorView`, `AdaptiveEmptyState`, and `AdaptiveSkeleton` (shimmer pulse box, circle, text). |
 | **7. A11y, Text Scaling, Safe Areas** | Complete & Verified | System `TextScaler` clamped scaling, minimum 48dp touch targets on compact screens, `AdaptiveSafeArea`. |
-| **8. Navigation, Scaffold & Dialogs** | Complete & Verified | Newly added `AdaptiveScaffold` (M3 bottom `NavigationBar` on compact vs side `NavigationRail` / extended rail on wide screens). |
+| **8. Navigation, Scaffold & Dialogs** | Complete & Verified | `AdaptiveScaffold` (M3 bottom `NavigationBar` on compact vs side `NavigationRail` / extended rail on wide screens; width-safe fallback). |
 | **9. Diagnostics & Debugging Tools** | Complete & Verified | `AdaptiveDebugOverlay` and `AdaptiveDiagnostics` HUD; top-docked with zero tap interference. |
-| **10. Tests & Benchmarks** | Complete & Verified | 66 package tests + 5 example application widget tests (71 total tests passing). |
+| **10. Tests & Benchmarks** | Complete & Verified | 68 package tests + 6 example application widget tests (74 total tests passing). |
 | **11. Example App & Documentation** | Complete & Verified | Full-featured 4-tab showcase studio in `example/`, comprehensive README and architecture specs. |
 | **12. Package Metadata & Release** | Complete & Verified | Clean `pubspec.yaml`, valid license, 0 analyzer issues, sound null safety, and zero third-party layout dependencies. |
 
@@ -164,7 +164,7 @@ adaptive_ui/
 - **Static Analysis**: `flutter analyze .` passing with 0 issues.
 - **Example Analysis**: `flutter analyze example` passing with 0 issues.
 - **Code Formatting**: `dart format .` passing 100% cleanly.
-- **Automated Tests**: **71 tests passing** across package and example suites:
+- **Automated Tests**: **74 tests passing** across package and example suites:
   - Breakpoint classification & tier comparison: 4 tests
   - Pure computation engine & column math: 4 tests
   - AdaptiveValue resolution (fixed, breakpoint, builder, auto): 6 tests
@@ -172,12 +172,13 @@ adaptive_ui/
   - Multi-viewport layout adaptation (320px to 1440px, portrait/landscape, keyboard insets): 7 tests
   - BLoC provider lifecycle, caching, and disposal: 4 tests
   - Granular selective rebuild isolation & equality short-circuiting: 2 tests
-  - Layout widgets (Containers, Row collapse, Grid, AutoSizeText): 17 tests
+  - Layout widgets (Containers, Row collapse, Grid, AutoSizeText): 19 tests
   - Navigation chrome (`AdaptiveScaffold` bottom nav vs rail vs extended rail): 6 tests
   - Shimmer placeholder loader (`AdaptiveSkeleton` box, text, circle, a11y): 5 tests
   - Theme & Design token propagation: 3 tests
   - Feedback views, ConstrainedBox, and Debug Overlay: 8 tests
-  - Example application automated integration/widget tests: 5 tests
+  - Controls & Touch targets with tight-constraint resilience: 4 tests
+  - Example application automated integration/widget tests: 6 tests
 
 ---
 
@@ -186,8 +187,9 @@ adaptive_ui/
 1. **Keep Public APIs Deliberate**: All exports are declared in `lib/adaptive_ui.dart`. Internal implementation details reside in `lib/src/`.
 2. **Never Break Flutter Lifecycle**: Base widgets preserve `initState`, `didUpdateWidget`, `dispose`, and `setState`.
 3. **No Unbounded Viewports Without Guard**: In collapsed `AdaptiveRow`, `Expanded` children are automatically unwrapped to prevent vertical flex errors in scrollables.
-4. **No Third-Party Responsive Dependencies**: Rely purely on native Flutter layout primitives (`LayoutBuilder`, `MediaQueryData`, `CustomPaint`, `TextPainter`).
-5. **Deterministic Testing**: Rebuild counters, controlled Cubits, and multi-viewport pumps must be verified via `flutter test`.
+4. **Adaptive Controls & Surfaces Must Never Overflow**: `AdaptiveButton` wraps content in `FittedBox` + `ClipRect` to safely scale icon and label down when space is constrained; `AdaptiveCard` clamps internal padding so it never starves children; `AdaptiveGrid` dynamically adjusts aspect ratio on narrow viewports; `AdaptiveScaffold` guards against starving body width.
+5. **No Third-Party Responsive Dependencies**: Rely purely on native Flutter layout primitives (`LayoutBuilder`, `MediaQueryData`, `CustomPaint`, `TextPainter`).
+6. **Deterministic Testing**: Rebuild counters, controlled Cubits, and multi-viewport pumps must be verified via `flutter test`.
 
 ---
 

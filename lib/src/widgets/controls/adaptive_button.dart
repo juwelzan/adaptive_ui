@@ -73,22 +73,32 @@ class AdaptiveButton extends StatelessWidget {
                   ),
                 ),
               )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (icon != null) ...[
-                    icon!,
-                    const SizedBox(width: 8.0),
-                  ],
-                  Flexible(child: child),
-                ],
+            : ClipRect(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (icon != null) ...[
+                        icon!,
+                        const SizedBox(width: 8.0),
+                      ],
+                      child,
+                    ],
+                  ),
+                ),
               );
+
+        final EdgeInsetsGeometry resolvedPadding = padding ??
+            (layout.isCompact
+                ? const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0)
+                : const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0));
 
         ButtonStyle buttonStyle = ElevatedButton.styleFrom(
           minimumSize: Size(minWidth, minHeight),
-          padding: padding ??
-              const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+          padding: resolvedPadding,
           shape: RoundedRectangleBorder(
             borderRadius: theme.radii.toBorderRadius(theme.radii.md),
           ),

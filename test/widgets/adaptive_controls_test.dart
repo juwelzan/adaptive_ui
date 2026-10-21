@@ -54,5 +54,24 @@ void main() {
       expect(buttonSize.width, greaterThanOrEqualTo(48.0));
       expect(buttonSize.height, greaterThanOrEqualTo(48.0));
     });
+
+    testWidgets(
+        'AdaptiveButton renders without RenderFlex overflow under extremely tight constraints',
+        (tester) async {
+      await tester.pumpAdaptive(
+        size: const Size(360.0, 640.0),
+        child: SizedBox(
+          width: 15.0,
+          child: AdaptiveButton(
+            icon: const Icon(Icons.add, size: 18),
+            onPressed: () {},
+            child: const Text('Add Student'),
+          ),
+        ),
+      );
+
+      // Verify no assertion error or exception was thrown during layout
+      expect(find.byType(AdaptiveButton), findsOneWidget);
+    });
   });
 }

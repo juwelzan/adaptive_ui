@@ -336,6 +336,7 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           Builder(
             builder: (ctx) {
               _headerRebuilds++;
+
               return AdaptiveCard(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

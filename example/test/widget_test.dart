@@ -118,5 +118,32 @@ void main() {
       expect(find.byType(NavigationRail), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);
     });
+
+    testWidgets(
+        'resilient against extreme window shrink/resize without overflow',
+        (WidgetTester tester) async {
+      // Squeeze viewport down to 320x568 (extreme narrow window)
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(const AdaptiveShowcaseApp());
+      await tester.pumpAndSettle();
+
+      // On narrow viewport, AdaptiveScaffold must safely use bottom NavigationBar
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
+
+      // Verify Add Student button renders without overflow
+      expect(find.text('Add Student'), findsOneWidget);
+
+      // Navigate to States tab and verify populated state with list tiles
+      await tester.tap(find.byIcon(Icons.swap_horiz_outlined));
+      await tester.pumpAndSettle();
+      expect(find.text('POPULATED'), findsOneWidget);
+    });
   });
 }

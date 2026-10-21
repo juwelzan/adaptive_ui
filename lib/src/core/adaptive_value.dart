@@ -251,6 +251,9 @@ class AdaptiveInsets {
     if (isAuto) {
       switch (layout.containerBreakpoint) {
         case Breakpoint.compact:
+          if (layout.availableWidth > 0 && layout.availableWidth < 360.0) {
+            return const EdgeInsets.all(12.0);
+          }
           return const EdgeInsets.all(16.0);
         case Breakpoint.medium:
           return const EdgeInsets.all(24.0);

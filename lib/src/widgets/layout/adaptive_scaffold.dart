@@ -139,10 +139,13 @@ class AdaptiveScaffold extends StatelessWidget {
     if (destinations.isEmpty) {
       return AdaptiveNavigationType.none;
     }
-    if (layout.containerBreakpoint.index >= extendedBreakpoint.index) {
+    // Prevent starving body width when window is small or during resize
+    if (layout.availableWidth >= 840.0 &&
+        layout.containerBreakpoint.index >= extendedBreakpoint.index) {
       return AdaptiveNavigationType.extendedRail;
     }
-    if (layout.containerBreakpoint.index >= railBreakpoint.index) {
+    if (layout.availableWidth >= 500.0 &&
+        layout.containerBreakpoint.index >= railBreakpoint.index) {
       return AdaptiveNavigationType.rail;
     }
     return AdaptiveNavigationType.bottom;
@@ -209,7 +212,14 @@ class AdaptiveScaffold extends StatelessWidget {
                   ),
                   if (includeRailDivider)
                     const VerticalDivider(width: 1, thickness: 1),
-                  Expanded(child: body),
+                  Expanded(
+                    child: AdaptiveBuilder(
+                      builder:
+                          (BuildContext ctx, AdaptiveLayoutData bodyLayout) {
+                        return body;
+                      },
+                    ),
+                  ),
                 ],
               ),
               floatingActionButton: floatingActionButton,

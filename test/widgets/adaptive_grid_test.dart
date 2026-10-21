@@ -47,5 +47,30 @@ void main() {
       expect(find.byType(GridView), findsOneWidget);
       expect(find.text('Cell 0'), findsOneWidget);
     });
+
+    testWidgets(
+        'dynamically adjusts effective childAspectRatio when itemWidth < minItemWidth',
+        (tester) async {
+      await tester.pumpAdaptive(
+        size: const Size(120.0, 400.0),
+        child: AdaptiveGrid(
+          minItemWidth: 240.0,
+          childAspectRatio: 1.4,
+          children: const [
+            AdaptiveCard(
+              child: Text('Card Content'),
+            ),
+          ],
+        ),
+      );
+
+      final GridView grid = tester.widget(find.byType(GridView));
+      final SliverGridDelegateWithFixedCrossAxisCount delegate =
+          grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+
+      // Because 120 < 240, childAspectRatio must be scaled down below 1.4 to provide more vertical space
+      expect(delegate.childAspectRatio, lessThan(1.4));
+      expect(find.text('Card Content'), findsOneWidget);
+    });
   });
 }

@@ -86,12 +86,28 @@ class AdaptiveGrid extends StatelessWidget {
               spacing: crossAxisSpacing ?? spacing,
             );
 
+        final double resolvedSpacing = crossAxisSpacing ?? spacing;
+        final double availableCrossAxis = layout.availableWidth > 0
+            ? layout.availableWidth
+            : layout.screenSize.width;
+        final double itemWidth = resolvedColumns > 0
+            ? (availableCrossAxis - (resolvedSpacing * (resolvedColumns - 1))) /
+                resolvedColumns
+            : availableCrossAxis;
+
+        double effectiveAspectRatio = childAspectRatio;
+        if (itemWidth > 0 && itemWidth < minItemWidth) {
+          final double ratioFactor =
+              (itemWidth / minItemWidth).clamp(0.55, 1.0);
+          effectiveAspectRatio = childAspectRatio * ratioFactor;
+        }
+
         final SliverGridDelegateWithFixedCrossAxisCount delegate =
             SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: resolvedColumns,
           mainAxisSpacing: mainAxisSpacing ?? spacing,
-          crossAxisSpacing: crossAxisSpacing ?? spacing,
-          childAspectRatio: childAspectRatio,
+          crossAxisSpacing: resolvedSpacing,
+          childAspectRatio: effectiveAspectRatio,
         );
 
         if (itemBuilder != null && itemCount != null) {

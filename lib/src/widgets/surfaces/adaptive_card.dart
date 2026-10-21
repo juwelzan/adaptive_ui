@@ -53,9 +53,36 @@ class AdaptiveCard extends StatelessWidget {
         final BorderRadius resolvedRadius =
             borderRadius ?? theme.radii.toBorderRadius(theme.radii.lg);
 
+        EdgeInsets safePadding = resolvedPadding;
+        if (layout.constraints.hasBoundedWidth &&
+            layout.constraints.maxWidth > 0) {
+          final double maxH = (layout.constraints.maxWidth * 0.15)
+              .clamp(0.0, resolvedPadding.left);
+          if (safePadding.horizontal >= layout.constraints.maxWidth * 0.4) {
+            safePadding = EdgeInsets.symmetric(
+              horizontal: maxH,
+              vertical: safePadding.vertical,
+            );
+          }
+        }
+        if (layout.constraints.hasBoundedHeight &&
+            layout.constraints.maxHeight > 0) {
+          final double maxV = (layout.constraints.maxHeight * 0.12)
+              .clamp(0.0, resolvedPadding.top);
+          if (safePadding.vertical >= layout.constraints.maxHeight * 0.4) {
+            safePadding = EdgeInsets.symmetric(
+              horizontal: safePadding.horizontal,
+              vertical: maxV,
+            );
+          }
+        }
+
         Widget content = Padding(
-          padding: resolvedPadding,
-          child: child,
+          padding: safePadding,
+          child: ClipRect(
+            clipBehavior: Clip.antiAlias,
+            child: child,
+          ),
         );
 
         if (onTap != null) {
