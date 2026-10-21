@@ -6,7 +6,8 @@ import '../helpers/test_helpers.dart';
 
 void main() {
   group('AdaptiveText Animations & Marquee', () {
-    testWidgets('short text remains static by default (AdaptiveTextAnimation.none)',
+    testWidgets(
+        'short text remains static by default (AdaptiveTextAnimation.none)',
         (tester) async {
       await tester.pumpAdaptive(
         size: const Size(400.0, 600.0),

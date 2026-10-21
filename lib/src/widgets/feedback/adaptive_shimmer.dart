@@ -118,7 +118,8 @@ class _AdaptiveShimmerState extends State<AdaptiveShimmer>
                 0.5,
                 0.9,
               ],
-              transform: _SlidingGradientTransform(slidePercent: _controller.value),
+              transform:
+                  _SlidingGradientTransform(slidePercent: _controller.value),
             ).createShader(bounds);
           },
           child: child,

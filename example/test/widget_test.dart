@@ -189,5 +189,53 @@ void main() {
       expect(find.textContaining('Notification #6 received on compact view'),
           findsOneWidget);
     });
+
+    testWidgets('navigates to Motion tab and exercises Phase 4 widgets',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(const AdaptiveShowcaseApp());
+      await tester.pumpAndSettle();
+
+      // Navigate to Motion tab via Icon
+      await tester.tap(find.byIcon(Icons.auto_awesome_outlined));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('1. AdaptiveText Motion & Marquee'), findsOneWidget);
+      expect(find.text('2. AdaptiveContainer Implicit Animations'),
+          findsOneWidget);
+
+      // Verify container expansion toggle works
+      expect(find.text('Expand'), findsOneWidget);
+      await tester.tap(find.text('Expand'));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Contract'), findsOneWidget);
+
+      // Scroll down to reveal Section 3: Shimmer & Skeleton System
+      await tester.drag(find.byType(AdaptiveScrollView), const Offset(0, -500));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('3. Shimmer & Skeleton System'), findsOneWidget);
+
+      // Verify toggle button for loading state works
+      expect(find.text('Loading: ON'), findsOneWidget);
+      await tester.tap(find.text('Loading: ON'));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Loading: OFF'), findsOneWidget);
+      expect(find.text('Dr. Evelyn Vance'), findsOneWidget);
+
+      // Scroll down to verify Sections 4 and 5
+      await tester.drag(find.byType(AdaptiveScrollView), const Offset(0, -350));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('4. AdaptiveSidebar Navigation'), findsOneWidget);
+
+      await tester.drag(find.byType(AdaptiveScrollView), const Offset(0, -350));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('5. AdaptiveBottomNavigationBar'), findsOneWidget);
+    });
   });
 }

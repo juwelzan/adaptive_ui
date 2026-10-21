@@ -6,7 +6,8 @@ import '../helpers/test_helpers.dart';
 
 void main() {
   group('AdaptiveContainer Animations', () {
-    testWidgets('animates decoration changes smoothly when animateChanges is true',
+    testWidgets(
+        'animates decoration changes smoothly when animateChanges is true',
         (tester) async {
       Color currentColor = Colors.blue;
 
@@ -110,8 +111,7 @@ void main() {
       expect(find.text('Reduced Motion Box'), findsOneWidget);
     });
 
-    testWidgets('handles tap and hover interactions cleanly',
-        (tester) async {
+    testWidgets('handles tap and hover interactions cleanly', (tester) async {
       bool tapped = false;
       bool hovered = false;
 
@@ -127,6 +127,7 @@ void main() {
 
       expect(find.text('Interactive Card'), findsOneWidget);
       expect(tapped, isFalse);
+      expect(hovered, isFalse);
 
       await tester.tap(find.text('Interactive Card'));
       await tester.pumpAndSettle();

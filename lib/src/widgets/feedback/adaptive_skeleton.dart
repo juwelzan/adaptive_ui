@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/adaptive_motion.dart';
-import 'adaptive_shimmer.dart';
 
 /// An animated placeholder skeleton loader for content-aware loading states.
 ///
@@ -141,12 +140,6 @@ class _AdaptiveSkeletonState extends State<AdaptiveSkeleton>
     // If used as a conditional content/placeholder switcher:
     if (widget.loading != null) {
       final bool isLoading = widget.loading!;
-      final Widget activeChild = isLoading
-          ? ExcludeSemantics(
-              child: widget.placeholder ?? const AdaptiveSkeleton.box(),
-            )
-          : (widget.child ?? const SizedBox.shrink());
-
       final bool reducedMotion = AdaptiveMotion.isReducedMotion(context);
       final Duration duration = reducedMotion
           ? Duration.zero
@@ -296,8 +289,8 @@ class AdaptiveSkeletonContainer extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final bool isDark = theme.brightness == Brightness.dark;
 
-    final Color bgColor = color ??
-        (isDark ? const Color(0xFF1E1E20) : const Color(0xFFF7F7F9));
+    final Color bgColor =
+        color ?? (isDark ? const Color(0xFF1E1E20) : const Color(0xFFF7F7F9));
 
     return Container(
       width: width,

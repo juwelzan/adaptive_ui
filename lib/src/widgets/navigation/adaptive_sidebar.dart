@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/adaptive_breakpoints.dart';
-import '../../core/adaptive_context.dart';
 import '../../core/adaptive_layout_data.dart';
 import '../../theme/adaptive_motion.dart';
 import '../adaptive_builder.dart';
@@ -161,9 +160,8 @@ class AdaptiveSidebar extends StatelessWidget {
         final Color effectiveSelectedText =
             selectedColor ?? theme.colorScheme.primary;
 
-        final Color unselectedColor = isDark
-            ? const Color(0xFF8E8E93)
-            : const Color(0xFF6C6C70);
+        final Color unselectedColor =
+            isDark ? const Color(0xFF8E8E93) : const Color(0xFF6C6C70);
 
         Widget sidebarContent = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -246,9 +244,8 @@ class _AdaptiveSidebarItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color itemColor = isSelected ? selectedColor : unselectedColor;
-    final Widget iconWidget = isSelected
-        ? (item.selectedIcon ?? item.icon)
-        : item.icon;
+    final Widget iconWidget =
+        isSelected ? (item.selectedIcon ?? item.icon) : item.icon;
 
     final IconThemeData iconTheme = IconThemeData(
       color: itemColor,

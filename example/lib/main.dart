@@ -2,6 +2,8 @@ import 'package:adaptive_ui/adaptive_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'motion_showcase.dart';
+
 void main() {
   runApp(const AdaptiveShowcaseApp());
 }
@@ -163,6 +165,11 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           selectedIcon: Icon(Icons.tune),
           label: 'Tokens',
         ),
+        AdaptiveNavigationDestination(
+          icon: Icon(Icons.auto_awesome_outlined),
+          selectedIcon: Icon(Icons.auto_awesome),
+          label: 'Motion',
+        ),
       ],
       body: AdaptiveCubitListener<ShowcaseCubit, ShowcaseState>.adaptive(
         listenWhen: (prev, curr) =>
@@ -178,15 +185,13 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
             ),
           );
         },
-        child: IndexedStack(
-          index: _currentTabIndex,
-          children: [
-            _buildResponsiveDashboardTab(context, layout),
-            _buildGranularRebuildLabTab(context, layout),
-            _buildStateTransitionsTab(context, layout),
-            _buildConstrainedBoxTab(context, layout),
-          ],
-        ),
+        child: switch (_currentTabIndex) {
+          0 => _buildResponsiveDashboardTab(context, layout),
+          1 => _buildGranularRebuildLabTab(context, layout),
+          2 => _buildStateTransitionsTab(context, layout),
+          3 => _buildConstrainedBoxTab(context, layout),
+          _ => MotionShowcaseTab(layout: layout),
+        },
       ),
     );
   }

@@ -26,7 +26,8 @@ void main() {
       ),
     ];
 
-    testWidgets('renders in collapsed mode by default on medium viewport (768dp)',
+    testWidgets(
+        'renders in collapsed mode by default on medium viewport (768dp)',
         (tester) async {
       await tester.pumpAdaptive(
         size: const Size(768.0, 1024.0), // medium < large (1200)
@@ -37,8 +38,8 @@ void main() {
       );
 
       // In collapsed mode (72dp), label is not visible in Row layout
-      final AnimatedContainer container = tester
-          .widget(find.byKey(const Key('adaptive_sidebar_container')));
+      final AnimatedContainer container =
+          tester.widget(find.byKey(const Key('adaptive_sidebar_container')));
       expect(container.constraints?.maxWidth ?? 72.0, equals(72.0));
       expect(find.byIcon(Icons.dashboard), findsOneWidget);
     });
@@ -53,8 +54,8 @@ void main() {
         ),
       );
 
-      final AnimatedContainer container = tester
-          .widget(find.byKey(const Key('adaptive_sidebar_container')));
+      final AnimatedContainer container =
+          tester.widget(find.byKey(const Key('adaptive_sidebar_container')));
       expect(container.constraints?.maxWidth ?? 240.0, equals(240.0));
       // In expanded mode, labels and selectedIcon are visible
       expect(find.text('Dashboard'), findsOneWidget);
@@ -145,8 +146,8 @@ void main() {
         ),
       );
 
-      final AnimatedContainer container = tester
-          .widget(find.byKey(const Key('adaptive_sidebar_container')));
+      final AnimatedContainer container =
+          tester.widget(find.byKey(const Key('adaptive_sidebar_container')));
       // Clamped to 50.0 without throwing overflow assertion
       expect(container.constraints?.maxWidth, equals(50.0));
     });

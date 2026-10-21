@@ -236,7 +236,6 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
   AnimationController? _controller;
   Animation<double>? _curvedAnimation;
   Timer? _delayTimer;
-  double _measuredTextWidth = 0.0;
   bool _isOverflowing = false;
 
   @override
@@ -297,7 +296,6 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
   }
 
   void _setupMarquee(double textWidth, double containerWidth) {
-    _measuredTextWidth = textWidth;
     _isOverflowing = textWidth > containerWidth;
 
     if (!_isOverflowing) {
@@ -366,6 +364,7 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
           )..layout();
 
           final double textWidth = painter.width;
+          final double textHeight = painter.height;
           final double containerWidth =
               constraints.hasBoundedWidth ? constraints.maxWidth : textWidth;
 
@@ -391,42 +390,43 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
 
           return Semantics(
             label: widget.semanticsLabel ?? widget.text,
-            child: ClipRect(
-              child: AnimatedBuilder(
-                animation: _controller!,
-                builder: (BuildContext context, Widget? child) {
-                  final double offset = _controller!.value * totalDistance;
-                  return OverflowBox(
-                    alignment: Alignment.topLeft,
-                    minWidth: 0.0,
-                    maxWidth: double.infinity,
-                    minHeight: 0.0,
-                    maxHeight: constraints.hasBoundedHeight
-                        ? constraints.maxHeight
-                        : double.infinity,
-                    child: Transform.translate(
-                      offset: Offset(-offset, 0.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            widget.text,
-                            style: widget.style,
-                            maxLines: 1,
-                            softWrap: false,
-                          ),
-                          SizedBox(width: widget.marqueeSpacing),
-                          Text(
-                            widget.text,
-                            style: widget.style,
-                            maxLines: 1,
-                            softWrap: false,
-                          ),
-                        ],
+            child: SizedBox(
+              height: textHeight,
+              child: ClipRect(
+                child: AnimatedBuilder(
+                  animation: _controller!,
+                  builder: (BuildContext context, Widget? child) {
+                    final double offset = _controller!.value * totalDistance;
+                    return OverflowBox(
+                      alignment: Alignment.topLeft,
+                      minWidth: 0.0,
+                      maxWidth: double.infinity,
+                      minHeight: textHeight,
+                      maxHeight: textHeight,
+                      child: Transform.translate(
+                        offset: Offset(-offset, 0.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.text,
+                              style: widget.style,
+                              maxLines: 1,
+                              softWrap: false,
+                            ),
+                            SizedBox(width: widget.marqueeSpacing),
+                            Text(
+                              widget.text,
+                              style: widget.style,
+                              maxLines: 1,
+                              softWrap: false,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           );

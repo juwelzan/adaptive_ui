@@ -26,7 +26,8 @@ void main() {
       ),
     ];
 
-    testWidgets('renders all destinations and displays active destination state',
+    testWidgets(
+        'renders all destinations and displays active destination state',
         (tester) async {
       await tester.pumpAdaptive(
         size: const Size(390.0, 844.0),
@@ -134,7 +135,8 @@ void main() {
         (tester) async {
       await tester.pumpAdaptive(
         size: const Size(390.0, 844.0),
-        viewPadding: const EdgeInsets.only(bottom: 34.0), // iPhone home indicator
+        viewPadding:
+            const EdgeInsets.only(bottom: 34.0), // iPhone home indicator
         child: AdaptiveBottomNavigationBar(
           destinations: sampleDestinations,
           selectedIndex: 0,

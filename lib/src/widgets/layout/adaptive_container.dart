@@ -157,9 +157,10 @@ class _AdaptiveContainerState extends State<AdaptiveContainer> {
 
         final Decoration? effectiveDecoration = _resolveEffectiveDecoration();
         final bool reducedMotion = AdaptiveMotion.isReducedMotion(ctx);
-        final Duration effectiveDuration = (reducedMotion || !widget.animateChanges)
-            ? Duration.zero
-            : (widget.animationDuration ?? AdaptiveMotion.standard);
+        final Duration effectiveDuration =
+            (reducedMotion || !widget.animateChanges)
+                ? Duration.zero
+                : (widget.animationDuration ?? AdaptiveMotion.standard);
 
         Widget current = widget.child ?? const SizedBox.shrink();
 
@@ -212,7 +213,8 @@ class _AdaptiveContainerState extends State<AdaptiveContainer> {
                   : current,
             );
             if (widget.clipBehavior != Clip.none) {
-              current = ClipRect(clipBehavior: widget.clipBehavior, child: current);
+              current =
+                  ClipRect(clipBehavior: widget.clipBehavior, child: current);
             }
           }
 

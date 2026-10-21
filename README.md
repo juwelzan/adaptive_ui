@@ -302,14 +302,140 @@ if (layout.containerBreakpoint >= Breakpoint.medium) {
 
 ---
 
+## Motion, Navigation & Skeleton System (Phase 4)
+
+`adaptive_ui` includes a production-grade motion and loading system engineered with accessibility, restrained animations, and responsive navigation at its core.
+
+### 1. AdaptiveText with Restrained Motion & Auto-Scroll
+`AdaptiveText` automatically measures parent constraints using `TextPainter`. If long text overflows available width, horizontal marquee scrolling activates smoothly. Short text remains static.
+
+```dart
+// Auto-scrolling marquee when text overflows available width
+AdaptiveText(
+  'Department of Advanced Artificial Intelligence & Robotics Laboratory',
+  animation: AdaptiveTextAnimation.marquee,
+  scrollSpeed: 40.0,
+  pauseDuration: const Duration(milliseconds: 1200),
+  marqueeSpacing: 32.0,
+)
+
+// Restrained typewriter or entrance effect
+AdaptiveText(
+  'Building responsive Flutter user interfaces automatically.',
+  animation: AdaptiveTextAnimation.typewriter,
+)
+```
+
+Supported animations:
+- `AdaptiveTextAnimation.none` (default, zero ticker overhead)
+- `AdaptiveTextAnimation.marquee` (or `autoScroll: true`)
+- `AdaptiveTextAnimation.fadeIn`
+- `AdaptiveTextAnimation.slideIn`
+- `AdaptiveTextAnimation.typewriter`
+
+*All animations automatically collapse to static text when `MediaQuery.disableAnimations` or reduced-motion accessibility preference is active.*
+
+### 2. AdaptiveSidebar Navigation
+Composable responsive sidebar supporting both expanded mode (desktop) and compact rail mode (tablet) with smooth animated transitions.
+
+```dart
+AdaptiveSidebar(
+  selectedIndex: _currentIndex,
+  isExpanded: _isExpanded,
+  onDestinationSelected: (index) => setState(() => _currentIndex = index),
+  header: const SidebarHeader(),
+  items: const [
+    AdaptiveSidebarItem(
+      icon: Icon(Icons.dashboard_outlined),
+      selectedIcon: Icon(Icons.dashboard),
+      label: Text('Dashboard'),
+      badge: Text('3', style: TextStyle(color: Colors.white, fontSize: 10)),
+    ),
+    AdaptiveSidebarItem(
+      icon: Icon(Icons.settings_outlined),
+      selectedIcon: Icon(Icons.settings),
+      label: Text('Settings'),
+    ),
+  ],
+)
+```
+
+### 3. AdaptiveBottomNavigationBar
+Material 3-aligned compact bottom navigation bar with animated indicator pills, label visibility policies, safe area padding, and accessible touch targets ($\ge 48\text{dp}$).
+
+```dart
+AdaptiveBottomNavigationBar(
+  selectedIndex: _currentIndex,
+  onDestinationSelected: (index) => setState(() => _currentIndex = index),
+  labelBehavior: AdaptiveBottomNavLabelBehavior.onlyShowSelected,
+  destinations: const [
+    AdaptiveBottomNavigationDestination(
+      icon: Icon(Icons.home_outlined),
+      selectedIcon: Icon(Icons.home),
+      label: 'Home',
+    ),
+    AdaptiveBottomNavigationDestination(
+      icon: Icon(Icons.notifications_outlined),
+      selectedIcon: Icon(Icons.notifications),
+      label: 'Alerts',
+      badge: Text('9+', style: TextStyle(color: Colors.white, fontSize: 10)),
+    ),
+  ],
+)
+```
+
+### 4. AdaptiveContainer with Implicit Motion
+An animated container that smoothly transitions decoration, border radii, padding, margin, constraints, and opacity when properties change without requiring custom animation controllers.
+
+```dart
+AdaptiveContainer(
+  animateChanges: true,
+  animationDuration: const Duration(milliseconds: 350),
+  animationCurve: Curves.easeOutCubic,
+  width: AdaptiveValue.fixed(_expanded ? 340.0 : 220.0),
+  height: AdaptiveValue.fixed(_expanded ? 130.0 : 90.0),
+  padding: AdaptiveInsets.all(_expanded ? 20.0 : 12.0),
+  decoration: BoxDecoration(
+    color: _expanded ? Colors.deepPurple : Colors.indigo,
+    borderRadius: BorderRadius.circular(_expanded ? 24.0 : 8.0),
+  ),
+  hoverDecoration: BoxDecoration(
+    color: Colors.teal,
+    borderRadius: BorderRadius.circular(16.0),
+  ),
+  child: const YourContent(),
+)
+```
+
+### 5. AdaptiveShimmer & Skeleton Loading System
+GPU-accelerated linear gradient shimmer mask with cross-fade content switching and composable skeleton primitives.
+
+```dart
+// Conditional switcher between placeholder and content
+AdaptiveSkeleton(
+  loading: _isLoading,
+  placeholder: const ProfileCardSkeleton(),
+  child: ProfileCard(data: _profileData),
+)
+
+// Composable skeleton primitives
+AdaptiveSkeleton.circle(size: 48)
+AdaptiveSkeleton.box(width: double.infinity, height: 120, borderRadius: BorderRadius.circular(8))
+AdaptiveSkeletonText(lines: 3, lineHeight: 14, spacing: 8)
+AdaptiveSkeletonList(itemCount: 4, spacing: 12)
+```
+
+---
+
 ## Interactive Studio Example App
 
-The included example application (`example/lib/main.dart`) demonstrates real-world multi-platform usage with a 4-tab interactive studio:
+The included example application (`example/lib/main.dart`) demonstrates real-world multi-platform usage with a 5-tab interactive studio:
 
 1. **Responsive Dashboard**: Live metric cards, dynamic adaptive grids, auto-collapsing rows, and device orientation handling across phone, tablet, and desktop widths.
 2. **Rebuild Lab**: Visual counter widgets demonstrating that `AdaptiveBlocSelector` triggers leaf-level rebuilds only for targeted fields while sibling widgets and parent containers experience zero rebuilds.
 3. **UI State Machine**: Handles `Loading`, `Empty`, `Error` (with retry button), and `Populated` list states using responsive feedback widgets.
 4. **Constrained Layouts & Theming**: Demonstrates fallback layouts under extreme parent constraints (<260dp width) alongside nested, localized `AdaptiveTheme` token overrides.
+5. **Motion & Skeletons**: Interactive showcase demonstrating `AdaptiveText` marquees and typewriters, `AdaptiveContainer` animated property transitions, `AdaptiveSidebar` and `AdaptiveBottomNavigationBar` components, and `AdaptiveSkeleton` cross-fade switching.
 
 Run the example:
 

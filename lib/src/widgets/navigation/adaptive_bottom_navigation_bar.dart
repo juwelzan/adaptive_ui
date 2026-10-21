@@ -127,8 +127,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
             ? theme.colorScheme.primary.withValues(alpha: 0.24)
             : theme.colorScheme.primary.withValues(alpha: 0.14));
 
-    final Color effectiveSelected =
-        selectedColor ?? theme.colorScheme.primary;
+    final Color effectiveSelected = selectedColor ?? theme.colorScheme.primary;
 
     final Color effectiveUnselected = unselectedColor ??
         (isDark ? const Color(0xFF8E8E93) : const Color(0xFF6C6C70));
