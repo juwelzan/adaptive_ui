@@ -171,5 +171,26 @@ void main() {
       expect(find.text('Leading Widget'), findsOneWidget);
       expect(find.text('Trailing Widget'), findsOneWidget);
     });
+
+    testWidgets(
+        'prevents RenderFlex overflow when forced narrow while isExpanded is true',
+        (tester) async {
+      await tester.pumpAdaptive(
+        size: const Size(800.0, 600.0),
+        child: Center(
+          child: SizedBox(
+            width: 56.0, // leaves 32.0 width for item tile
+            child: AdaptiveSidebar(
+              isExpanded: true,
+              items: sampleItems,
+              selectedIndex: 1, // Analytics item with badge '5'
+            ),
+          ),
+        ),
+      );
+
+      // Verify it didn't throw RenderFlex overflow and rendered icon safely
+      expect(find.byIcon(Icons.analytics), findsOneWidget);
+    });
   });
 }

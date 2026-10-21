@@ -457,20 +457,28 @@ class _MotionShowcaseTabState extends State<MotionShowcaseTab> {
                     isExpanded: _sidebarExpanded,
                     onDestinationSelected: (idx) =>
                         setState(() => _sidebarIndex = idx),
-                    header: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.layers, color: Color(0xFF1E5BB0)),
-                          if (_sidebarExpanded) ...[
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Studio Rail',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
+                    header: ClipRect(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.layers, color: Color(0xFF1E5BB0)),
+                            if (_sidebarExpanded) ...[
+                              const SizedBox(width: 8),
+                              const Flexible(
+                                child: Text(
+                                  'Studio Rail',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14),
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                     items: const [

@@ -232,9 +232,9 @@ class _AnimatedAdaptiveText extends StatefulWidget {
 }
 
 class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   AnimationController? _controller;
-  Animation<double>? _curvedAnimation;
+  CurvedAnimation? _curvedAnimation;
   Timer? _delayTimer;
   bool _isOverflowing = false;
 
@@ -265,6 +265,8 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
   void _cleanupAnimation() {
     _delayTimer?.cancel();
     _delayTimer = null;
+    _curvedAnimation?.dispose();
+    _curvedAnimation = null;
     _controller?.dispose();
     _controller = null;
   }
@@ -282,23 +284,30 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
             ? Duration(milliseconds: (widget.text.length * 35).clamp(200, 1500))
             : AdaptiveMotion.medium);
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: effectiveDuration,
-    );
+    if (_controller == null) {
+      _controller = AnimationController(
+        vsync: this,
+        duration: effectiveDuration,
+      );
+    } else {
+      _controller!.duration = effectiveDuration;
+    }
 
+    _curvedAnimation?.dispose();
     _curvedAnimation = CurvedAnimation(
       parent: _controller!,
       curve: widget.animationCurve,
     );
 
-    _controller!.forward();
+    _controller!.forward(from: 0.0);
   }
 
   void _setupMarquee(double textWidth, double containerWidth) {
     _isOverflowing = textWidth > containerWidth;
 
     if (!_isOverflowing) {
+      _delayTimer?.cancel();
+      _delayTimer = null;
       _controller?.stop();
       _controller?.reset();
       return;
@@ -309,14 +318,23 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
         ((totalDistance / widget.scrollSpeed) * 1000).round();
     final Duration scrollDuration = Duration(milliseconds: durationMs);
 
-    if (_controller == null || _controller!.duration != scrollDuration) {
-      _controller?.dispose();
+    if (_controller == null) {
       _controller = AnimationController(
         vsync: this,
         duration: scrollDuration,
       );
-
-      _startMarqueeCycle();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _startMarqueeCycle();
+      });
+    } else if (_controller!.duration != scrollDuration) {
+      _controller!.duration = scrollDuration;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _startMarqueeCycle();
+      });
+    } else if (!_controller!.isAnimating && _delayTimer == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _startMarqueeCycle();
+      });
     }
   }
 

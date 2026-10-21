@@ -166,8 +166,8 @@ class AdaptiveSidebar extends StatelessWidget {
         Widget sidebarContent = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (header != null) header!,
-            if (leading != null) leading!,
+            if (header != null) ClipRect(child: header!),
+            if (leading != null) ClipRect(child: leading!),
             Expanded(
               child: SingleChildScrollView(
                 padding: padding,
@@ -190,12 +190,12 @@ class AdaptiveSidebar extends StatelessWidget {
                         unselectedColor: unselectedColor,
                       ),
                     ],
-                    if (trailing != null) trailing!,
+                    if (trailing != null) ClipRect(child: trailing!),
                   ],
                 ),
               ),
             ),
-            if (footer != null) footer!,
+            if (footer != null) ClipRect(child: footer!),
           ],
         );
 
@@ -255,48 +255,6 @@ class _AdaptiveSidebarItemTile extends StatelessWidget {
     final String? tooltipText = item.tooltip ??
         (!isExpanded && item.label is Text ? (item.label as Text).data : null);
 
-    Widget content;
-    if (isExpanded) {
-      content = Row(
-        children: [
-          IconTheme(data: iconTheme, child: iconWidget),
-          const SizedBox(width: 12.0),
-          Expanded(
-            child: DefaultTextStyle(
-              style: TextStyle(
-                color: itemColor,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 14.0,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              child: item.label,
-            ),
-          ),
-          if (item.badge != null) ...[
-            const SizedBox(width: 8.0),
-            item.badge!,
-          ],
-        ],
-      );
-    } else {
-      content = Center(
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            IconTheme(data: iconTheme, child: iconWidget),
-            if (item.badge != null)
-              Positioned(
-                top: -4.0,
-                right: -6.0,
-                child: item.badge!,
-              ),
-          ],
-        ),
-      );
-    }
-
     final bool hasOverlay = Overlay.maybeOf(context) != null;
 
     final Widget tile = Semantics(
@@ -315,7 +273,57 @@ class _AdaptiveSidebarItemTile extends StatelessWidget {
             color: isSelected ? indicatorColor : Colors.transparent,
             borderRadius: BorderRadius.circular(12.0),
           ),
-          child: content,
+          child: LayoutBuilder(
+            builder: (BuildContext ctx, BoxConstraints tileConstraints) {
+              final bool canFitExpanded =
+                  isExpanded && tileConstraints.maxWidth >= 80.0;
+
+              if (canFitExpanded) {
+                return ClipRect(
+                  child: Row(
+                    children: [
+                      IconTheme(data: iconTheme, child: iconWidget),
+                      const SizedBox(width: 12.0),
+                      Expanded(
+                        child: DefaultTextStyle(
+                          style: TextStyle(
+                            color: itemColor,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            fontSize: 14.0,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          child: item.label,
+                        ),
+                      ),
+                      if (item.badge != null) ...[
+                        const SizedBox(width: 8.0),
+                        item.badge!,
+                      ],
+                    ],
+                  ),
+                );
+              }
+
+              return Center(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    IconTheme(data: iconTheme, child: iconWidget),
+                    if (item.badge != null)
+                      Positioned(
+                        top: -4.0,
+                        right: -6.0,
+                        child: item.badge!,
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
