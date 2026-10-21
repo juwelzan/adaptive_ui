@@ -42,6 +42,10 @@ export 'src/widgets/layout/adaptive_sized_box.dart';
 export 'src/widgets/layout/adaptive_visibility.dart';
 export 'src/widgets/layout/adaptive_wrap.dart';
 
+// Navigation Widgets
+export 'src/widgets/navigation/adaptive_bottom_navigation_bar.dart';
+export 'src/widgets/navigation/adaptive_sidebar.dart';
+
 // Typography Widgets
 export 'src/widgets/typography/adaptive_auto_size_text.dart';
 export 'src/widgets/typography/adaptive_rich_text.dart';
@@ -65,10 +69,12 @@ export 'src/widgets/surfaces/adaptive_text_container.dart';
 export 'src/widgets/feedback/adaptive_empty_state.dart';
 export 'src/widgets/feedback/adaptive_error_view.dart';
 export 'src/widgets/feedback/adaptive_loading.dart';
+export 'src/widgets/feedback/adaptive_shimmer.dart';
 export 'src/widgets/feedback/adaptive_skeleton.dart';
 
 // Theme & Tokens
 export 'src/theme/adaptive_colors.dart';
+export 'src/theme/adaptive_motion.dart';
 export 'src/theme/adaptive_radii.dart';
 export 'src/theme/adaptive_sizing.dart';
 export 'src/theme/adaptive_spacing.dart';
