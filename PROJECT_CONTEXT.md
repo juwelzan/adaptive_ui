@@ -206,8 +206,8 @@ adaptive_ui/
 | Area | Test Suite File | Test Count | Status | Key Verifications |
 | :--- | :--- | :--- | :--- | :--- |
 | **Motion Tokens & Helpers** | `adaptive_text_animation_test.dart` | 8 | Pass | Reduced-motion resolution, duration collapsing, standard curves. |
-| **AdaptiveText Motion** | `adaptive_text_animation_test.dart` | 8 | Pass | Static short text, true constraint overflow marquee, typewriter, fadeIn, slideIn, controller disposal, reduced motion bypass. |
-| **AdaptiveSidebar** | `adaptive_sidebar_test.dart` | 7 | Pass | Expanded (240dp) vs collapsed (72dp) modes, selection callbacks, long scrollable lists, auto-expand breakpoint, badges, safe overlay tooltips. |
+| **AdaptiveText Motion** | `adaptive_text_animation_test.dart`, `adaptive_text_test.dart` | 12 | Pass | Static short text, true constraint overflow marquee, typewriter, fadeIn, slideIn, controller lifecycle & TickerProviderStateMixin safety, reduced motion bypass. |
+| **AdaptiveSidebar** | `adaptive_sidebar_test.dart` | 8 | Pass | Expanded (240dp) vs collapsed (72dp) modes, narrow constraint resilience (LayoutBuilder width guard against RenderFlex overflow), selection callbacks, long scrollable lists, auto-expand breakpoint, badges, safe overlay tooltips. |
 | **AdaptiveBottomNavigationBar** | `adaptive_bottom_navigation_bar_test.dart` | 6 | Pass | Destination rendering, selection tap callback, label visibility modes (`alwaysShow`, `onlyShowSelected`, `neverShow`), touch target $\ge 48\text{dp}$, safe area padding. |
 | **AdaptiveContainer Motion** | `adaptive_container_animation_test.dart` | 4 | Pass | Animated property transitions (decoration, radii, padding, opacity), state preservation of stateful children, tap/hover callbacks, reduced-motion bypass. |
 | **AdaptiveShimmer & Skeletons** | `adaptive_shimmer_skeleton_test.dart` | 6 | Pass | GPU gradient sweep, conditional `AdaptiveSkeleton` switcher toggles, `AdaptiveSkeletonText` multi-line layout, `AdaptiveSkeletonList` item count, reduced-motion handling. |
@@ -220,9 +220,9 @@ adaptive_ui/
 - **Static Analysis**: `flutter analyze .` (package) passing with **0 issues**.
 - **Example Analysis**: `flutter analyze .` (example) passing with **0 issues**.
 - **Code Formatting**: `dart format .` passing 100% cleanly across all files.
-- **Automated Tests**: **146 tests passing** across package and example suites:
-  - Package Tests: **137 tests passing** (up from 106).
-  - Example App Tests: **9 tests passing** (up from 8).
+- **Automated Tests**: **149 tests passing** across package and example suites:
+  - Package Tests: **140 tests passing** (up from 137).
+  - Example App Tests: **9 tests passing**.
 
 ---
 
