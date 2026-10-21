@@ -1,6 +1,6 @@
 name: adaptive_ui
 description: An automatic-first, fully customizable responsive UI framework and widget system for Flutter applications.
-version: 0.1.0
+version: 0.2.0
 homepage: https://github.com/adaptive_ui/adaptive_ui
 repository: https://github.com/adaptive_ui/adaptive_ui
 issue_tracker: https://github.com/adaptive_ui/adaptive_ui/issues

@@ -80,3 +80,50 @@ testWidgets('Button provides >= 48dp height on mobile', (tester) async {
   expect(size.height, greaterThanOrEqualTo(48.0));
 });
 ```
+
+### 5. Testing BLoC/Cubit Lifecycle & Rebuild Counts
+Use rebuild tracking wrappers and equality checks to assert zero-rebuild isolation:
+
+```dart
+testWidgets('AdaptiveBlocSelector triggers rebuild ONLY for targeted field', (tester) async {
+  final cubit = DashboardCubit();
+  int nameRebuilds = 0;
+  int countRebuilds = 0;
+
+  await tester.pumpWidget(
+    MaterialApp(
+      home: BlocProvider.value(
+        value: cubit,
+        child: Column(
+          children: [
+            AdaptiveBlocSelector<DashboardCubit, DashboardState, String>(
+              selector: (s) => s.name,
+              builder: (ctx, name) {
+                nameRebuilds++;
+                return Text('Name: $name');
+              },
+            ),
+            AdaptiveBlocSelector<DashboardCubit, DashboardState, int>(
+              selector: (s) => s.count,
+              builder: (ctx, count) {
+                countRebuilds++;
+                return Text('Count: $count');
+              },
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  expect(nameRebuilds, equals(1));
+  expect(countRebuilds, equals(1));
+
+  // Update only count: nameRebuilds MUST remain 1
+  cubit.incrementCount();
+  await tester.pump();
+
+  expect(nameRebuilds, equals(1));
+  expect(countRebuilds, equals(2));
+});
+```

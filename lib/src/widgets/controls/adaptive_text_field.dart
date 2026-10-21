@@ -13,6 +13,7 @@ class AdaptiveTextField extends StatelessWidget {
     this.decoration,
     this.hintText,
     this.labelText,
+    this.prefixIcon,
     this.keyboardType,
     this.obscureText = false,
     this.onChanged,
@@ -26,6 +27,7 @@ class AdaptiveTextField extends StatelessWidget {
   final InputDecoration? decoration;
   final String? hintText;
   final String? labelText;
+  final Widget? prefixIcon;
   final TextInputType? keyboardType;
   final bool obscureText;
   final ValueChanged<String>? onChanged;
@@ -45,6 +47,7 @@ class AdaptiveTextField extends StatelessWidget {
                 InputDecoration(
                   hintText: hintText,
                   labelText: labelText,
+                  prefixIcon: prefixIcon,
                   filled: true,
                   fillColor: theme.colors.surfaceVariant.withValues(alpha: 0.4),
                   border: OutlineInputBorder(

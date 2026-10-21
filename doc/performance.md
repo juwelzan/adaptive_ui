@@ -25,5 +25,11 @@ AdaptiveGrid.builder(
 )
 ```
 
-### 4. Zero External Dependencies
-`adaptive_ui` has zero third-party dependencies, guaranteeing minimal binary size overhead and instantaneous startup times.
+### 4. Selective State Subscriptions & Granular Rebuilds
+State emissions must not cause full-screen redraws or recompute parent layout constraints. Using `AdaptiveBlocSelector` at the leaf level ensures that:
+- Rebuilds occur only when the selected state slice changes value (`!=`).
+- Sibling widgets and parent containers experience zero rebuilds.
+- Continuous layout animations or input focus are preserved without interruption.
+
+### 5. Minimal, Focused Dependencies
+`adaptive_ui` relies only on the standard `flutter_bloc` package for provider and state-management integration and the lightweight `nested` package for efficient multi-provider composition, guaranteeing minimal binary size overhead and fast startup times.

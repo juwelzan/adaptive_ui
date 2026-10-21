@@ -1,7 +1,7 @@
 # Adaptive UI
 
 [![pub package](https://img.shields.io/badge/pub-v0.2.0-blue.svg)](https://pub.dev/packages/adaptive_ui)
-[![License](https://img.shields.io/badge/license-Custom-green.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/adaptive_ui/adaptive_ui/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
 
 An **automatic-first**, **fully customizable** responsive UI framework and widget system for Flutter applications, featuring **native BLoC/Cubit integration** and **granular rebuild optimization**.
@@ -121,10 +121,10 @@ class StudentSummary extends AdaptiveStatelessWidget {
 ## Core Components
 
 ### 1. Granular Reactive Widgets
-- **`AdaptiveBlocSelector<B, S, T>`**: Subscribes to a slice of state and rebuilds strictly when that slice changes.
-- **`AdaptiveBlocBuilder<B, S>`**: Rebuilds widget on state changes with optional `buildWhen`.
-- **`AdaptiveBlocConsumer<B, S>`**: Combines reactive listener and builder.
-- **`AdaptiveBlocListener<B, S>`**: Executes side effects without triggering UI rebuilds.
+- **`AdaptiveBlocSelector<B, S, T>` / `AdaptiveCubitSelector<C, S, T>`**: Subscribes to a slice of state and rebuilds strictly when that slice changes (verified by `==` equality).
+- **`AdaptiveBlocBuilder<B, S>` / `AdaptiveCubitBuilder<C, S>`**: Rebuilds widget on state changes with optional `buildWhen` and access to ambient `AdaptiveLayoutData`.
+- **`AdaptiveBlocConsumer<B, S>` / `AdaptiveCubitConsumer<C, S>`**: Combines reactive listener and builder.
+- **`AdaptiveBlocListener<B, S>` / `AdaptiveCubitListener<C, S>`**: Executes side effects without triggering UI rebuilds.
 
 ### 2. Adaptive Typography
 Responsive font scaling that strictly respects system accessibility settings:
@@ -237,17 +237,35 @@ AdaptiveDebugOverlay(
 
 ---
 
+## Interactive Studio Example App
+
+The included example application (`example/lib/main.dart`) demonstrates real-world multi-platform usage with a 4-tab interactive studio:
+
+1. **Responsive Dashboard**: Live metric cards, dynamic adaptive grids, auto-collapsing rows, and device orientation handling across phone, tablet, and desktop widths.
+2. **Rebuild Lab**: Visual counter widgets demonstrating that `AdaptiveBlocSelector` triggers leaf-level rebuilds only for targeted fields while sibling widgets and parent containers experience zero rebuilds.
+3. **UI State Machine**: Handles `Loading`, `Empty`, `Error` (with retry button), and `Populated` list states using responsive feedback widgets.
+4. **Constrained Layouts & Theming**: Demonstrates fallback layouts under extreme parent constraints (<260dp width) alongside nested, localized `AdaptiveTheme` token overrides.
+
+Run the example:
+
+```bash
+cd example
+flutter run
+```
+
+---
+
 ## Documentation
 
-Detailed architectural notes and best practices are available in `docs/`:
+Detailed architectural notes and best practices are available in `doc/`:
 
-- [Architecture Overview](docs/architecture.md)
-- [Responsive Rules & Guidelines](docs/responsive_rules.md)
-- [Customization API](docs/customization.md)
-- [Typography & Accessibility](docs/typography.md)
-- [Testing Multi-Viewport Layouts](docs/testing.md)
-- [Performance & Best Practices](docs/performance.md)
-- [Implementation Roadmap](docs/roadmap.md)
+- [Architecture Overview](doc/architecture.md)
+- [Responsive Rules & Guidelines](doc/responsive_rules.md)
+- [Customization API](doc/customization.md)
+- [Typography & Accessibility](doc/typography.md)
+- [Testing Multi-Viewport Layouts](doc/testing.md)
+- [Performance & Best Practices](doc/performance.md)
+- [Implementation Roadmap](doc/roadmap.md)
 
 ---
 
@@ -257,4 +275,4 @@ Contributions, issues, and feature requests are welcome! See [CONTRIBUTING.md](C
 
 ## License
 
-See [LICENSE](LICENSE) placeholder for license details.
+Distributed under the [MIT License](LICENSE).
