@@ -80,7 +80,10 @@ class AdaptiveRow extends StatelessWidget {
             mainAxisSize: mainAxisSize,
             mainAxisAlignment: mainAxisAlignment,
             crossAxisAlignment: collapsedCrossAxisAlignment,
-            children: spacedChildren,
+            children: spacedChildren.map((Widget w) {
+              if (w is Expanded) return w.child;
+              return w;
+            }).toList(),
           );
         }
 

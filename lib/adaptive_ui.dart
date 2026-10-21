@@ -34,6 +34,7 @@ export 'src/widgets/layout/adaptive_grid.dart';
 export 'src/widgets/layout/adaptive_padding.dart';
 export 'src/widgets/layout/adaptive_row.dart';
 export 'src/widgets/layout/adaptive_safe_area.dart';
+export 'src/widgets/layout/adaptive_scaffold.dart';
 export 'src/widgets/layout/adaptive_scroll_view.dart';
 export 'src/widgets/layout/adaptive_sized_box.dart';
 export 'src/widgets/layout/adaptive_visibility.dart';
@@ -62,6 +63,7 @@ export 'src/widgets/surfaces/adaptive_text_container.dart';
 export 'src/widgets/feedback/adaptive_empty_state.dart';
 export 'src/widgets/feedback/adaptive_error_view.dart';
 export 'src/widgets/feedback/adaptive_loading.dart';
+export 'src/widgets/feedback/adaptive_skeleton.dart';
 
 // Theme & Tokens
 export 'src/theme/adaptive_colors.dart';

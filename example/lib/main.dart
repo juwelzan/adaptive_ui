@@ -66,13 +66,18 @@ class ShowcaseCubit extends Cubit<ShowcaseState> {
 // ---------------------------------------------------------------------------
 
 class AdaptiveShowcaseApp extends StatelessWidget {
-  const AdaptiveShowcaseApp({super.key});
+  const AdaptiveShowcaseApp({
+    super.key,
+    this.enableDiagnostics = false,
+  });
+
+  final bool enableDiagnostics;
 
   @override
   Widget build(BuildContext context) {
     return AdaptiveApp(
-      config: const AdaptiveConfig(
-        enableDiagnostics: true,
+      config: AdaptiveConfig(
+        enableDiagnostics: enableDiagnostics,
         designBaseWidth: 390.0,
       ),
       child: MaterialApp(
@@ -119,7 +124,9 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
   Widget buildAdaptive(BuildContext context, AdaptiveLayoutData layout) {
     final cubit = context.read<ShowcaseCubit>();
 
-    return Scaffold(
+    return AdaptiveScaffold(
+      selectedIndex: _currentTabIndex,
+      onDestinationSelected: (idx) => setState(() => _currentTabIndex = idx),
       appBar: AppBar(
         title: AdaptiveText(
           'Adaptive UI Studio (${layout.containerBreakpoint.name.toUpperCase()})',
@@ -135,6 +142,28 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           ),
         ],
       ),
+      destinations: const [
+        AdaptiveNavigationDestination(
+          icon: Icon(Icons.dashboard_outlined),
+          selectedIcon: Icon(Icons.dashboard),
+          label: 'Dashboard',
+        ),
+        AdaptiveNavigationDestination(
+          icon: Icon(Icons.bolt_outlined),
+          selectedIcon: Icon(Icons.bolt),
+          label: 'Rebuild Lab',
+        ),
+        AdaptiveNavigationDestination(
+          icon: Icon(Icons.swap_horiz_outlined),
+          selectedIcon: Icon(Icons.swap_horiz),
+          label: 'States',
+        ),
+        AdaptiveNavigationDestination(
+          icon: Icon(Icons.tune_outlined),
+          selectedIcon: Icon(Icons.tune),
+          label: 'Tokens',
+        ),
+      ],
       body: IndexedStack(
         index: _currentTabIndex,
         children: [
@@ -142,32 +171,6 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           _buildGranularRebuildLabTab(context, layout),
           _buildStateTransitionsTab(context, layout),
           _buildConstrainedBoxTab(context, layout),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentTabIndex,
-        onDestinationSelected: (idx) => setState(() => _currentTabIndex = idx),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bolt_outlined),
-            selectedIcon: Icon(Icons.bolt),
-            label: 'Rebuild Lab',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.swap_horiz_outlined),
-            selectedIcon: Icon(Icons.swap_horiz),
-            label: 'States',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.tune_outlined),
-            selectedIcon: Icon(Icons.tune),
-            label: 'Tokens',
-          ),
         ],
       ),
     );
@@ -337,7 +340,8 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Static Sibling Header:'),
+                    const Expanded(child: Text('Static Sibling Header:')),
+                    const SizedBox(width: 8.0),
                     Badge(
                       label: Text('$_headerRebuilds builds'),
                       backgroundColor: Colors.blueGrey,
@@ -358,7 +362,8 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Student Leaf: $count students'),
+                    Expanded(child: Text('Student Leaf: $count students')),
+                    const SizedBox(width: 8.0),
                     Badge(
                       label: Text('$_studentRebuilds builds'),
                       backgroundColor: Colors.green,
@@ -379,7 +384,10 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Notifications Leaf: $notifications unread'),
+                    Expanded(
+                      child: Text('Notifications Leaf: $notifications unread'),
+                    ),
+                    const SizedBox(width: 8.0),
                     Badge(
                       label: Text('$_notificationsRebuilds builds'),
                       backgroundColor: Colors.orange,
@@ -447,8 +455,30 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
             builder: (ctx, status) {
               switch (status) {
                 case TelemetryStatus.loading:
-                  return const AdaptiveLoading(
-                    message: 'Synchronizing adaptive database...',
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: 4,
+                    itemBuilder: (ctx, idx) => const AdaptiveCard(
+                      child: Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: Row(
+                          children: [
+                            AdaptiveSkeleton.circle(size: 44),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AdaptiveSkeleton.text(width: 140, height: 16),
+                                  SizedBox(height: 8),
+                                  AdaptiveSkeleton.text(width: 220, height: 12),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   );
                 case TelemetryStatus.empty:
                   return AdaptiveEmptyState(
