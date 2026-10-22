@@ -5,19 +5,26 @@ import '../../core/adaptive_breakpoints.dart';
 import '../../core/adaptive_layout_data.dart';
 import '../../theme/adaptive_motion.dart';
 import '../adaptive_builder.dart';
+import 'adaptive_bottom_navigation_bar.dart';
 import 'adaptive_sidebar_models.dart';
 import 'adaptive_sidebar_styles.dart';
 import 'adaptive_sidebar_tile.dart';
 
+export 'adaptive_bottom_navigation_bar.dart';
 export 'adaptive_dropdown.dart';
 export 'adaptive_sidebar_models.dart';
 export 'adaptive_sidebar_styles.dart';
 
-/// A modern, responsive, animated navigation sidebar supporting two primary models
-/// ([AdaptiveSidebarModel.classic] and [AdaptiveSidebarModel.floating]), three floating
-/// modes ([AdaptiveFloatingSidebarMode.elevated], [AdaptiveFloatingSidebarMode.inset],
-/// [AdaptiveFloatingSidebarMode.minimal]), animated hierarchical submenus, dropdown actions,
-/// and compact rail modes.
+/// A modern, unified responsive navigation system supporting two primary sidebar
+/// models ([AdaptiveSidebarModel.classic] and [AdaptiveSidebarModel.floating]),
+/// three floating modes ([AdaptiveFloatingSidebarMode.elevated],
+/// [AdaptiveFloatingSidebarMode.inset], and [AdaptiveFloatingSidebarMode.minimal]),
+/// and seamless automatic switching to a mobile bottom navigation bar on compact
+/// viewports.
+///
+/// Developers define navigation items once using [AdaptiveSidebarItem]. The same
+/// destination list drives both desktop/tablet sidebar presentation and mobile
+/// bottom navigation without duplicated state or configuration drift.
 class AdaptiveSidebar extends StatefulWidget {
   const AdaptiveSidebar({
     super.key,
@@ -54,15 +61,22 @@ class AdaptiveSidebar extends StatefulWidget {
     this.elevation,
     this.border,
     this.enableRailToggle = false,
+    this.child,
+    this.mobileBreakpoint = 600.0,
+    this.bottomNavigation = const AdaptiveBottomNavigationConfig(),
+    this.enableMobileBottomNavigation = true,
+    this.pageController,
+    this.pages,
+    this.pageBuilder,
   });
 
-  /// The navigation items displayed in this sidebar.
+  /// The unified navigation items displayed in this navigation system.
   final List<AdaptiveSidebarItem> items;
 
   /// Index of the currently selected destination.
   final int selectedIndex;
 
-  /// Callback invoked when a navigation destination is selected.
+  /// Primary callback invoked when a navigation destination is selected.
   final ValueChanged<int>? onItemSelected;
 
   /// Callback invoked when a navigation destination is selected.
@@ -159,6 +173,39 @@ class AdaptiveSidebar extends StatefulWidget {
   /// Whether to render an interactive collapse/expand toggle button.
   final bool enableRailToggle;
 
+  /// Optional page content body hosted by this navigation system.
+  ///
+  /// On wider viewports, [child] is displayed alongside the sidebar within a [Row].
+  /// On compact viewports (< [mobileBreakpoint]), [child] occupies the viewport with
+  /// the bottom navigation bar pinned at the bottom within a [Column].
+  final Widget? child;
+
+  /// Viewport width threshold in logical pixels below which navigation
+  /// automatically presents as a mobile bottom navigation bar.
+  /// Defaults to 600.0 dp (compact phone boundary).
+  final double mobileBreakpoint;
+
+  /// Dedicated configuration for mobile bottom navigation presentation.
+  final AdaptiveBottomNavigationConfig bottomNavigation;
+
+  /// Whether to automatically switch to a bottom navigation bar when viewport
+  /// width is below [mobileBreakpoint]. Defaults to `true`.
+  final bool enableMobileBottomNavigation;
+
+  /// Optional [PageController] synchronized bidirectionally with navigation selection.
+  ///
+  /// If provided, selecting destinations animates the controller, and user page swipes
+  /// update the selected destination index without recursive callback loops.
+  final PageController? pageController;
+
+  /// Optional list of pages rendered inside an internal [PageView] synchronized
+  /// with navigation selection.
+  final List<Widget>? pages;
+
+  /// Optional page builder rendered inside an internal [PageView] synchronized
+  /// with navigation selection.
+  final IndexedWidgetBuilder? pageBuilder;
+
   @override
   State<AdaptiveSidebar> createState() => _AdaptiveSidebarState();
 }
@@ -166,11 +213,19 @@ class AdaptiveSidebar extends StatefulWidget {
 class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
   final Set<int> _expandedSubmenus = <int>{};
   bool _internalExpanded = true;
+  PageController? _internalPageController;
+  bool _isInternalNavigating = false;
+  final GlobalKey _bodyKey = GlobalKey(debugLabel: 'adaptive_sidebar_body_key');
 
   @override
   void initState() {
     super.initState();
     _initSubmenuStates();
+    if (widget.pageController == null &&
+        (widget.pages != null || widget.pageBuilder != null)) {
+      _internalPageController =
+          PageController(initialPage: widget.selectedIndex);
+    }
   }
 
   @override
@@ -179,6 +234,40 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
     if (widget.items != oldWidget.items) {
       _initSubmenuStates();
     }
+    if (widget.selectedIndex != oldWidget.selectedIndex) {
+      final PageController? controller =
+          widget.pageController ?? _internalPageController;
+      if (controller != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          if (controller.hasClients) {
+            final int? currentPage = controller.page?.round();
+            if (currentPage != widget.selectedIndex) {
+              _isInternalNavigating = true;
+              controller.jumpToPage(widget.selectedIndex);
+              _isInternalNavigating = false;
+            }
+          }
+        });
+      }
+    }
+    if (widget.pageController != oldWidget.pageController) {
+      if (oldWidget.pageController == null && _internalPageController != null) {
+        _internalPageController?.dispose();
+        _internalPageController = null;
+      }
+      if (widget.pageController == null &&
+          (widget.pages != null || widget.pageBuilder != null)) {
+        _internalPageController =
+            PageController(initialPage: widget.selectedIndex);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _internalPageController?.dispose();
+    super.dispose();
   }
 
   void _initSubmenuStates() {
@@ -211,10 +300,114 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
     });
   }
 
+  void _onDestinationTapped(int index) {
+    widget._handleItemSelected(index);
+
+    final PageController? controller =
+        widget.pageController ?? _internalPageController;
+    if (controller != null && controller.hasClients) {
+      final int? currentPage = controller.page?.round();
+      if (currentPage != index) {
+        _isInternalNavigating = true;
+        controller
+            .animateToPage(
+          index,
+          duration:
+              widget.animationDuration ?? const Duration(milliseconds: 300),
+          curve: widget.animationCurve ?? Curves.easeInOut,
+        )
+            .then((_) {
+          _isInternalNavigating = false;
+        });
+      }
+    }
+  }
+
+  Widget? _buildBodyContent() {
+    if (widget.pages != null) {
+      final PageController controller =
+          widget.pageController ?? _internalPageController!;
+      return PageView(
+        controller: controller,
+        onPageChanged: (int page) {
+          if (!_isInternalNavigating) {
+            widget._handleItemSelected(page);
+          }
+        },
+        children: widget.pages!,
+      );
+    }
+    if (widget.pageBuilder != null) {
+      final PageController controller =
+          widget.pageController ?? _internalPageController!;
+      return PageView.builder(
+        controller: controller,
+        itemCount: widget.items.length,
+        onPageChanged: (int page) {
+          if (!_isInternalNavigating) {
+            widget._handleItemSelected(page);
+          }
+        },
+        itemBuilder: widget.pageBuilder!,
+      );
+    }
+    return widget.child;
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdaptiveBuilder(
       builder: (BuildContext ctx, AdaptiveLayoutData layout) {
+        final double availableWidth = layout.constraints.hasBoundedWidth
+            ? layout.constraints.maxWidth
+            : layout.screenSize.width;
+
+        final Widget? rawBody = _buildBodyContent();
+        final Widget? bodyWidget = rawBody != null
+            ? KeyedSubtree(key: _bodyKey, child: rawBody)
+            : null;
+
+        // Determine whether to present mobile bottom navigation:
+        // 1. Feature enabled
+        // 2. Available width < mobileBreakpoint
+        // 3. Either body is provided, or available width >= 120.0 dp (not a constrained rail slot)
+        final bool isCompact = availableWidth < widget.mobileBreakpoint;
+        final bool shouldShowBottomNav = widget.enableMobileBottomNavigation &&
+            isCompact &&
+            (bodyWidget != null || availableWidth >= 120.0);
+
+        if (shouldShowBottomNav) {
+          final int safeSelected = widget.items.isEmpty
+              ? 0
+              : widget.selectedIndex.clamp(0, widget.items.length - 1);
+
+          final Widget bottomNav = AdaptiveBottomNavigationBar(
+            items: widget.items,
+            selectedIndex: safeSelected,
+            onItemSelected: _onDestinationTapped,
+            config: widget.bottomNavigation,
+            backgroundColor: widget.backgroundColor,
+            selectedColor: widget.selectedColor,
+            indicatorColor: widget.indicatorColor,
+            animationDuration: widget.animationDuration,
+            animationCurve:
+                widget.animationCurve ?? AdaptiveMotion.emphasizedCurve,
+          );
+
+          if (bodyWidget != null) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: bodyWidget),
+                bottomNav,
+              ],
+            );
+          } else {
+            return bottomNav;
+          }
+        }
+
+        // Wider layout: Render Classic or Floating sidebar
         final bool reducedMotion = AdaptiveMotion.isReducedMotion(ctx);
 
         final AdaptiveSidebarStyleSpec styleSpec =
@@ -262,10 +455,15 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
         final List<Widget> renderedTiles = <Widget>[];
 
         for (int i = 0; i < widget.items.length; i++) {
+          final AdaptiveSidebarItem item = widget.items[i];
           final int itemIndex = runningIndex;
           runningIndex++;
 
-          final AdaptiveSidebarItem item = widget.items[i];
+          // Skip if hidden on desktop
+          if (!item.visibleOnDesktop) {
+            continue;
+          }
+
           final bool isSubmenuOpen = _expandedSubmenus.contains(i);
 
           // Check if any descendant of this item is selected
@@ -281,7 +479,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
 
           final bool isSelected = widget.selectedIndex == itemIndex;
 
-          if (i > 0 && styleSpec.itemSpacing > 0) {
+          if (renderedTiles.isNotEmpty && styleSpec.itemSpacing > 0) {
             renderedTiles.add(SizedBox(height: styleSpec.itemSpacing));
           }
 
@@ -296,16 +494,15 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
               isAncestorOfSelected: isAncestor,
               isExpandedSidebar: resolvedExpanded,
               isSubmenuExpanded: isSubmenuOpen,
-              onTap: item.enabled
-                  ? () => widget._handleItemSelected(itemIndex)
-                  : null,
+              onTap:
+                  item.enabled ? () => _onDestinationTapped(itemIndex) : null,
               onSubmenuToggle: () => _toggleSubmenu(i),
               styleSpec: styleSpec,
               submenuAnimation: widget.submenuAnimation,
               duration: duration,
               curve: styleSpec.animationCurve,
               indentation: styleSpec.submenuIndentation,
-              onDestinationSelected: widget._handleItemSelected,
+              onDestinationSelected: _onDestinationTapped,
               selectedIndex: widget.selectedIndex,
             ),
           );
@@ -402,11 +599,23 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
           );
         }
 
-        return Material(
+        final Widget sidebarWidget = Material(
           color: Colors.transparent,
           elevation: 0.0,
           child: surface,
         );
+
+        if (bodyWidget != null) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              sidebarWidget,
+              Expanded(child: bodyWidget),
+            ],
+          );
+        } else {
+          return sidebarWidget;
+        }
       },
     );
   }

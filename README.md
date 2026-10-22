@@ -335,8 +335,33 @@ Supported animations:
 
 *All animations automatically collapse to static text when `MediaQuery.disableAnimations` or reduced-motion accessibility preference is active.*
 
-### 2. AdaptiveSidebar Navigation System
-A modern, production-ready navigation system simplified into **two primary architectural models** (Classic and Floating) with **three distinct floating modes**, animated nested submenus, interactive dropdown popups, and responsive rail transitions.
+### 2. AdaptiveSidebar Unified Responsive Navigation System
+A unified, responsive navigation architecture that **automatically switches between a mobile bottom navigation bar on compact screens and a desktop/tablet sidebar on wider layouts** from a single navigation definition.
+
+#### Core Architectural Philosophy: One Navigation Definition
+Define destinations once using `AdaptiveSidebarItem`. The same destination list, selection state, and callbacks drive both:
+- **Compact Viewports (`< mobileBreakpoint`, default 600dp)**: Rendered as a constraint-resilient `AdaptiveBottomNavigationBar`.
+- **Wider Viewports (`>= mobileBreakpoint`)**: Rendered as a full-featured `AdaptiveSidebar` (Classic or Floating) with child content alongside it.
+
+```dart
+AdaptiveSidebar(
+  items: navigationItems,
+  selectedIndex: _selectedIndex,
+  onItemSelected: (index) => setState(() => _selectedIndex = index),
+  model: AdaptiveSidebarModel.floating,
+  floatingMode: AdaptiveFloatingSidebarMode.elevated,
+  mobileBreakpoint: 600.0,
+  bottomNavigation: const AdaptiveBottomNavigationConfig(
+    overflowPolicy: AdaptiveBottomNavOverflowPolicy.auto,
+    labelBehavior: AdaptiveBottomNavLabelBehavior.alwaysShow,
+    height: 70.0,
+  ),
+  child: PageView(
+    controller: _pageController,
+    children: _pages,
+  ),
+)
+```
 
 #### Primary Architecture Models (`AdaptiveSidebarModel`)
 - **`classic`**: Conventional, full-height navigation surface within its parent layout. Squared corners, zero outer margins, crisp right vertical boundary divider, and subtle active-item indicators. Ideal for Scaffolds, split views, and standard enterprise applications.
@@ -347,6 +372,16 @@ When using `AdaptiveSidebarModel.floating`:
 - **`elevated`** *(Default)*: Rounded outer container (16dp radius), soft elevation shadow (3dp), comfortable internal padding, and smooth active indicator pill.
 - **`inset`**: Soft rounded corners (12dp radius), restrained hairline border, zero elevation shadow, and inset surface tint for seamless surrounding layout framing.
 - **`minimal`**: Lightweight presentation with very subtle surface separation, minimal/zero shadow, compact padding, and crisp typography.
+
+#### Variable Destination Density & Overflow Policies
+Resilient layout across 1, 2, 5, 10, or more destinations with **zero `RenderFlex` overflow** under any screen constraint:
+- **`auto`**: Dynamically chooses fixed-width items when available space permits, or converts to a horizontally scrollable strip on narrow screens.
+- **`menu`**: Shows primary visible destinations within available space and places remaining destinations into an accessible "More" bottom sheet.
+- **`scroll`**: Horizontally scrollable destination bar preserving minimum touch targets ($\ge 48 \times 48\text{dp}$).
+
+#### PageView & State Preservation
+- **State Preservation**: Page bodies preserve internal scroll positions, text inputs, and component state when crossing breakpoints between `Column` (bottom bar) and `Row` (sidebar) via keyed subtrees.
+- **PageView Synchronization**: Direct integration with `PageController`, `pages`, or `pageBuilder` with bidirectional synchronization and recursion guards.
 
 #### Developer Customization (`AdaptiveSidebarStyleData`)
 Centralized, immutable style configuration supporting complete developer customization without parameter clutter:
@@ -365,6 +400,7 @@ AdaptiveSidebar(
     elevation: 2.0,
     itemSpacing: 8.0,
   ),
+  child: MainContentView(selectedIndex: selectedIndex),
 )
 ```
 
@@ -435,30 +471,20 @@ AdaptiveSidebar(
       label: Text('Settings'),
     ),
   ],
+  child: pageContent,
 )
 ```
 
 ### 3. AdaptiveBottomNavigationBar
-Material 3-aligned compact bottom navigation bar with animated indicator pills, label visibility policies, safe area padding, and accessible touch targets ($\ge 48\text{dp}$).
+Material 3-aligned compact bottom navigation bar with animated indicator pills, label visibility policies, safe area padding, overflow management (`auto`, `menu`, `scroll`), and accessible touch targets ($\ge 48\text{dp}$). Accepts either legacy `destinations` or unified `items: List<AdaptiveSidebarItem>`.
 
 ```dart
 AdaptiveBottomNavigationBar(
   selectedIndex: _currentIndex,
   onDestinationSelected: (index) => setState(() => _currentIndex = index),
   labelBehavior: AdaptiveBottomNavLabelBehavior.onlyShowSelected,
-  destinations: const [
-    AdaptiveBottomNavigationDestination(
-      icon: Icon(Icons.home_outlined),
-      selectedIcon: Icon(Icons.home),
-      label: 'Home',
-    ),
-    AdaptiveBottomNavigationDestination(
-      icon: Icon(Icons.notifications_outlined),
-      selectedIcon: Icon(Icons.notifications),
-      label: 'Alerts',
-      badge: Text('9+', style: TextStyle(color: Colors.white, fontSize: 10)),
-    ),
-  ],
+  overflowPolicy: AdaptiveBottomNavOverflowPolicy.auto,
+  items: sharedNavigationItems,
 )
 ```
 

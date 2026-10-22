@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 /// The two primary visual architecture models for [AdaptiveSidebar].
 enum AdaptiveSidebarModel {
@@ -363,10 +363,267 @@ class AdaptiveDropdownItem<T> {
         onTap = null;
 }
 
-/// Specification for a navigation item in [AdaptiveSidebar].
+/// Overflow presentation policy when bottom navigation destinations exceed available width.
+enum AdaptiveBottomNavOverflowPolicy {
+  /// Automatically selects the safest presentation based on available width,
+  /// item count, and label lengths:
+  /// - Fits comfortably (up to [AdaptiveBottomNavigationConfig.maxVisibleItems]): renders evenly.
+  /// - Exceeds capacity: presents primary destinations plus an accessible 'More' menu.
+  auto,
+
+  /// Displays primary destinations up to [AdaptiveBottomNavigationConfig.maxVisibleItems] - 1
+  /// and gathers remaining destinations into an accessible 'More' menu/sheet.
+  menu,
+
+  /// Horizontally scrolls through all destinations in a single-row scrollable bar.
+  scroll,
+}
+
+/// Label visibility behavior for mobile bottom navigation.
+enum AdaptiveBottomNavLabelBehavior {
+  /// Always display labels for all destinations.
+  alwaysShow,
+
+  /// Display label only for the currently selected destination.
+  onlyShowSelected,
+
+  /// Never display labels visually (labels remain available for accessibility/semantics).
+  neverShow,
+}
+
+/// Dedicated, immutable configuration object for the mobile bottom navigation bar
+/// within [AdaptiveSidebar].
+@immutable
+class AdaptiveBottomNavigationConfig {
+  const AdaptiveBottomNavigationConfig({
+    this.backgroundColor,
+    this.selectedColor,
+    this.unselectedColor,
+    this.selectedIconColor,
+    this.unselectedIconColor,
+    this.selectedLabelStyle,
+    this.unselectedLabelStyle,
+    this.indicatorColor,
+    this.indicatorShape,
+    this.indicatorSize,
+    this.height = 80.0,
+    this.padding,
+    this.itemSpacing,
+    this.border,
+    this.borderRadius,
+    this.elevation = 3.0,
+    this.shadowColor,
+    this.animationDuration,
+    this.animationCurve,
+    this.labelBehavior = AdaptiveBottomNavLabelBehavior.alwaysShow,
+    this.iconSize = 24.0,
+    this.useSafeArea = true,
+    this.overflowPolicy = AdaptiveBottomNavOverflowPolicy.auto,
+    this.maxVisibleItems = 5,
+    this.moreIcon = const Icon(Icons.more_horiz),
+    this.moreLabel = 'More',
+  });
+
+  /// Primary background color of the mobile navigation bar.
+  final Color? backgroundColor;
+
+  /// Text and icon accent color for selected destination.
+  final Color? selectedColor;
+
+  /// Text and icon color for unselected destinations.
+  final Color? unselectedColor;
+
+  /// Specific icon color override for the selected destination.
+  final Color? selectedIconColor;
+
+  /// Specific icon color override for unselected destinations.
+  final Color? unselectedIconColor;
+
+  /// Text style applied to the selected item label.
+  final TextStyle? selectedLabelStyle;
+
+  /// Text style applied to unselected item labels.
+  final TextStyle? unselectedLabelStyle;
+
+  /// Background color of the animated indicator pill behind the selected icon.
+  final Color? indicatorColor;
+
+  /// Shape of the active indicator.
+  final ShapeBorder? indicatorShape;
+
+  /// Size of the active indicator pill.
+  final Size? indicatorSize;
+
+  /// Height of the bottom navigation bar excluding safe-area insets. Defaults to 80.0 dp.
+  final double height;
+
+  /// Outer padding surrounding the destinations bar.
+  final EdgeInsetsGeometry? padding;
+
+  /// Spacing between consecutive destination items.
+  final double? itemSpacing;
+
+  /// Top or surrounding border of the navigation bar container.
+  final Border? border;
+
+  /// Border radius applied to the navigation bar container.
+  final BorderRadiusGeometry? borderRadius;
+
+  /// Surface elevation depth. Defaults to 3.0.
+  final double elevation;
+
+  /// Shadow color cast when [elevation] > 0.
+  final Color? shadowColor;
+
+  /// Duration for transition animations.
+  final Duration? animationDuration;
+
+  /// Easing curve for indicator animations.
+  final Curve? animationCurve;
+
+  /// Label visibility behavior. Defaults to [AdaptiveBottomNavLabelBehavior.alwaysShow].
+  final AdaptiveBottomNavLabelBehavior labelBehavior;
+
+  /// Base icon size in logical pixels. Defaults to 24.0 dp.
+  final double iconSize;
+
+  /// Whether to pad for system safe-area insets automatically. Defaults to `true`.
+  final bool useSafeArea;
+
+  /// Policy for handling navigation items that exceed available width.
+  final AdaptiveBottomNavOverflowPolicy overflowPolicy;
+
+  /// Maximum number of primary items visible when [overflowPolicy] is [AdaptiveBottomNavOverflowPolicy.menu] or [AdaptiveBottomNavOverflowPolicy.auto].
+  final int maxVisibleItems;
+
+  /// Icon widget representing the "More" item when overflow occurs.
+  final Widget moreIcon;
+
+  /// Label text for the "More" item when overflow occurs.
+  final String moreLabel;
+
+  /// Creates a copy of this configuration with given properties replaced.
+  AdaptiveBottomNavigationConfig copyWith({
+    Color? backgroundColor,
+    Color? selectedColor,
+    Color? unselectedColor,
+    Color? selectedIconColor,
+    Color? unselectedIconColor,
+    TextStyle? selectedLabelStyle,
+    TextStyle? unselectedLabelStyle,
+    Color? indicatorColor,
+    ShapeBorder? indicatorShape,
+    Size? indicatorSize,
+    double? height,
+    EdgeInsetsGeometry? padding,
+    double? itemSpacing,
+    Border? border,
+    BorderRadiusGeometry? borderRadius,
+    double? elevation,
+    Color? shadowColor,
+    Duration? animationDuration,
+    Curve? animationCurve,
+    AdaptiveBottomNavLabelBehavior? labelBehavior,
+    double? iconSize,
+    bool? useSafeArea,
+    AdaptiveBottomNavOverflowPolicy? overflowPolicy,
+    int? maxVisibleItems,
+    Widget? moreIcon,
+    String? moreLabel,
+  }) {
+    return AdaptiveBottomNavigationConfig(
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      selectedColor: selectedColor ?? this.selectedColor,
+      unselectedColor: unselectedColor ?? this.unselectedColor,
+      selectedIconColor: selectedIconColor ?? this.selectedIconColor,
+      unselectedIconColor: unselectedIconColor ?? this.unselectedIconColor,
+      selectedLabelStyle: selectedLabelStyle ?? this.selectedLabelStyle,
+      unselectedLabelStyle: unselectedLabelStyle ?? this.unselectedLabelStyle,
+      indicatorColor: indicatorColor ?? this.indicatorColor,
+      indicatorShape: indicatorShape ?? this.indicatorShape,
+      indicatorSize: indicatorSize ?? this.indicatorSize,
+      height: height ?? this.height,
+      padding: padding ?? this.padding,
+      itemSpacing: itemSpacing ?? this.itemSpacing,
+      border: border ?? this.border,
+      borderRadius: borderRadius ?? this.borderRadius,
+      elevation: elevation ?? this.elevation,
+      shadowColor: shadowColor ?? this.shadowColor,
+      animationDuration: animationDuration ?? this.animationDuration,
+      animationCurve: animationCurve ?? this.animationCurve,
+      labelBehavior: labelBehavior ?? this.labelBehavior,
+      iconSize: iconSize ?? this.iconSize,
+      useSafeArea: useSafeArea ?? this.useSafeArea,
+      overflowPolicy: overflowPolicy ?? this.overflowPolicy,
+      maxVisibleItems: maxVisibleItems ?? this.maxVisibleItems,
+      moreIcon: moreIcon ?? this.moreIcon,
+      moreLabel: moreLabel ?? this.moreLabel,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdaptiveBottomNavigationConfig &&
+          runtimeType == other.runtimeType &&
+          backgroundColor == other.backgroundColor &&
+          selectedColor == other.selectedColor &&
+          unselectedColor == other.unselectedColor &&
+          selectedIconColor == other.selectedIconColor &&
+          unselectedIconColor == other.unselectedIconColor &&
+          selectedLabelStyle == other.selectedLabelStyle &&
+          unselectedLabelStyle == other.unselectedLabelStyle &&
+          indicatorColor == other.indicatorColor &&
+          indicatorShape == other.indicatorShape &&
+          indicatorSize == other.indicatorSize &&
+          height == other.height &&
+          padding == other.padding &&
+          itemSpacing == other.itemSpacing &&
+          border == other.border &&
+          borderRadius == other.borderRadius &&
+          elevation == other.elevation &&
+          shadowColor == other.shadowColor &&
+          animationDuration == other.animationDuration &&
+          animationCurve == other.animationCurve &&
+          labelBehavior == other.labelBehavior &&
+          iconSize == other.iconSize &&
+          useSafeArea == other.useSafeArea &&
+          overflowPolicy == other.overflowPolicy &&
+          maxVisibleItems == other.maxVisibleItems &&
+          moreLabel == other.moreLabel;
+
+  @override
+  int get hashCode => Object.hash(
+        backgroundColor,
+        selectedColor,
+        unselectedColor,
+        selectedIconColor,
+        selectedIconColor,
+        selectedLabelStyle,
+        unselectedLabelStyle,
+        indicatorColor,
+        indicatorShape,
+        indicatorSize,
+        height,
+        padding,
+        itemSpacing,
+        border,
+        borderRadius,
+        elevation,
+        shadowColor,
+        animationDuration,
+        animationCurve,
+        labelBehavior,
+      );
+}
+
+/// Specification for a unified navigation destination item in [AdaptiveSidebar].
 ///
-/// Supports nested submenus via [children] and contextual dropdown menus
-/// via [dropdownItems].
+/// Functions as the single source of truth for both mobile bottom navigation
+/// and desktop/tablet sidebar modes. Supports nested submenus via [children],
+/// contextual dropdown menus via [dropdownItems], custom item builders via
+/// [customBuilder], and per-presentation visibility overrides via [visibleOnMobile]
+/// and [visibleOnDesktop].
 @immutable
 class AdaptiveSidebarItem {
   const AdaptiveSidebarItem({
@@ -382,6 +639,9 @@ class AdaptiveSidebarItem {
     this.initiallyExpanded = false,
     this.dropdownItems,
     this.onDropdownSelected,
+    this.visibleOnMobile = true,
+    this.visibleOnDesktop = true,
+    this.customBuilder,
   });
 
   /// Unique identifier for this item, used for hierarchy tracking and selection.
@@ -421,9 +681,28 @@ class AdaptiveSidebarItem {
   /// Callback invoked when an item from [dropdownItems] is selected.
   final ValueChanged<dynamic>? onDropdownSelected;
 
+  /// Whether this destination should appear in mobile bottom navigation presentation.
+  /// Defaults to `true`.
+  final bool visibleOnMobile;
+
+  /// Whether this destination should appear in wider desktop/tablet sidebar presentation.
+  /// Defaults to `true`.
+  final bool visibleOnDesktop;
+
+  /// Optional custom widget builder for this destination item.
+  final Widget Function(BuildContext context, bool isSelected)? customBuilder;
+
   /// Whether this navigation item has nested child items.
   bool get hasChildren => children.isNotEmpty;
 
   /// Whether this navigation item has dropdown items.
   bool get hasDropdown => dropdownItems != null && dropdownItems!.isNotEmpty;
+
+  /// Extracted text string from [label] if it is a [Text] widget, or fallback to [tooltip] or [id].
+  String get labelText {
+    if (label is Text) {
+      return (label as Text).data ?? '';
+    }
+    return tooltip ?? id ?? '';
+  }
 }
