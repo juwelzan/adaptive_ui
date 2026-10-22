@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/adaptive_engine.dart';
 import '../../core/adaptive_layout_data.dart';
-import '../../core/adaptive_scope.dart';
 import '../../core/adaptive_value.dart';
+import '../../theme/adaptive_theme.dart';
 import '../../theme/adaptive_theme_data.dart';
 import '../adaptive_builder.dart';
 
@@ -34,7 +34,7 @@ class AdaptiveSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     return AdaptiveBuilder(
       builder: (BuildContext ctx, AdaptiveLayoutData layout) {
-        final AdaptiveThemeData theme = AdaptiveScope.themeOf(ctx);
+        final AdaptiveThemeData theme = AdaptiveTheme.of(ctx);
         final EdgeInsets resolvedPadding =
             AdaptiveEngine.resolvePadding(layout, padding);
         final EdgeInsets resolvedMargin =

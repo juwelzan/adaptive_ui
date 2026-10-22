@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/adaptive_motion.dart';
+import '../../theme/adaptive_theme.dart';
+import '../../theme/adaptive_theme_data.dart';
 
 /// A gradient-based shimmer effect widget that sweeps across its [child].
 ///
@@ -90,13 +92,15 @@ class _AdaptiveShimmerState extends State<AdaptiveShimmer>
       return widget.child;
     }
 
-    final ThemeData theme = Theme.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
+    final AdaptiveThemeData theme = AdaptiveTheme.of(context);
+    final bool isDark = theme.isDark;
 
     final Color base = widget.baseColor ??
+        theme.shimmerTheme.baseColor ??
         (isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA));
 
     final Color highlight = widget.highlightColor ??
+        theme.shimmerTheme.highlightColor ??
         (isDark ? const Color(0xFF3A3A3C) : const Color(0xFFF2F2F7));
 
     return AnimatedBuilder(

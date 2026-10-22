@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/adaptive_engine.dart';
 import '../../core/adaptive_layout_data.dart';
-import '../../core/adaptive_scope.dart';
 import '../../core/adaptive_value.dart';
+import '../../theme/adaptive_theme.dart';
 import '../../theme/adaptive_theme_data.dart';
 import '../adaptive_builder.dart';
 
@@ -55,13 +55,24 @@ class AdaptiveCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AdaptiveBuilder(
       builder: (BuildContext ctx, AdaptiveLayoutData layout) {
-        final AdaptiveThemeData theme = AdaptiveScope.themeOf(ctx);
+        final AdaptiveThemeData theme = AdaptiveTheme.of(ctx);
         final EdgeInsets resolvedPadding =
-            AdaptiveEngine.resolvePadding(layout, padding);
+            theme.cardTheme.padding is EdgeInsets &&
+                    padding == const AdaptiveInsets.auto()
+                ? theme.cardTheme.padding as EdgeInsets
+                : AdaptiveEngine.resolvePadding(layout, padding);
         final EdgeInsets resolvedMargin =
-            AdaptiveEngine.resolvePadding(layout, margin);
-        final BorderRadius resolvedRadius =
-            borderRadius ?? theme.radii.toBorderRadius(theme.radii.lg);
+            theme.cardTheme.margin is EdgeInsets && margin == null
+                ? theme.cardTheme.margin as EdgeInsets
+                : AdaptiveEngine.resolvePadding(layout, margin);
+        final BorderRadius resolvedRadius = borderRadius ??
+            theme.cardTheme.borderRadius ??
+            theme.radii.toBorderRadius(theme.radii.lg);
+        final Color effectiveColor =
+            color ?? theme.cardTheme.color ?? theme.colors.surface;
+        final double effectiveElevation = elevation != 1.0
+            ? elevation
+            : (theme.cardTheme.elevation ?? elevation);
 
         EdgeInsets safePadding = resolvedPadding;
         if (layout.constraints.hasBoundedWidth &&
@@ -120,8 +131,8 @@ class AdaptiveCard extends StatelessWidget {
         }
 
         Widget card = Material(
-          color: color ?? theme.colors.surface,
-          elevation: elevation,
+          color: effectiveColor,
+          elevation: effectiveElevation,
           borderRadius: resolvedRadius,
           clipBehavior: Clip.antiAlias,
           child: content,

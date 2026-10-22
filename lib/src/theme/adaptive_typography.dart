@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 /// Typography scale tokens providing baseline text styling.
 @immutable
@@ -15,7 +15,10 @@ class AdaptiveTypography {
     required this.bodySmall,
     required this.labelLarge,
     required this.labelMedium,
-  });
+    TextStyle? caption,
+  }) : caption = caption ??
+            const TextStyle(
+                fontSize: 11.0, fontWeight: FontWeight.normal, height: 1.4);
 
   /// Standard Material-aligned typography scale.
   static const AdaptiveTypography standard = AdaptiveTypography(
@@ -41,7 +44,28 @@ class AdaptiveTypography {
         TextStyle(fontSize: 14.0, fontWeight: FontWeight.w600, height: 1.3),
     labelMedium:
         TextStyle(fontSize: 12.0, fontWeight: FontWeight.w500, height: 1.3),
+    caption:
+        TextStyle(fontSize: 11.0, fontWeight: FontWeight.normal, height: 1.4),
   );
+
+  /// Constructs an [AdaptiveTypography] instance from Flutter's [TextTheme].
+  factory AdaptiveTypography.fromTextTheme(TextTheme textTheme) {
+    const fallback = AdaptiveTypography.standard;
+    return AdaptiveTypography(
+      displayLarge: textTheme.displayLarge ?? fallback.displayLarge,
+      displayMedium: textTheme.displayMedium ?? fallback.displayMedium,
+      headlineLarge: textTheme.headlineLarge ?? fallback.headlineLarge,
+      headlineMedium: textTheme.headlineMedium ?? fallback.headlineMedium,
+      titleLarge: textTheme.titleLarge ?? fallback.titleLarge,
+      titleMedium: textTheme.titleMedium ?? fallback.titleMedium,
+      bodyLarge: textTheme.bodyLarge ?? fallback.bodyLarge,
+      bodyMedium: textTheme.bodyMedium ?? fallback.bodyMedium,
+      bodySmall: textTheme.bodySmall ?? fallback.bodySmall,
+      labelLarge: textTheme.labelLarge ?? fallback.labelLarge,
+      labelMedium: textTheme.labelMedium ?? fallback.labelMedium,
+      caption: textTheme.labelSmall ?? textTheme.bodySmall ?? fallback.caption,
+    );
+  }
 
   final TextStyle displayLarge;
   final TextStyle displayMedium;
@@ -54,6 +78,7 @@ class AdaptiveTypography {
   final TextStyle bodySmall;
   final TextStyle labelLarge;
   final TextStyle labelMedium;
+  final TextStyle caption;
 
   AdaptiveTypography copyWith({
     TextStyle? displayLarge,
@@ -67,6 +92,7 @@ class AdaptiveTypography {
     TextStyle? bodySmall,
     TextStyle? labelLarge,
     TextStyle? labelMedium,
+    TextStyle? caption,
   }) {
     return AdaptiveTypography(
       displayLarge: displayLarge ?? this.displayLarge,
@@ -80,6 +106,32 @@ class AdaptiveTypography {
       bodySmall: bodySmall ?? this.bodySmall,
       labelLarge: labelLarge ?? this.labelLarge,
       labelMedium: labelMedium ?? this.labelMedium,
+      caption: caption ?? this.caption,
+    );
+  }
+
+  /// Linearly interpolates between two [AdaptiveTypography] scales.
+  static AdaptiveTypography lerp(
+      AdaptiveTypography a, AdaptiveTypography b, double t) {
+    return AdaptiveTypography(
+      displayLarge:
+          TextStyle.lerp(a.displayLarge, b.displayLarge, t) ?? a.displayLarge,
+      displayMedium: TextStyle.lerp(a.displayMedium, b.displayMedium, t) ??
+          a.displayMedium,
+      headlineLarge: TextStyle.lerp(a.headlineLarge, b.headlineLarge, t) ??
+          a.headlineLarge,
+      headlineMedium: TextStyle.lerp(a.headlineMedium, b.headlineMedium, t) ??
+          a.headlineMedium,
+      titleLarge: TextStyle.lerp(a.titleLarge, b.titleLarge, t) ?? a.titleLarge,
+      titleMedium:
+          TextStyle.lerp(a.titleMedium, b.titleMedium, t) ?? a.titleMedium,
+      bodyLarge: TextStyle.lerp(a.bodyLarge, b.bodyLarge, t) ?? a.bodyLarge,
+      bodyMedium: TextStyle.lerp(a.bodyMedium, b.bodyMedium, t) ?? a.bodyMedium,
+      bodySmall: TextStyle.lerp(a.bodySmall, b.bodySmall, t) ?? a.bodySmall,
+      labelLarge: TextStyle.lerp(a.labelLarge, b.labelLarge, t) ?? a.labelLarge,
+      labelMedium:
+          TextStyle.lerp(a.labelMedium, b.labelMedium, t) ?? a.labelMedium,
+      caption: TextStyle.lerp(a.caption, b.caption, t) ?? a.caption,
     );
   }
 
@@ -98,7 +150,8 @@ class AdaptiveTypography {
           bodyMedium == other.bodyMedium &&
           bodySmall == other.bodySmall &&
           labelLarge == other.labelLarge &&
-          labelMedium == other.labelMedium;
+          labelMedium == other.labelMedium &&
+          caption == other.caption;
 
   @override
   int get hashCode => Object.hash(
@@ -113,5 +166,6 @@ class AdaptiveTypography {
         bodySmall,
         labelLarge,
         labelMedium,
+        caption,
       );
 }

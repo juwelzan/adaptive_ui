@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/adaptive_layout_data.dart';
-import '../../core/adaptive_scope.dart';
+import '../../theme/adaptive_theme.dart';
 import '../../theme/adaptive_theme_data.dart';
 import '../adaptive_builder.dart';
 
@@ -24,6 +24,7 @@ class AdaptiveButton extends StatelessWidget {
     this.isLoading = false,
     this.icon,
     this.padding,
+    this.borderRadius,
   });
 
   /// Action callback triggered upon tap. If null, the button renders disabled.
@@ -47,16 +48,23 @@ class AdaptiveButton extends StatelessWidget {
   /// Custom padding override.
   final EdgeInsetsGeometry? padding;
 
+  /// Custom border radius override.
+  final BorderRadius? borderRadius;
+
   @override
   Widget build(BuildContext context) {
     return AdaptiveBuilder(
       builder: (BuildContext ctx, AdaptiveLayoutData layout) {
-        final AdaptiveThemeData theme = AdaptiveScope.themeOf(ctx);
+        final AdaptiveThemeData theme = AdaptiveTheme.of(ctx);
         final double minHeight = layout.isCompact
-            ? theme.sizing.buttonHeightCompact
-            : theme.sizing.buttonHeightRegular;
+            ? (theme.buttonTheme.minHeightCompact ??
+                theme.sizing.buttonHeightCompact)
+            : (theme.buttonTheme.minHeightRegular ??
+                theme.sizing.buttonHeightRegular);
 
-        final double minWidth = layout.isCompact && fullWidthOnCompact
+        final bool effectiveFullWidth = fullWidthOnCompact ||
+            (theme.buttonTheme.fullWidthOnCompact ?? false);
+        final double minWidth = layout.isCompact && effectiveFullWidth
             ? double.infinity
             : theme.sizing.touchTargetMin;
 
@@ -92,15 +100,20 @@ class AdaptiveButton extends StatelessWidget {
               );
 
         final EdgeInsetsGeometry resolvedPadding = padding ??
+            theme.buttonTheme.padding ??
             (layout.isCompact
                 ? const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0)
                 : const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0));
+
+        final BorderRadius resolvedBorderRadius = borderRadius ??
+            theme.buttonTheme.borderRadius ??
+            theme.radii.toBorderRadius(theme.radii.md);
 
         ButtonStyle buttonStyle = ElevatedButton.styleFrom(
           minimumSize: Size(minWidth, minHeight),
           padding: resolvedPadding,
           shape: RoundedRectangleBorder(
-            borderRadius: theme.radii.toBorderRadius(theme.radii.md),
+            borderRadius: resolvedBorderRadius,
           ),
         );
 

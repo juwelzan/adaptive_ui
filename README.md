@@ -478,15 +478,108 @@ AdaptiveSkeletonList(itemCount: 4, spacing: 12)
 
 ---
 
+## Centralized Design System & Theme Engine (Phase 5)
+
+`adaptive_ui` provides a unified, production-grade design system and theme engine that integrates natively with Flutter's `ThemeData` and `ColorScheme` while offering granular component-level customization, semantic color roles, density presets, and smooth animated transitions.
+
+### 1. Theme Configuration & Setup
+
+You can define your design system globally via `AdaptiveApp`, at a subtree with `AdaptiveTheme`, or with animated interpolation using `AnimatedAdaptiveTheme`:
+
+```dart
+// Automatic Theme Setup
+AdaptiveApp(
+  theme: AdaptiveThemeData.fromColorScheme(
+    ColorScheme.fromSeed(seedColor: const Color(0xFF1E5BB0)),
+  ).copyWith(
+    density: AdaptiveDensity.comfortable,
+    componentThemes: const AdaptiveComponentThemes(
+      card: AdaptiveCardThemeData(
+        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+        elevation: 2.0,
+      ),
+      button: AdaptiveButtonThemeData(
+        borderRadius: BorderRadius.all(Radius.circular(16.0)),
+      ),
+    ),
+  ),
+  child: MaterialApp(
+    home: const HomeScreen(),
+  ),
+);
+```
+
+### 2. Precedence Hierarchy
+
+Component styling strictly follows a 4-tier precedence model:
+1. **Explicit widget parameter** (e.g. `AdaptiveCard(color: Colors.red)`) — highest priority.
+2. **Component theme in `AdaptiveThemeData`** (e.g. `theme.cardTheme.color`).
+3. **Global token in `AdaptiveThemeData`** (e.g. `theme.colors.surface`).
+4. **Ambient Flutter `ThemeData`** / `ColorScheme` — fallback.
+
+### 3. Semantic Color System
+
+`AdaptiveColors` eliminates scattered arbitrary hex codes with complete semantic roles:
+
+| Role | Property | Semantic Purpose |
+| :--- | :--- | :--- |
+| **Primary** | `colors.primary`, `onPrimary` | Key interactive highlights and brand identity. |
+| **Secondary** | `colors.secondary`, `onSecondary` | Supporting controls and secondary actions. |
+| **Surfaces** | `colors.surface`, `surfaceElevated` | Flat surfaces and elevated cards/sheets. |
+| **Typography** | `colors.textPrimary`, `textSecondary` | Main readable text and muted captions. |
+| **Status** | `colors.success`, `warning`, `error`, `info` | Feedback, alerts, badges, and validation. |
+| **Structure** | `colors.border`, `divider`, `outline` | Card outlines and section dividers. |
+| **Interactive** | `colors.disabled`, `hover`, `focus`, `highlight` | Accessible interaction states. |
+
+Construct directly from Flutter: `AdaptiveColors.fromColorScheme(Theme.of(context).colorScheme)`.
+
+### 4. Adaptive Typography & `AdaptiveTextVariant`
+
+Standardized type scale with built-in accessibility text scaling:
+
+```dart
+AdaptiveText('Dashboard Overview', variant: AdaptiveTextVariant.titleLarge)
+AdaptiveText('Student profile updated.', variant: AdaptiveTextVariant.bodyMedium)
+AdaptiveText('Last synchronized 2m ago', variant: AdaptiveTextVariant.caption)
+```
+
+Supported variants: `displayLarge`, `displayMedium`, `headlineLarge`, `headlineMedium`, `titleLarge`, `titleMedium`, `bodyLarge`, `bodyMedium`, `bodySmall`, `labelLarge`, `labelMedium`, and `caption`.
+
+### 5. Spacing, Radii, Elevation & Density Tokens
+
+- **Spacing**: `xs` (4dp), `sm` (8dp), `md` (16dp), `lg` (24dp), `xl` (32dp), `xxl` (48dp).
+- **Radii**: `none` (0), `xs` (4), `sm` (8), `md` (12), `lg` (16), `xl` (24), `full` (9999).
+- **Elevations & Shadows**: `none` (0dp), `low` (1dp), `medium` (3dp), `high` (6dp), `extraHigh` (12dp), and `elevations.shadowOf(elevation)`.
+- **Density Presets**: `AdaptiveDensity.compact`, `AdaptiveDensity.comfortable`, and `AdaptiveDensity.spacious`.
+
+### 6. Animated Theme Transitions
+
+Smoothly interpolate tokens between light and dark modes or dynamic seed palettes:
+
+```dart
+AnimatedAdaptiveTheme(
+  data: isDark ? AdaptiveThemeData.dark() : AdaptiveThemeData.light(),
+  duration: const Duration(milliseconds: 300),
+  curve: Curves.easeInOutCubic,
+  child: const YourAppContent(),
+)
+```
+
+Automatically respects accessibility settings (`MediaQuery.disableAnimationsOf(context)`): when reduced motion is preferred, transitions snap instantly without delay.
+
+---
+
 ## Interactive Studio Example App
 
-The included example application (`example/lib/main.dart`) demonstrates real-world multi-platform usage with a 5-tab interactive studio:
+The included example application (`example/lib/main.dart`) demonstrates real-world multi-platform usage with a 7-tab interactive studio:
 
 1. **Responsive Dashboard**: Live metric cards, dynamic adaptive grids, auto-collapsing rows, and device orientation handling across phone, tablet, and desktop widths.
 2. **Rebuild Lab**: Visual counter widgets demonstrating that `AdaptiveBlocSelector` triggers leaf-level rebuilds only for targeted fields while sibling widgets and parent containers experience zero rebuilds.
 3. **UI State Machine**: Handles `Loading`, `Empty`, `Error` (with retry button), and `Populated` list states using responsive feedback widgets.
-4. **Constrained Layouts & Theming**: Demonstrates fallback layouts under extreme parent constraints (<260dp width) alongside nested, localized `AdaptiveTheme` token overrides.
-5. **Motion & Skeletons**: Interactive showcase demonstrating `AdaptiveText` marquees and typewriters, `AdaptiveContainer` animated property transitions, `AdaptiveSidebar` and `AdaptiveBottomNavigationBar` components, and `AdaptiveSkeleton` cross-fade switching.
+4. **Constrained Layouts & Tokens**: Demonstrates fallback layouts under extreme parent constraints (<260dp width) alongside nested `AdaptiveTheme` token overrides.
+5. **Theme Studio (Phase 5)**: Live interactive design system inspector with light/dark toggle, seed palette picker (Royal Blue, Emerald, Crimson, Purple, Amber, Deep Teal), density preset selector, component override switcher, elevation previews, and animated transition slider.
+6. **Motion & Skeletons**: Interactive showcase demonstrating `AdaptiveText` marquees and typewriters, `AdaptiveContainer` animated property transitions, `AdaptiveBottomNavigationBar`, and `AdaptiveSkeleton` cross-fade switching.
+7. **AdaptiveSidebar 2.0 Studio**: Full exploration of all 9 visual models, accordion vs independent submenu expansion, animated flyouts, action tools, and rail navigation.
 
 Run the example:
 

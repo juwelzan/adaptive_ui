@@ -290,5 +290,43 @@ void main() {
       expect(find.text('New Workspace'), findsOneWidget);
       expect(find.text('Export Telemetry (CSV)'), findsOneWidget);
     });
+
+    testWidgets(
+        'navigates to Theme Studio tab and exercises theme engine controls',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(const AdaptiveShowcaseApp());
+      await tester.pumpAndSettle();
+
+      // Navigate to Theme Studio tab
+      await tester.tap(find.text('Theme Studio'));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.text('Unified Theme Engine & Studio'), findsOneWidget);
+      expect(find.text('Semantic Color Roles'), findsOneWidget);
+
+      // Toggle Dark Theme
+      await tester.tap(find.text('Light Theme'));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Dark Theme'), findsOneWidget);
+
+      // Toggle Component Overrides
+      await tester.tap(find.text('Component Overrides'));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Select Emerald Palette
+      await tester.tap(find.text('Emerald'));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Verify typography scale and tokens visible
+      expect(find.text('Adaptive Typography Scale'), findsOneWidget);
+      expect(find.text('Spacing, Radii & Elevation Tokens'), findsOneWidget);
+    });
   });
 }

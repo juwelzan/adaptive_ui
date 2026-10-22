@@ -46,6 +46,19 @@ class AdaptiveRadii {
     );
   }
 
+  /// Linearly interpolates between two [AdaptiveRadii] instances.
+  static AdaptiveRadii lerp(AdaptiveRadii a, AdaptiveRadii b, double t) {
+    return AdaptiveRadii(
+      none: a.none + (b.none - a.none) * t,
+      xs: a.xs + (b.xs - a.xs) * t,
+      sm: a.sm + (b.sm - a.sm) * t,
+      md: a.md + (b.md - a.md) * t,
+      lg: a.lg + (b.lg - a.lg) * t,
+      xl: a.xl + (b.xl - a.xl) * t,
+      full: a.full + (b.full - a.full) * t,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

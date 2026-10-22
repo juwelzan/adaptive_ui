@@ -44,6 +44,19 @@ class AdaptiveSpacing {
     );
   }
 
+  /// Linearly interpolates between two [AdaptiveSpacing] instances.
+  static AdaptiveSpacing lerp(AdaptiveSpacing a, AdaptiveSpacing b, double t) {
+    return AdaptiveSpacing(
+      xxs: a.xxs + (b.xxs - a.xxs) * t,
+      xs: a.xs + (b.xs - a.xs) * t,
+      sm: a.sm + (b.sm - a.sm) * t,
+      md: a.md + (b.md - a.md) * t,
+      lg: a.lg + (b.lg - a.lg) * t,
+      xl: a.xl + (b.xl - a.xl) * t,
+      xxl: a.xxl + (b.xxl - a.xxl) * t,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

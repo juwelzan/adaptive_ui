@@ -52,8 +52,8 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
     with SingleTickerProviderStateMixin {
   bool _isHovered = false;
   late bool _internalSubmenuExpanded;
-  late final AnimationController _submenuController;
-  late final Animation<double> _submenuAnimation;
+  AnimationController? _submenuController;
+  Animation<double>? _submenuAnimation;
   final GlobalKey<AdaptiveDropdownState> _dropdownKey =
       GlobalKey<AdaptiveDropdownState>();
 
@@ -62,14 +62,20 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
     super.initState();
     _internalSubmenuExpanded =
         widget.isSubmenuExpanded || widget.item.initiallyExpanded;
-    _submenuController = AnimationController(
+    if (widget.item.hasChildren) {
+      _initSubmenuController();
+    }
+  }
+
+  void _initSubmenuController() {
+    final controller = AnimationController(
       vsync: this,
       duration: widget.duration,
       value: _internalSubmenuExpanded ? 1.0 : 0.0,
     );
-
+    _submenuController = controller;
     _submenuAnimation = CurvedAnimation(
-      parent: _submenuController,
+      parent: controller,
       curve: widget.curve,
     );
   }
@@ -77,24 +83,33 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
   @override
   void didUpdateWidget(covariant AdaptiveSidebarTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.duration != oldWidget.duration) {
-      _submenuController.duration = widget.duration;
-    }
-    if (widget.onSubmenuToggle != null) {
-      if (widget.isSubmenuExpanded != oldWidget.isSubmenuExpanded) {
-        _internalSubmenuExpanded = widget.isSubmenuExpanded;
-        if (widget.isSubmenuExpanded) {
-          _submenuController.forward();
-        } else {
-          _submenuController.reverse();
+    if (widget.item.hasChildren) {
+      if (_submenuController == null) {
+        _initSubmenuController();
+      } else if (widget.duration != oldWidget.duration) {
+        _submenuController!.duration = widget.duration;
+      }
+
+      if (widget.onSubmenuToggle != null) {
+        if (widget.isSubmenuExpanded != oldWidget.isSubmenuExpanded) {
+          _internalSubmenuExpanded = widget.isSubmenuExpanded;
+          if (widget.isSubmenuExpanded) {
+            _submenuController?.forward();
+          } else {
+            _submenuController?.reverse();
+          }
         }
       }
+    } else {
+      _submenuController?.dispose();
+      _submenuController = null;
+      _submenuAnimation = null;
     }
   }
 
   @override
   void dispose() {
-    _submenuController.dispose();
+    _submenuController?.dispose();
     super.dispose();
   }
 

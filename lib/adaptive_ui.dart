@@ -77,6 +77,9 @@ export 'src/widgets/feedback/adaptive_skeleton.dart';
 
 // Theme & Tokens
 export 'src/theme/adaptive_colors.dart';
+export 'src/theme/adaptive_component_themes.dart';
+export 'src/theme/adaptive_density.dart';
+export 'src/theme/adaptive_elevations.dart';
 export 'src/theme/adaptive_motion.dart';
 export 'src/theme/adaptive_radii.dart';
 export 'src/theme/adaptive_sizing.dart';

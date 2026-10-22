@@ -11,6 +11,7 @@ It provides an end-to-end multi-platform layout engine paired with:
 4. Responsive navigation suite (`AdaptiveSidebar` expanded/collapsed modes and `AdaptiveBottomNavigationBar` Material 3 indicator).
 5. Composable implicit animation container (`AdaptiveContainer` with hover, press, decoration, and constraint animations).
 6. GPU-accelerated Shimmer & Skeleton Loading suite (`AdaptiveShimmer`, `AdaptiveSkeleton`, `AdaptiveSkeletonText`, `AdaptiveSkeletonContainer`, and `AdaptiveSkeletonList`).
+7. Production-grade Centralized Design System & Unified Theme Engine (`AdaptiveThemeData`, `AdaptiveTheme`, `AnimatedAdaptiveTheme`, semantic `AdaptiveColors`, `AdaptiveTypography`, `AdaptiveElevations`, `AdaptiveDensity`, and granular `AdaptiveComponentThemes`).
 
 ---
 
@@ -111,6 +112,21 @@ All thresholds are immutable, equatable, and customizable per application or sub
   - `AdaptiveSkeletonContainer`: Structured card container placeholder with padding and borders.
   - `AdaptiveSkeletonList`: Pre-composed list item skeletons with avatar and dual-line placeholders.
 
+### L. Phase 5 — Unified Design System & Centralized Theme Engine
+- **Immutable `AdaptiveThemeData`**: Centralizes design tokens across `colors`, `typography`, `spacing`, `radii`, `sizing`, `elevations`, `density`, `motion`, and `componentThemes`.
+- **Inherited Resolution Hierarchy**: `AdaptiveTheme.of(context)` resolves in priority order:
+  1. Explicit `AdaptiveTheme` ancestor.
+  2. Ambient `AdaptiveScope.theme`.
+  3. Automatic derivation from ambient Flutter `Theme.of(context)` via `AdaptiveThemeData.fromTheme()`.
+  4. Safe fallback: `AdaptiveThemeData.light()`.
+- **Smooth Animated Transitions**: `AnimatedAdaptiveTheme` provides smooth token interpolation (250ms standard curve) when theme data changes, while instantly snapping without delay when `MediaQuery.disableAnimationsOf(context)` is true.
+- **Semantic Color Roles**: `AdaptiveColors` implements comprehensive semantic roles (`primary`, `secondary`, `surface`, `surfaceElevated`, `onSurfaceElevated`, `background`, `outline`, `border`, `divider`, `success`, `warning`, `error`, `info`, `disabled`, `hover`, `focus`, `highlight`, `textPrimary`, `textSecondary`) and provides `AdaptiveColors.fromColorScheme()` and `AdaptiveColors.lerp()`.
+- **Adaptive Typography Scale**: `AdaptiveTypography` standard scale covers `displayLarge`, `displayMedium`, `headlineLarge`, `headlineMedium`, `titleLarge`, `titleMedium`, `bodyLarge`, `bodyMedium`, `bodySmall`, `labelLarge`, `labelMedium`, and `caption`, interoperable with Flutter's `TextTheme` and `AdaptiveTextVariant`.
+- **Elevation & Density Tokens**: `AdaptiveElevations` defines `none` (0dp), `low` (1dp), `medium` (3dp), `high` (6dp), `extraHigh` (12dp), and `shadowOf()`. `AdaptiveDensity` offers `compact`, `comfortable`, and `spacious` presets with vertical/horizontal multipliers and touch target adjustments.
+- **Granular Component Themes & Precedence**:
+  - `AdaptiveCardThemeData`, `AdaptiveButtonThemeData`, `AdaptiveSidebarThemeData`, `AdaptiveBottomNavThemeData`, and `AdaptiveShimmerThemeData`.
+  - Strict precedence: **Explicit widget parameter** > **Component theme in `AdaptiveThemeData`** > **Global design token in `AdaptiveThemeData`** > **Ambient Flutter `ThemeData`**.
+
 ---
 
 ## 3. Package Structure
@@ -187,16 +203,19 @@ adaptive_ui/
 │       │       ├── adaptive_loading.dart
 │       │       ├── adaptive_shimmer.dart          # GPU gradient shimmer mask
 │       │       └── adaptive_skeleton.dart         # Skeleton switcher & primitive placeholders
-│       ├── theme/                             # Design tokens, motion, theme overrides
-│       │   ├── adaptive_colors.dart
+│       ├── theme/                             # Unified Design System & Tokens
+│       │   ├── adaptive_colors.dart           # Semantic color roles & lerp
+│       │   ├── adaptive_component_themes.dart # Granular card, button, sidebar, nav & shimmer themes
+│       │   ├── adaptive_density.dart          # Compact, comfortable & spacious density presets
+│       │   ├── adaptive_elevations.dart       # Elevation scale & shadow generators
 │       │   ├── adaptive_motion.dart           # Standard animation durations & curves
-│       │   ├── adaptive_radii.dart
-│       │   ├── adaptive_sizing.dart
-│       │   ├── adaptive_spacing.dart
-│       │   ├── adaptive_theme.dart
-│       │   ├── adaptive_theme_data.dart
-│       │   ├── adaptive_tokens.dart
-│       │   └── adaptive_typography.dart
+│       │   ├── adaptive_radii.dart            # Corner radii tokens
+│       │   ├── adaptive_sizing.dart           # Component sizing & touch targets
+│       │   ├── adaptive_spacing.dart          # Spacing tokens & multipliers
+│       │   ├── adaptive_theme.dart            # AdaptiveTheme & AnimatedAdaptiveTheme widgets
+│       │   ├── adaptive_theme_data.dart       # Immutable theme data & lerp
+│       │   ├── adaptive_tokens.dart           # Aggregated token container
+│       │   └── adaptive_typography.dart       # Typography scale & TextTheme integration
 │       ├── utilities/                         # Font calculation & text measurement
 │       │   ├── adaptive_math.dart
 │       │   ├── adaptive_overflow_policy.dart
@@ -207,17 +226,21 @@ adaptive_ui/
 │       └── diagnostics/                       # Live telemetry & debug banner
 │           ├── adaptive_debug_overlay.dart
 │           └── adaptive_diagnostics.dart
-├── test/                                      # Automated test suite (157 tests)
-│   ├── widgets/
-│   │   ├── adaptive_sidebar_test.dart         # 18 comprehensive sidebar tests
-│   │   ├── adaptive_dropdown_test.dart        # 7 dropdown unit tests
-│   │   ├── adaptive_text_animation_test.dart
-│   │   ├── adaptive_bottom_navigation_bar_test.dart
-│   │   ├── adaptive_container_animation_test.dart
-│   │   └── adaptive_shimmer_skeleton_test.dart
-├── example/                                   # Real-world 6-tab studio showcase (10 tests)
+├── test/                                      # Automated test suite (176 tests)
+│   ├── theme/
+│   │   ├── adaptive_theme_test.dart           # Core token inheritance tests
+│   │   └── adaptive_design_system_test.dart   # 19 comprehensive Phase 5 tests
+│   └── widgets/
+│       ├── adaptive_sidebar_test.dart         # 18 comprehensive sidebar tests
+│       ├── adaptive_dropdown_test.dart        # 7 dropdown unit tests
+│       ├── adaptive_text_animation_test.dart
+│       ├── adaptive_bottom_navigation_bar_test.dart
+│       ├── adaptive_container_animation_test.dart
+│       └── adaptive_shimmer_skeleton_test.dart
+├── example/                                   # Real-world 7-tab studio showcase (11 tests)
 │   ├── lib/
-│   │   ├── main.dart                          # Studio app with BLoC state & 6-tab router
+│   │   ├── main.dart                          # Studio app with BLoC state & 7-tab router
+│   │   ├── theme_showcase.dart                # Phase 5 Theme Engine & Design System Studio
 │   │   ├── motion_showcase.dart               # Phase 4 motion & skeleton showcase tab
 │   │   └── sidebar_showcase.dart              # AdaptiveSidebar 2.0 Studio showcase tab
 │   └── test/
@@ -233,6 +256,8 @@ adaptive_ui/
 
 | Area | Test Suite File | Test Count | Status | Key Verifications |
 | :--- | :--- | :--- | :--- | :--- |
+| **Adaptive Design System & Theme Engine** | `adaptive_design_system_test.dart` | 19 | Pass | Theme defaults, light & dark constructors, semantic color roles, `AdaptiveColors.lerp()`, typography scale, `AdaptiveTextVariant` resolution, `AdaptiveElevations` shadows, `AdaptiveDensity` multipliers, `AdaptiveThemeData.lerp()`, precedence rules (explicit prop > component theme > global token > ambient theme), `AnimatedAdaptiveTheme` transitions, reduced-motion instant snapping, RTL layout rendering, accessibility `TextScaler(2.0)`, and backward compatibility without explicit theme. |
+| **Core Token Resolution** | `adaptive_theme_test.dart` | 3 | Pass | Default token fallback, subtree overrides, nested `AdaptiveTheme` scope isolation. |
 | **AdaptiveSidebar 2.0** | `adaptive_sidebar_test.dart` | 18 | Pass | All 9 visual design models, expanded (240dp) vs collapsed (72dp) modes, narrow constraint resilience (56dp/50dp width guards without overflow), selection tap callbacks, 5 submenu animation transitions (`expand`, `fade`, `slide`, `fadeSlide`, `sizeTransition`), multi-level deep nesting (depth 2+), accordion vs independent expansion, parent ancestor highlighting, interactive rail toggle, dropdown integration, reduced-motion bypass. |
 | **AdaptiveDropdown** | `adaptive_dropdown_test.dart` | 7 | Pass | Trigger rendering, opening on tap, selecting item and callback invocation, outside barrier tap dismissal, Escape key dismissal, divider rendering, disabled item states, and safe overlay disposal. |
 | **Motion Tokens & Helpers** | `adaptive_text_animation_test.dart` | 8 | Pass | Reduced-motion resolution, duration collapsing, standard curves. |
@@ -240,17 +265,17 @@ adaptive_ui/
 | **AdaptiveBottomNavigationBar** | `adaptive_bottom_navigation_bar_test.dart` | 6 | Pass | Destination rendering, selection tap callback, label visibility modes (`alwaysShow`, `onlyShowSelected`, `neverShow`), touch target $\ge 48\text{dp}$, safe area padding. |
 | **AdaptiveContainer Motion** | `adaptive_container_animation_test.dart` | 4 | Pass | Animated property transitions (decoration, radii, padding, opacity), state preservation of stateful children, tap/hover callbacks, reduced-motion bypass. |
 | **AdaptiveShimmer & Skeletons** | `adaptive_shimmer_skeleton_test.dart` | 6 | Pass | GPU gradient sweep, conditional `AdaptiveSkeleton` switcher toggles, `AdaptiveSkeletonText` multi-line layout, `AdaptiveSkeletonList` item count, reduced-motion handling. |
-| **Showcase Example App** | `example/test/widget_test.dart` | 10 | Pass | 6-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, and AdaptiveSidebar 2.0 Studio tab. |
+| **Showcase Example App** | `example/test/widget_test.dart` | 11 | Pass | 7-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, AdaptiveSidebar 2.0 Studio tab, and Phase 5 Theme Studio tab. |
 
 ---
 
 ## 5. Current Progress & Verification Matrix
 
 - **Static Analysis**: `flutter analyze . example` passing with **0 issues**.
-- **Code Formatting**: `dart format .` passing 100% cleanly across all 113 Dart files.
-- **Automated Tests**: **167 tests passing** across workspace:
-  - Package Tests: **157 tests passing** (up from 140).
-  - Example App Tests: **10 tests passing** (up from 9).
+- **Code Formatting**: `dart format .` passing 100% cleanly across all Dart files.
+- **Automated Tests**: **187 tests passing** across workspace:
+  - Package Tests: **176 tests passing** (up from 157).
+  - Example App Tests: **11 tests passing** (up from 10).
 
 ---
 

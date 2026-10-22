@@ -7,6 +7,9 @@ import '../../core/adaptive_layout_data.dart';
 import '../../core/adaptive_scope.dart';
 import '../../core/adaptive_value.dart';
 import '../../theme/adaptive_motion.dart';
+import '../../theme/adaptive_theme.dart';
+import '../../theme/adaptive_theme_data.dart';
+import '../../theme/adaptive_typography.dart';
 import '../../utilities/adaptive_overflow_policy.dart';
 import '../adaptive_builder.dart';
 import 'adaptive_text_style.dart';
@@ -29,6 +32,22 @@ enum AdaptiveTextAnimation {
   typewriter,
 }
 
+/// Standard typography scale variants for [AdaptiveText].
+enum AdaptiveTextVariant {
+  displayLarge,
+  displayMedium,
+  headlineLarge,
+  headlineMedium,
+  titleLarge,
+  titleMedium,
+  bodyLarge,
+  bodyMedium,
+  bodySmall,
+  labelLarge,
+  labelMedium,
+  caption,
+}
+
 /// A responsive typography widget that scales font sizes safely, respects system
 /// accessibility settings, and optionally supports restrained animations (marquee,
 /// fade-in, slide-in, typewriter).
@@ -36,6 +55,7 @@ class AdaptiveText extends StatelessWidget {
   const AdaptiveText(
     this.text, {
     super.key,
+    this.variant,
     this.size,
     this.baseFontSize = 16.0,
     this.minFontSize,
@@ -56,6 +76,9 @@ class AdaptiveText extends StatelessWidget {
     this.animationDuration,
     this.animationCurve = AdaptiveMotion.standardCurve,
   });
+
+  /// Optional typography variant determining default scale from [AdaptiveTypography].
+  final AdaptiveTextVariant? variant;
 
   /// The text to display.
   final String text;
@@ -123,15 +146,22 @@ class AdaptiveText extends StatelessWidget {
     return AdaptiveBuilder(
       builder: (BuildContext ctx, AdaptiveLayoutData layout) {
         final AdaptiveConfig config = AdaptiveScope.configOf(ctx);
-        final TextStyle base = style ?? const TextStyle();
+        final AdaptiveThemeData theme = AdaptiveTheme.of(ctx);
+        final TextStyle? variantStyle = variant != null
+            ? _resolveVariantStyle(theme.typography, variant!)
+            : null;
+        final TextStyle base = style ?? variantStyle ?? const TextStyle();
         final TextStyle resolvedAdaptive =
             adaptiveStyle?.resolve(layout) ?? base;
+
+        final double defaultBaseSize = variantStyle?.fontSize ??
+            (resolvedAdaptive.fontSize ?? baseFontSize);
 
         double effectiveFontSize;
         if (size != null) {
           effectiveFontSize = size!.resolve(layout, () {
             return AdaptiveEngine.calculateFontSize(
-              baseFontSize: baseFontSize,
+              baseFontSize: defaultBaseSize,
               layout: layout,
               config: config,
               minFontSize: minFontSize,
@@ -139,9 +169,8 @@ class AdaptiveText extends StatelessWidget {
             );
           });
         } else {
-          final double baseSize = resolvedAdaptive.fontSize ?? baseFontSize;
           effectiveFontSize = AdaptiveEngine.calculateFontSize(
-            baseFontSize: baseSize,
+            baseFontSize: defaultBaseSize,
             layout: layout,
             config: config,
             minFontSize: minFontSize,
@@ -151,6 +180,8 @@ class AdaptiveText extends StatelessWidget {
 
         final TextStyle finalStyle = resolvedAdaptive.copyWith(
           fontSize: effectiveFontSize,
+          color: resolvedAdaptive.color ??
+              (variant != null ? theme.colors.onSurface : null),
         );
 
         final AdaptiveOverflowPolicy effectivePolicy =
@@ -191,6 +222,36 @@ class AdaptiveText extends StatelessWidget {
         );
       },
     );
+  }
+
+  static TextStyle _resolveVariantStyle(
+      AdaptiveTypography typography, AdaptiveTextVariant variant) {
+    switch (variant) {
+      case AdaptiveTextVariant.displayLarge:
+        return typography.displayLarge;
+      case AdaptiveTextVariant.displayMedium:
+        return typography.displayMedium;
+      case AdaptiveTextVariant.headlineLarge:
+        return typography.headlineLarge;
+      case AdaptiveTextVariant.headlineMedium:
+        return typography.headlineMedium;
+      case AdaptiveTextVariant.titleLarge:
+        return typography.titleLarge;
+      case AdaptiveTextVariant.titleMedium:
+        return typography.titleMedium;
+      case AdaptiveTextVariant.bodyLarge:
+        return typography.bodyLarge;
+      case AdaptiveTextVariant.bodyMedium:
+        return typography.bodyMedium;
+      case AdaptiveTextVariant.bodySmall:
+        return typography.bodySmall;
+      case AdaptiveTextVariant.labelLarge:
+        return typography.labelLarge;
+      case AdaptiveTextVariant.labelMedium:
+        return typography.labelMedium;
+      case AdaptiveTextVariant.caption:
+        return typography.caption;
+    }
   }
 }
 

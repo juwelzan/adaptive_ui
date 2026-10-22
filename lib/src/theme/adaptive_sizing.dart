@@ -52,6 +52,25 @@ class AdaptiveSizing {
     );
   }
 
+  /// Linearly interpolates between two [AdaptiveSizing] instances.
+  static AdaptiveSizing lerp(AdaptiveSizing a, AdaptiveSizing b, double t) {
+    return AdaptiveSizing(
+      iconSm: a.iconSm + (b.iconSm - a.iconSm) * t,
+      iconMd: a.iconMd + (b.iconMd - a.iconMd) * t,
+      iconLg: a.iconLg + (b.iconLg - a.iconLg) * t,
+      iconXl: a.iconXl + (b.iconXl - a.iconXl) * t,
+      touchTargetMin:
+          a.touchTargetMin + (b.touchTargetMin - a.touchTargetMin) * t,
+      buttonHeightCompact: a.buttonHeightCompact +
+          (b.buttonHeightCompact - a.buttonHeightCompact) * t,
+      buttonHeightRegular: a.buttonHeightRegular +
+          (b.buttonHeightRegular - a.buttonHeightRegular) * t,
+      cardMaxWidth: a.cardMaxWidth + (b.cardMaxWidth - a.cardMaxWidth) * t,
+      readableTextMaxWidth: a.readableTextMaxWidth +
+          (b.readableTextMaxWidth - a.readableTextMaxWidth) * t,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

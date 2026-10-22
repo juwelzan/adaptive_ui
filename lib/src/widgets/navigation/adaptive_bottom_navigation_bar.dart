@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/adaptive_motion.dart';
+import '../../theme/adaptive_theme.dart';
+import '../../theme/adaptive_theme_data.dart';
 
 /// Label visibility policy for [AdaptiveBottomNavigationBar].
 enum AdaptiveBottomNavLabelBehavior {
@@ -111,29 +113,47 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
+    final AdaptiveThemeData adaptiveTheme = AdaptiveTheme.of(context);
+    final bool isDark = adaptiveTheme.isDark;
     final bool reducedMotion = AdaptiveMotion.isReducedMotion(context);
 
     final Duration duration = reducedMotion
         ? Duration.zero
         : (animationDuration ?? AdaptiveMotion.standard);
 
+    final double effectiveHeight = height != 80.0
+        ? height
+        : (adaptiveTheme.bottomNavTheme.height ?? height);
+
+    final double effectiveElevation = elevation != 3.0
+        ? elevation
+        : (adaptiveTheme.bottomNavTheme.elevation ?? elevation);
+
+    final AdaptiveBottomNavLabelBehavior effectiveLabelBehavior =
+        labelBehavior != AdaptiveBottomNavLabelBehavior.alwaysShow
+            ? labelBehavior
+            : (adaptiveTheme.bottomNavTheme.labelBehavior ?? labelBehavior);
+
     final Color effectiveBg = backgroundColor ??
-        (isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF9F9FB));
+        adaptiveTheme.bottomNavTheme.backgroundColor ??
+        adaptiveTheme.colors.surface;
 
     final Color effectiveIndicator = indicatorColor ??
+        adaptiveTheme.bottomNavTheme.indicatorColor ??
         (isDark
-            ? theme.colorScheme.primary.withValues(alpha: 0.24)
-            : theme.colorScheme.primary.withValues(alpha: 0.14));
+            ? adaptiveTheme.colors.primary.withValues(alpha: 0.24)
+            : adaptiveTheme.colors.primary.withValues(alpha: 0.14));
 
-    final Color effectiveSelected = selectedColor ?? theme.colorScheme.primary;
+    final Color effectiveSelected = selectedColor ??
+        adaptiveTheme.bottomNavTheme.selectedColor ??
+        adaptiveTheme.colors.primary;
 
     final Color effectiveUnselected = unselectedColor ??
-        (isDark ? const Color(0xFF8E8E93) : const Color(0xFF6C6C70));
+        adaptiveTheme.bottomNavTheme.unselectedColor ??
+        adaptiveTheme.colors.onSurfaceVariant;
 
     Widget content = SizedBox(
-      height: height,
+      height: effectiveHeight,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -142,7 +162,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
               child: _AdaptiveBottomNavItem(
                 destination: destinations[i],
                 isSelected: selectedIndex == i,
-                labelBehavior: labelBehavior,
+                labelBehavior: effectiveLabelBehavior,
                 onTap: destinations[i].enabled
                     ? () => onDestinationSelected?.call(i)
                     : null,
@@ -162,7 +182,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
     }
 
     return Material(
-      elevation: elevation,
+      elevation: effectiveElevation,
       color: effectiveBg,
       child: Container(
         decoration: BoxDecoration(border: border),

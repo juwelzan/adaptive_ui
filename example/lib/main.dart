@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'motion_showcase.dart';
 import 'sidebar_showcase.dart';
+import 'theme_showcase.dart';
 
 void main() {
   runApp(const AdaptiveShowcaseApp());
@@ -167,6 +168,11 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           label: 'Tokens',
         ),
         AdaptiveNavigationDestination(
+          icon: Icon(Icons.palette_outlined),
+          selectedIcon: Icon(Icons.palette),
+          label: 'Theme Studio',
+        ),
+        AdaptiveNavigationDestination(
           icon: Icon(Icons.auto_awesome_outlined),
           selectedIcon: Icon(Icons.auto_awesome),
           label: 'Motion',
@@ -196,7 +202,8 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           1 => _buildGranularRebuildLabTab(context, layout),
           2 => _buildStateTransitionsTab(context, layout),
           3 => _buildConstrainedBoxTab(context, layout),
-          4 => MotionShowcaseTab(layout: layout),
+          4 => ThemeShowcaseTab(layout: layout),
+          5 => MotionShowcaseTab(layout: layout),
           _ => SidebarShowcaseTab(layout: layout),
         },
       ),

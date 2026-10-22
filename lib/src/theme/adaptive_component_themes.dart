@@ -1,0 +1,406 @@
+import 'package:flutter/widgets.dart';
+
+import '../widgets/navigation/adaptive_bottom_navigation_bar.dart';
+import '../widgets/navigation/adaptive_sidebar_models.dart';
+
+/// Component-level theme overrides for [AdaptiveCard].
+@immutable
+class AdaptiveCardThemeData {
+  const AdaptiveCardThemeData({
+    this.color,
+    this.elevation,
+    this.borderRadius,
+    this.padding,
+    this.margin,
+  });
+
+  final Color? color;
+  final double? elevation;
+  final BorderRadius? borderRadius;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+
+  AdaptiveCardThemeData copyWith({
+    Color? color,
+    double? elevation,
+    BorderRadius? borderRadius,
+    EdgeInsetsGeometry? padding,
+    EdgeInsetsGeometry? margin,
+  }) {
+    return AdaptiveCardThemeData(
+      color: color ?? this.color,
+      elevation: elevation ?? this.elevation,
+      borderRadius: borderRadius ?? this.borderRadius,
+      padding: padding ?? this.padding,
+      margin: margin ?? this.margin,
+    );
+  }
+
+  static AdaptiveCardThemeData lerp(
+      AdaptiveCardThemeData? a, AdaptiveCardThemeData? b, double t) {
+    if (a == null && b == null) return const AdaptiveCardThemeData();
+    return AdaptiveCardThemeData(
+      color: Color.lerp(a?.color, b?.color, t),
+      elevation: a?.elevation != null && b?.elevation != null
+          ? a!.elevation! + (b!.elevation! - a.elevation!) * t
+          : (t < 0.5 ? a?.elevation : b?.elevation),
+      borderRadius: BorderRadius.lerp(a?.borderRadius, b?.borderRadius, t),
+      padding: EdgeInsetsGeometry.lerp(a?.padding, b?.padding, t),
+      margin: EdgeInsetsGeometry.lerp(a?.margin, b?.margin, t),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdaptiveCardThemeData &&
+          runtimeType == other.runtimeType &&
+          color == other.color &&
+          elevation == other.elevation &&
+          borderRadius == other.borderRadius &&
+          padding == other.padding &&
+          margin == other.margin;
+
+  @override
+  int get hashCode =>
+      Object.hash(color, elevation, borderRadius, padding, margin);
+}
+
+/// Component-level theme overrides for [AdaptiveButton].
+@immutable
+class AdaptiveButtonThemeData {
+  const AdaptiveButtonThemeData({
+    this.borderRadius,
+    this.padding,
+    this.minHeightCompact,
+    this.minHeightRegular,
+    this.fullWidthOnCompact,
+  });
+
+  final BorderRadius? borderRadius;
+  final EdgeInsetsGeometry? padding;
+  final double? minHeightCompact;
+  final double? minHeightRegular;
+  final bool? fullWidthOnCompact;
+
+  AdaptiveButtonThemeData copyWith({
+    BorderRadius? borderRadius,
+    EdgeInsetsGeometry? padding,
+    double? minHeightCompact,
+    double? minHeightRegular,
+    bool? fullWidthOnCompact,
+  }) {
+    return AdaptiveButtonThemeData(
+      borderRadius: borderRadius ?? this.borderRadius,
+      padding: padding ?? this.padding,
+      minHeightCompact: minHeightCompact ?? this.minHeightCompact,
+      minHeightRegular: minHeightRegular ?? this.minHeightRegular,
+      fullWidthOnCompact: fullWidthOnCompact ?? this.fullWidthOnCompact,
+    );
+  }
+
+  static AdaptiveButtonThemeData lerp(
+      AdaptiveButtonThemeData? a, AdaptiveButtonThemeData? b, double t) {
+    if (a == null && b == null) return const AdaptiveButtonThemeData();
+    return AdaptiveButtonThemeData(
+      borderRadius: BorderRadius.lerp(a?.borderRadius, b?.borderRadius, t),
+      padding: EdgeInsetsGeometry.lerp(a?.padding, b?.padding, t),
+      minHeightCompact:
+          a?.minHeightCompact != null && b?.minHeightCompact != null
+              ? a!.minHeightCompact! +
+                  (b!.minHeightCompact! - a.minHeightCompact!) * t
+              : (t < 0.5 ? a?.minHeightCompact : b?.minHeightCompact),
+      minHeightRegular:
+          a?.minHeightRegular != null && b?.minHeightRegular != null
+              ? a!.minHeightRegular! +
+                  (b!.minHeightRegular! - a.minHeightRegular!) * t
+              : (t < 0.5 ? a?.minHeightRegular : b?.minHeightRegular),
+      fullWidthOnCompact:
+          t < 0.5 ? a?.fullWidthOnCompact : b?.fullWidthOnCompact,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdaptiveButtonThemeData &&
+          runtimeType == other.runtimeType &&
+          borderRadius == other.borderRadius &&
+          padding == other.padding &&
+          minHeightCompact == other.minHeightCompact &&
+          minHeightRegular == other.minHeightRegular &&
+          fullWidthOnCompact == other.fullWidthOnCompact;
+
+  @override
+  int get hashCode => Object.hash(borderRadius, padding, minHeightCompact,
+      minHeightRegular, fullWidthOnCompact);
+}
+
+/// Component-level theme overrides for [AdaptiveSidebar].
+@immutable
+class AdaptiveSidebarThemeData {
+  const AdaptiveSidebarThemeData({
+    this.style,
+    this.backgroundColor,
+    this.selectedColor,
+    this.indicatorColor,
+    this.width,
+    this.collapsedWidth,
+    this.border,
+    this.elevation,
+  });
+
+  final AdaptiveSidebarStyle? style;
+  final Color? backgroundColor;
+  final Color? selectedColor;
+  final Color? indicatorColor;
+  final double? width;
+  final double? collapsedWidth;
+  final Border? border;
+  final double? elevation;
+
+  AdaptiveSidebarThemeData copyWith({
+    AdaptiveSidebarStyle? style,
+    Color? backgroundColor,
+    Color? selectedColor,
+    Color? indicatorColor,
+    double? width,
+    double? collapsedWidth,
+    Border? border,
+    double? elevation,
+  }) {
+    return AdaptiveSidebarThemeData(
+      style: style ?? this.style,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      selectedColor: selectedColor ?? this.selectedColor,
+      indicatorColor: indicatorColor ?? this.indicatorColor,
+      width: width ?? this.width,
+      collapsedWidth: collapsedWidth ?? this.collapsedWidth,
+      border: border ?? this.border,
+      elevation: elevation ?? this.elevation,
+    );
+  }
+
+  static AdaptiveSidebarThemeData lerp(
+      AdaptiveSidebarThemeData? a, AdaptiveSidebarThemeData? b, double t) {
+    if (a == null && b == null) return const AdaptiveSidebarThemeData();
+    return AdaptiveSidebarThemeData(
+      style: t < 0.5 ? a?.style : b?.style,
+      backgroundColor: Color.lerp(a?.backgroundColor, b?.backgroundColor, t),
+      selectedColor: Color.lerp(a?.selectedColor, b?.selectedColor, t),
+      indicatorColor: Color.lerp(a?.indicatorColor, b?.indicatorColor, t),
+      width: a?.width != null && b?.width != null
+          ? a!.width! + (b!.width! - a.width!) * t
+          : (t < 0.5 ? a?.width : b?.width),
+      collapsedWidth: a?.collapsedWidth != null && b?.collapsedWidth != null
+          ? a!.collapsedWidth! + (b!.collapsedWidth! - a.collapsedWidth!) * t
+          : (t < 0.5 ? a?.collapsedWidth : b?.collapsedWidth),
+      border: Border.lerp(a?.border, b?.border, t),
+      elevation: a?.elevation != null && b?.elevation != null
+          ? a!.elevation! + (b!.elevation! - a.elevation!) * t
+          : (t < 0.5 ? a?.elevation : b?.elevation),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdaptiveSidebarThemeData &&
+          runtimeType == other.runtimeType &&
+          style == other.style &&
+          backgroundColor == other.backgroundColor &&
+          selectedColor == other.selectedColor &&
+          indicatorColor == other.indicatorColor &&
+          width == other.width &&
+          collapsedWidth == other.collapsedWidth &&
+          border == other.border &&
+          elevation == other.elevation;
+
+  @override
+  int get hashCode => Object.hash(style, backgroundColor, selectedColor,
+      indicatorColor, width, collapsedWidth, border, elevation);
+}
+
+/// Component-level theme overrides for [AdaptiveBottomNavigationBar].
+@immutable
+class AdaptiveBottomNavThemeData {
+  const AdaptiveBottomNavThemeData({
+    this.backgroundColor,
+    this.indicatorColor,
+    this.selectedColor,
+    this.unselectedColor,
+    this.height,
+    this.elevation,
+    this.labelBehavior,
+  });
+
+  final Color? backgroundColor;
+  final Color? indicatorColor;
+  final Color? selectedColor;
+  final Color? unselectedColor;
+  final double? height;
+  final double? elevation;
+  final AdaptiveBottomNavLabelBehavior? labelBehavior;
+
+  AdaptiveBottomNavThemeData copyWith({
+    Color? backgroundColor,
+    Color? indicatorColor,
+    Color? selectedColor,
+    Color? unselectedColor,
+    double? height,
+    double? elevation,
+    AdaptiveBottomNavLabelBehavior? labelBehavior,
+  }) {
+    return AdaptiveBottomNavThemeData(
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      indicatorColor: indicatorColor ?? this.indicatorColor,
+      selectedColor: selectedColor ?? this.selectedColor,
+      unselectedColor: unselectedColor ?? this.unselectedColor,
+      height: height ?? this.height,
+      elevation: elevation ?? this.elevation,
+      labelBehavior: labelBehavior ?? this.labelBehavior,
+    );
+  }
+
+  static AdaptiveBottomNavThemeData lerp(
+      AdaptiveBottomNavThemeData? a, AdaptiveBottomNavThemeData? b, double t) {
+    if (a == null && b == null) return const AdaptiveBottomNavThemeData();
+    return AdaptiveBottomNavThemeData(
+      backgroundColor: Color.lerp(a?.backgroundColor, b?.backgroundColor, t),
+      indicatorColor: Color.lerp(a?.indicatorColor, b?.indicatorColor, t),
+      selectedColor: Color.lerp(a?.selectedColor, b?.selectedColor, t),
+      unselectedColor: Color.lerp(a?.unselectedColor, b?.unselectedColor, t),
+      height: a?.height != null && b?.height != null
+          ? a!.height! + (b!.height! - a.height!) * t
+          : (t < 0.5 ? a?.height : b?.height),
+      elevation: a?.elevation != null && b?.elevation != null
+          ? a!.elevation! + (b!.elevation! - a.elevation!) * t
+          : (t < 0.5 ? a?.elevation : b?.elevation),
+      labelBehavior: t < 0.5 ? a?.labelBehavior : b?.labelBehavior,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdaptiveBottomNavThemeData &&
+          runtimeType == other.runtimeType &&
+          backgroundColor == other.backgroundColor &&
+          indicatorColor == other.indicatorColor &&
+          selectedColor == other.selectedColor &&
+          unselectedColor == other.unselectedColor &&
+          height == other.height &&
+          elevation == other.elevation &&
+          labelBehavior == other.labelBehavior;
+
+  @override
+  int get hashCode => Object.hash(backgroundColor, indicatorColor,
+      selectedColor, unselectedColor, height, elevation, labelBehavior);
+}
+
+/// Component-level theme overrides for [AdaptiveShimmer] and [AdaptiveSkeleton].
+@immutable
+class AdaptiveShimmerThemeData {
+  const AdaptiveShimmerThemeData({
+    this.baseColor,
+    this.highlightColor,
+    this.duration,
+  });
+
+  final Color? baseColor;
+  final Color? highlightColor;
+  final Duration? duration;
+
+  AdaptiveShimmerThemeData copyWith({
+    Color? baseColor,
+    Color? highlightColor,
+    Duration? duration,
+  }) {
+    return AdaptiveShimmerThemeData(
+      baseColor: baseColor ?? this.baseColor,
+      highlightColor: highlightColor ?? this.highlightColor,
+      duration: duration ?? this.duration,
+    );
+  }
+
+  static AdaptiveShimmerThemeData lerp(
+      AdaptiveShimmerThemeData? a, AdaptiveShimmerThemeData? b, double t) {
+    if (a == null && b == null) return const AdaptiveShimmerThemeData();
+    return AdaptiveShimmerThemeData(
+      baseColor: Color.lerp(a?.baseColor, b?.baseColor, t),
+      highlightColor: Color.lerp(a?.highlightColor, b?.highlightColor, t),
+      duration: t < 0.5 ? a?.duration : b?.duration,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdaptiveShimmerThemeData &&
+          runtimeType == other.runtimeType &&
+          baseColor == other.baseColor &&
+          highlightColor == other.highlightColor &&
+          duration == other.duration;
+
+  @override
+  int get hashCode => Object.hash(baseColor, highlightColor, duration);
+}
+
+/// Container bundling all component-specific adaptive themes.
+@immutable
+class AdaptiveComponentThemes {
+  const AdaptiveComponentThemes({
+    this.card = const AdaptiveCardThemeData(),
+    this.button = const AdaptiveButtonThemeData(),
+    this.sidebar = const AdaptiveSidebarThemeData(),
+    this.bottomNav = const AdaptiveBottomNavThemeData(),
+    this.shimmer = const AdaptiveShimmerThemeData(),
+  });
+
+  final AdaptiveCardThemeData card;
+  final AdaptiveButtonThemeData button;
+  final AdaptiveSidebarThemeData sidebar;
+  final AdaptiveBottomNavThemeData bottomNav;
+  final AdaptiveShimmerThemeData shimmer;
+
+  AdaptiveComponentThemes copyWith({
+    AdaptiveCardThemeData? card,
+    AdaptiveButtonThemeData? button,
+    AdaptiveSidebarThemeData? sidebar,
+    AdaptiveBottomNavThemeData? bottomNav,
+    AdaptiveShimmerThemeData? shimmer,
+  }) {
+    return AdaptiveComponentThemes(
+      card: card ?? this.card,
+      button: button ?? this.button,
+      sidebar: sidebar ?? this.sidebar,
+      bottomNav: bottomNav ?? this.bottomNav,
+      shimmer: shimmer ?? this.shimmer,
+    );
+  }
+
+  static AdaptiveComponentThemes lerp(
+      AdaptiveComponentThemes a, AdaptiveComponentThemes b, double t) {
+    return AdaptiveComponentThemes(
+      card: AdaptiveCardThemeData.lerp(a.card, b.card, t),
+      button: AdaptiveButtonThemeData.lerp(a.button, b.button, t),
+      sidebar: AdaptiveSidebarThemeData.lerp(a.sidebar, b.sidebar, t),
+      bottomNav: AdaptiveBottomNavThemeData.lerp(a.bottomNav, b.bottomNav, t),
+      shimmer: AdaptiveShimmerThemeData.lerp(a.shimmer, b.shimmer, t),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdaptiveComponentThemes &&
+          runtimeType == other.runtimeType &&
+          card == other.card &&
+          button == other.button &&
+          sidebar == other.sidebar &&
+          bottomNav == other.bottomNav &&
+          shimmer == other.shimmer;
+
+  @override
+  int get hashCode => Object.hash(card, button, sidebar, bottomNav, shimmer);
+}

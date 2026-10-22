@@ -5,6 +5,7 @@ import '../core/adaptive_config.dart';
 import '../core/adaptive_context.dart';
 import '../core/adaptive_layout_data.dart';
 import '../core/adaptive_scope.dart';
+import '../theme/adaptive_theme.dart';
 import '../theme/adaptive_theme_data.dart';
 
 /// Extension methods on [BuildContext] providing streamlined access to adaptive layout data and tokens.
@@ -37,7 +38,7 @@ extension AdaptiveContextExtensions on BuildContext {
   double get availableHeight => adaptiveLayout.availableHeight;
 
   /// Current [AdaptiveThemeData] design tokens.
-  AdaptiveThemeData get adaptiveTheme => AdaptiveScope.themeOf(this);
+  AdaptiveThemeData get adaptiveTheme => AdaptiveTheme.of(this);
 
   /// Current [AdaptiveConfig] global settings.
   AdaptiveConfig get adaptiveConfig => AdaptiveScope.configOf(this);

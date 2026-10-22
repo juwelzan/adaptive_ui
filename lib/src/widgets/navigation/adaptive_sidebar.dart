@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../core/adaptive_breakpoints.dart';
 import '../../core/adaptive_layout_data.dart';
 import '../../theme/adaptive_motion.dart';
+import '../../theme/adaptive_theme.dart';
+import '../../theme/adaptive_theme_data.dart';
 import '../adaptive_builder.dart';
 import 'adaptive_sidebar_models.dart';
 import 'adaptive_sidebar_styles.dart';
@@ -201,10 +203,16 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
             ? Duration.zero
             : (widget.animationDuration ?? AdaptiveMotion.standard);
 
+        final AdaptiveThemeData theme = AdaptiveTheme.of(ctx);
+        final AdaptiveSidebarStyle effectiveStyle =
+            widget.style != AdaptiveSidebarStyle.classicModern
+                ? widget.style
+                : (theme.sidebarTheme.style ?? widget.style);
+
         final AdaptiveSidebarStyleSpec styleSpec =
             AdaptiveSidebarStyleSpec.resolve(
           context: ctx,
-          style: widget.style,
+          style: effectiveStyle,
           customBackgroundColor: widget.backgroundColor,
           customSelectedColor: widget.selectedColor,
           customIndicatorColor: widget.indicatorColor,
