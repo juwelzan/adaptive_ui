@@ -108,6 +108,7 @@ class AdaptiveSkeleton extends StatefulWidget {
 class _AdaptiveSkeletonState extends State<AdaptiveSkeleton>
     with SingleTickerProviderStateMixin {
   AnimationController? _controller;
+  CurvedAnimation? _curvedAnimation;
   Animation<double>? _animation;
 
   @override
@@ -120,19 +121,63 @@ class _AdaptiveSkeletonState extends State<AdaptiveSkeleton>
         duration: const Duration(milliseconds: 1200),
       );
 
-      _animation = Tween<double>(begin: 0.35, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _controller!,
-          curve: Curves.easeInOut,
-        ),
+      _curvedAnimation = CurvedAnimation(
+        parent: _controller!,
+        curve: Curves.easeInOut,
       );
 
-      _controller!.repeat(reverse: true);
+      _animation =
+          Tween<double>(begin: 0.35, end: 1.0).animate(_curvedAnimation!);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimationState();
+  }
+
+  @override
+  void didUpdateWidget(covariant AdaptiveSkeleton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.loading != null && _controller != null) {
+      _curvedAnimation?.dispose();
+      _curvedAnimation = null;
+      _controller?.dispose();
+      _controller = null;
+      _animation = null;
+    } else if (widget.loading == null && _controller == null) {
+      _controller = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1200),
+      );
+      _curvedAnimation = CurvedAnimation(
+        parent: _controller!,
+        curve: Curves.easeInOut,
+      );
+      _animation =
+          Tween<double>(begin: 0.35, end: 1.0).animate(_curvedAnimation!);
+      _syncAnimationState();
+    }
+  }
+
+  void _syncAnimationState() {
+    if (_controller == null) return;
+    final bool reducedMotion = AdaptiveMotion.isReducedMotion(context);
+    if (reducedMotion) {
+      if (_controller!.isAnimating) {
+        _controller!.stop();
+      }
+    } else {
+      if (!_controller!.isAnimating) {
+        _controller!.repeat(reverse: true);
+      }
     }
   }
 
   @override
   void dispose() {
+    _curvedAnimation?.dispose();
     _controller?.dispose();
     super.dispose();
   }

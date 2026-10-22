@@ -532,7 +532,8 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                               decoration: BoxDecoration(
                                 color: switch (_bottomNavStyle) {
                                   AdaptiveBottomNavigationStyle.classicCurve ||
-                                  AdaptiveBottomNavigationStyle.floatingIsland ||
+                                  AdaptiveBottomNavigationStyle
+                                      .floatingIsland ||
                                   AdaptiveBottomNavigationStyle.wave ||
                                   AdaptiveBottomNavigationStyle.pillMotion ||
                                   AdaptiveBottomNavigationStyle.dock ||
@@ -546,7 +547,8 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                               child: Text(
                                 switch (_bottomNavStyle) {
                                   AdaptiveBottomNavigationStyle.classicCurve ||
-                                  AdaptiveBottomNavigationStyle.floatingIsland ||
+                                  AdaptiveBottomNavigationStyle
+                                      .floatingIsland ||
                                   AdaptiveBottomNavigationStyle.wave ||
                                   AdaptiveBottomNavigationStyle.pillMotion ||
                                   AdaptiveBottomNavigationStyle.dock ||
@@ -558,8 +560,10 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                                   fontSize: 11.0,
                                   fontWeight: FontWeight.bold,
                                   color: switch (_bottomNavStyle) {
-                                    AdaptiveBottomNavigationStyle.classicCurve ||
-                                    AdaptiveBottomNavigationStyle.floatingIsland ||
+                                    AdaptiveBottomNavigationStyle
+                                        .classicCurve ||
+                                    AdaptiveBottomNavigationStyle
+                                        .floatingIsland ||
                                     AdaptiveBottomNavigationStyle.wave ||
                                     AdaptiveBottomNavigationStyle.pillMotion ||
                                     AdaptiveBottomNavigationStyle.dock ||
@@ -1048,8 +1052,8 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                       decoration: BoxDecoration(
                         border: Border.symmetric(
                           vertical: BorderSide(
-                            color:
-                                previewTheme.dividerColor.withValues(alpha: 0.5),
+                            color: previewTheme.dividerColor
+                                .withValues(alpha: 0.5),
                             width: 2.0,
                           ),
                         ),

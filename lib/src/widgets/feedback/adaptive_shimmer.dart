@@ -57,9 +57,12 @@ class _AdaptiveShimmerState extends State<AdaptiveShimmer>
       vsync: this,
       duration: widget.duration,
     );
-    if (widget.enabled) {
-      _controller.repeat();
-    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimationState();
   }
 
   @override
@@ -68,12 +71,19 @@ class _AdaptiveShimmerState extends State<AdaptiveShimmer>
     if (oldWidget.duration != widget.duration) {
       _controller.duration = widget.duration;
     }
-    if (widget.enabled != oldWidget.enabled) {
-      if (widget.enabled) {
-        _controller.repeat();
-      } else {
+    _syncAnimationState();
+  }
+
+  void _syncAnimationState() {
+    final bool reducedMotion = AdaptiveMotion.isReducedMotion(context);
+    if (!widget.enabled || reducedMotion) {
+      if (_controller.isAnimating) {
         _controller.stop();
         _controller.reset();
+      }
+    } else {
+      if (!_controller.isAnimating) {
+        _controller.repeat();
       }
     }
   }

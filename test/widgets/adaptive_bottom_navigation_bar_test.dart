@@ -414,7 +414,9 @@ void main() {
     });
 
     group('AdaptiveBottomNavPainter and Low-RAM Optimizations', () {
-      test('AdaptiveBottomNavPainter shouldRepaint returns false when properties are identical', () {
+      test(
+          'AdaptiveBottomNavPainter shouldRepaint returns false when properties are identical',
+          () {
         final animation = AlwaysStoppedAnimation(1.0);
         final painter1 = AdaptiveBottomNavPainter(
           repaint: animation,
@@ -447,7 +449,9 @@ void main() {
         expect(painter1.shouldRepaint(painter2), isFalse);
       });
 
-      test('AdaptiveBottomNavPainter shouldRepaint returns true when properties change', () {
+      test(
+          'AdaptiveBottomNavPainter shouldRepaint returns true when properties change',
+          () {
         final animation = AlwaysStoppedAnimation(1.0);
         final basePainter = AdaptiveBottomNavPainter(
           repaint: animation,
@@ -574,7 +578,9 @@ void main() {
         AdaptiveBottomNavigationStyle.dock,
         AdaptiveBottomNavigationStyle.minimalLine,
       ]) {
-        testWidgets('renders CustomPainter style ${style.name} with AdaptiveBottomNavPainter', (tester) async {
+        testWidgets(
+            'renders CustomPainter style ${style.name} with AdaptiveBottomNavPainter',
+            (tester) async {
           await tester.pumpAdaptive(
             size: const Size(390.0, 844.0),
             child: AdaptiveBottomNavigationBar(
@@ -597,7 +603,8 @@ void main() {
         });
       }
 
-      testWidgets('rapid repeated taps do not throw or leak animation state', (tester) async {
+      testWidgets('rapid repeated taps do not throw or leak animation state',
+          (tester) async {
         int selected = 0;
         await tester.pumpAdaptive(
           size: const Size(390.0, 844.0),
@@ -629,7 +636,8 @@ void main() {
         expect(tester.takeException(), isNull);
       });
 
-      testWidgets('respects reduced-motion preference without animation delay', (tester) async {
+      testWidgets('respects reduced-motion preference without animation delay',
+          (tester) async {
         int selected = 0;
         await tester.pumpWidget(
           MaterialApp(
@@ -659,7 +667,8 @@ void main() {
         expect(selected, equals(1));
       });
 
-      testWidgets('cleans up animation controllers cleanly upon unmount', (tester) async {
+      testWidgets('cleans up animation controllers cleanly upon unmount',
+          (tester) async {
         bool showBar = true;
         await tester.pumpAdaptive(
           size: const Size(390.0, 844.0),
@@ -691,7 +700,8 @@ void main() {
         expect(tester.takeException(), isNull);
       });
 
-      testWidgets('renders accurately under RTL layout directionality', (tester) async {
+      testWidgets('renders accurately under RTL layout directionality',
+          (tester) async {
         await tester.pumpAdaptive(
           size: const Size(390.0, 844.0),
           child: Directionality(
@@ -708,13 +718,16 @@ void main() {
           (w) => w is CustomPaint && w.painter is AdaptiveBottomNavPainter,
         );
         expect(customPaintFinder, findsOneWidget);
-        final painter = (tester.widget<CustomPaint>(customPaintFinder)).painter as AdaptiveBottomNavPainter;
+        final painter = (tester.widget<CustomPaint>(customPaintFinder)).painter
+            as AdaptiveBottomNavPainter;
         expect(painter.textDirection, equals(TextDirection.rtl));
       });
 
-      testWidgets('supports developer-supplied customPainter hook', (tester) async {
+      testWidgets('supports developer-supplied customPainter hook',
+          (tester) async {
         bool customPainterCalled = false;
-        final testPainter = _TestCustomPainter(() => customPainterCalled = true);
+        final testPainter =
+            _TestCustomPainter(() => customPainterCalled = true);
 
         await tester.pumpAdaptive(
           size: const Size(390.0, 844.0),

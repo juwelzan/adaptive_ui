@@ -190,7 +190,8 @@ class AdaptiveBottomNavigationBar extends StatefulWidget {
       _AdaptiveBottomNavigationBarState();
 }
 
-class _AdaptiveBottomNavigationBarState extends State<AdaptiveBottomNavigationBar>
+class _AdaptiveBottomNavigationBarState
+    extends State<AdaptiveBottomNavigationBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late CurvedAnimation _curvedAnimation;
@@ -277,7 +278,8 @@ class _AdaptiveBottomNavigationBarState extends State<AdaptiveBottomNavigationBa
       AdaptiveBottomNavigationStyle.wave ||
       AdaptiveBottomNavigationStyle.pillMotion ||
       AdaptiveBottomNavigationStyle.dock ||
-      AdaptiveBottomNavigationStyle.minimalLine => true,
+      AdaptiveBottomNavigationStyle.minimalLine =>
+        true,
       _ => false,
     };
   }
@@ -500,8 +502,9 @@ class _AdaptiveBottomNavigationBarState extends State<AdaptiveBottomNavigationBa
     final int effectiveMaxVisible =
         widget.maxVisibleItems ?? widget.config?.maxVisibleItems ?? 5;
 
-    final Widget effectiveMoreIcon =
-        widget.moreIcon ?? widget.config?.moreIcon ?? const Icon(Icons.more_horiz);
+    final Widget effectiveMoreIcon = widget.moreIcon ??
+        widget.config?.moreIcon ??
+        const Icon(Icons.more_horiz);
 
     final String effectiveMoreLabel =
         widget.moreLabel ?? widget.config?.moreLabel ?? 'More';
@@ -603,7 +606,8 @@ class _AdaptiveBottomNavigationBarState extends State<AdaptiveBottomNavigationBa
           final bool isMoreSelected = widget.selectedIndex >= primaryCount;
           visibleCount = primaryCount + 1;
           effectiveIndex = isMoreSelected ? primaryCount : widget.selectedIndex;
-          effectivePrev = _previousIndex >= primaryCount ? primaryCount : _previousIndex;
+          effectivePrev =
+              _previousIndex >= primaryCount ? primaryCount : _previousIndex;
 
           barItems = Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -708,8 +712,8 @@ class _AdaptiveBottomNavigationBarState extends State<AdaptiveBottomNavigationBa
                     child: CustomPaint(
                       painter: AdaptiveBottomNavPainter(
                         repaint: _curvedAnimation,
+                        animation: _curvedAnimation,
                         style: effectiveStyle,
-                        progress: _curvedAnimation.value,
                         previousIndex: effectivePrev,
                         currentIndex: effectiveIndex,
                         itemCount: visibleCount,
@@ -924,7 +928,8 @@ class AdaptiveBottomNavPainter extends CustomPainter {
   AdaptiveBottomNavPainter({
     required Listenable repaint,
     required this.style,
-    required this.progress,
+    double? progress,
+    Animation<double>? animation,
     required this.previousIndex,
     required this.currentIndex,
     required this.itemCount,
@@ -934,10 +939,18 @@ class AdaptiveBottomNavPainter extends CustomPainter {
     required this.backgroundColor,
     required this.textDirection,
     this.customPainter,
-  }) : super(repaint: repaint);
+  })  : _explicitProgress = progress,
+        animation =
+            animation ?? (repaint is Animation<double> ? repaint : null),
+        super(repaint: repaint);
 
   final AdaptiveBottomNavigationStyle style;
-  final double progress;
+  final Animation<double>? animation;
+  final double? _explicitProgress;
+
+  double get progress =>
+      _explicitProgress ?? (animation != null ? animation!.value : 1.0);
+
   final int previousIndex;
   final int currentIndex;
   final int itemCount;

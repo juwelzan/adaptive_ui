@@ -12,6 +12,7 @@ It provides an end-to-end multi-platform layout engine paired with:
 5. Composable implicit animation container (`AdaptiveContainer` with hover, press, decoration, and constraint animations).
 6. GPU-accelerated Shimmer & Skeleton Loading suite (`AdaptiveShimmer`, `AdaptiveSkeleton`, `AdaptiveSkeletonText`, `AdaptiveSkeletonContainer`, and `AdaptiveSkeletonList`).
 7. Production-grade Centralized Design System & Unified Theme Engine (`AdaptiveThemeData`, `AdaptiveTheme`, `AnimatedAdaptiveTheme`, semantic `AdaptiveColors`, `AdaptiveTypography`, `AdaptiveElevations`, `AdaptiveDensity`, and granular `AdaptiveComponentThemes`).
+8. Adaptive Performance Engine & Intelligent Rendering (Phase 8): Zero-allocation tickers, native paragraph release (`TextPainter.dispose()`), complete ticker halting under reduced motion, state preservation across navigation modes (`AdaptiveScaffold` `_bodyKey`), and render-driven custom painter acceleration for low-RAM (500 MB–1 GB) devices.
 
 ---
 
@@ -309,6 +310,7 @@ adaptive_ui/
 | **AdaptiveBottomNavigationBar** | `adaptive_bottom_navigation_bar_test.dart` | 43 | Pass | Destination rendering, selection tap callback, 12 design styles (`classicCurve`, `floatingIsland`, `wave`, `pillMotion`, `dock`, `minimalLine`, `classic`, `floating`, `pill`, `materialExpressive`, `minimal`, `glass`), CustomPainter acceleration, `AdaptiveBottomNavPainter.shouldRepaint` property equality validation, zero allocation static paint/path reuse, rapid repeated tap redirection and leak-free controller safety, reduced motion immediate bypass, clean unmount controller disposal, RTL layout mirror geometry, developer-supplied `customPainter` hook, pill active capsule, glass BackdropFilter, floating margin/elevation, minimal flat underline, custom colors, height, indicator size, destination counts (1, 2, 5, 10+), scroll and menu overflow sheets, narrow constraints (300dp) with 2.0x text scaling, touch target $\ge 48\text{dp}$, safe area padding. |
 | **AdaptiveContainer Motion** | `adaptive_container_animation_test.dart` | 4 | Pass | Animated property transitions (decoration, radii, padding, opacity), state preservation of stateful children, tap/hover callbacks, reduced-motion bypass. |
 | **AdaptiveShimmer & Skeletons** | `adaptive_shimmer_skeleton_test.dart` | 6 | Pass | GPU gradient sweep, conditional `AdaptiveSkeleton` switcher toggles, `AdaptiveSkeletonText` multi-line layout, `AdaptiveSkeletonList` item count, reduced-motion handling. |
+| **Phase 8 Performance Engine & Rendering** | `adaptive_performance_engine_test.dart` | 10 | Pass | Shimmer ticker halted under reduced motion & dynamic toggle, Skeleton CurvedAnimation disposal & ticker stop, AdaptiveText native paragraph release via `TextPainter.dispose()` & static child reuse in `AnimatedBuilder`, `AdaptiveScaffold` body state preservation across compact-to-expanded viewport resize via `GlobalKey` (`_bodyKey`), `AdaptiveBottomNavPainter` dynamic progress resolution from `animation.value` with zero widget rebuilds, `shouldRepaint` property equality, and 50-frame stress painting without leaks. |
 | **Showcase Example App** | `example/test/widget_test.dart` | 12 | Pass | 8-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, AdaptiveSidebar Studio tab with Phase 7 bottom nav styles and submenu controls, Phase 5 Theme Studio tab, and Phase 6 Forms & Input System showcase tab. |
 
 ---
@@ -317,8 +319,8 @@ adaptive_ui/
 
 - **Static Analysis**: `flutter analyze . example` passing with **0 issues**.
 - **Code Formatting**: `dart format . example` passing 100% cleanly across all Dart files.
-- **Automated Tests**: **287 tests passing** across workspace:
-  - Package Tests: **275 tests passing** (up from 256).
+- **Automated Tests**: **297 tests passing** across workspace:
+  - Package Tests: **285 tests passing** (up from 275).
   - Example App Tests: **12 tests passing**.
 
 ---

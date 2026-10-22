@@ -99,10 +99,14 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
           _submenuController!.duration = widget.duration;
         }
         if (widget.curve != oldWidget.curve) {
-          _submenuAnimation = CurvedAnimation(
-            parent: _submenuController!,
-            curve: widget.curve,
-          );
+          if (_submenuAnimation is CurvedAnimation) {
+            (_submenuAnimation as CurvedAnimation).curve = widget.curve;
+          } else {
+            _submenuAnimation = CurvedAnimation(
+              parent: _submenuController!,
+              curve: widget.curve,
+            );
+          }
         }
       }
 
@@ -117,6 +121,9 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
         }
       }
     } else {
+      if (_submenuAnimation is CurvedAnimation) {
+        (_submenuAnimation as CurvedAnimation).dispose();
+      }
       _submenuController?.dispose();
       _submenuController = null;
       _submenuAnimation = null;
@@ -138,6 +145,9 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
 
   @override
   void dispose() {
+    if (_submenuAnimation is CurvedAnimation) {
+      (_submenuAnimation as CurvedAnimation).dispose();
+    }
     _submenuController?.dispose();
     super.dispose();
   }
@@ -418,7 +428,7 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
     }
     return AnimatedBuilder(
       animation: animation,
-      builder: (BuildContext context, _) {
+      builder: (BuildContext context, Widget? cachedChild) {
         final bool isOffstage = animation.value == 0.0;
         final Widget transitionChild;
 
@@ -428,7 +438,7 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
             transitionChild = SizeTransition(
               sizeFactor: animation,
               alignment: Alignment.topCenter,
-              child: child,
+              child: cachedChild,
             );
             break;
 
@@ -438,7 +448,7 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
               alignment: Alignment.topCenter,
               child: FadeTransition(
                 opacity: animation,
-                child: child,
+                child: cachedChild,
               ),
             );
             break;
@@ -452,7 +462,7 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
                   begin: const Offset(0.0, -0.15),
                   end: Offset.zero,
                 ).animate(animation),
-                child: child,
+                child: cachedChild,
               ),
             );
             break;
@@ -468,7 +478,7 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
                     begin: const Offset(0.0, -0.1),
                     end: Offset.zero,
                   ).animate(animation),
-                  child: child,
+                  child: cachedChild,
                 ),
               ),
             );
@@ -483,6 +493,7 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
           ),
         );
       },
+      child: child,
     );
   }
 }

@@ -198,24 +198,25 @@ class _AdaptiveContainerState extends State<AdaptiveContainer> {
             current = Padding(padding: resolvedPadding, child: current);
           }
 
-          if (effectiveDecoration != null ||
-              widget.foregroundDecoration != null ||
-              widget.clipBehavior != Clip.none) {
+          if (widget.foregroundDecoration != null) {
             current = DecoratedBox(
-              decoration: effectiveDecoration ?? const BoxDecoration(),
-              position: DecorationPosition.background,
-              child: widget.foregroundDecoration != null
-                  ? DecoratedBox(
-                      decoration: widget.foregroundDecoration!,
-                      position: DecorationPosition.foreground,
-                      child: current,
-                    )
-                  : current,
+              decoration: widget.foregroundDecoration!,
+              position: DecorationPosition.foreground,
+              child: current,
             );
-            if (widget.clipBehavior != Clip.none) {
-              current =
-                  ClipRect(clipBehavior: widget.clipBehavior, child: current);
-            }
+          }
+
+          if (effectiveDecoration != null) {
+            current = DecoratedBox(
+              decoration: effectiveDecoration,
+              position: DecorationPosition.background,
+              child: current,
+            );
+          }
+
+          if (widget.clipBehavior != Clip.none) {
+            current =
+                ClipRect(clipBehavior: widget.clipBehavior, child: current);
           }
 
           current = ConstrainedBox(constraints: constraints, child: current);

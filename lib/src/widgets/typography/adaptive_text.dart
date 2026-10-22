@@ -418,10 +418,27 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AdaptiveMotion.isReducedMotion(context)) {
+      if (_controller != null && _controller!.isAnimating) {
+        _controller!.stop();
+      }
+      _delayTimer?.cancel();
+      _delayTimer = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bool reducedMotion = AdaptiveMotion.isReducedMotion(context);
 
     if (reducedMotion) {
+      if (_controller != null && _controller!.isAnimating) {
+        _controller!.stop();
+      }
+      _delayTimer?.cancel();
+      _delayTimer = null;
       return Text(
         widget.text,
         style: widget.style,
@@ -444,6 +461,8 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
 
           final double textWidth = painter.width;
           final double textHeight = painter.height;
+          painter.dispose();
+
           final double containerWidth =
               constraints.hasBoundedWidth ? constraints.maxWidth : textWidth;
 
@@ -484,27 +503,28 @@ class _AnimatedAdaptiveTextState extends State<_AnimatedAdaptiveText>
                       maxHeight: textHeight,
                       child: Transform.translate(
                         offset: Offset(-offset, 0.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              widget.text,
-                              style: widget.style,
-                              maxLines: 1,
-                              softWrap: false,
-                            ),
-                            SizedBox(width: widget.marqueeSpacing),
-                            Text(
-                              widget.text,
-                              style: widget.style,
-                              maxLines: 1,
-                              softWrap: false,
-                            ),
-                          ],
-                        ),
+                        child: child,
                       ),
                     );
                   },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.text,
+                        style: widget.style,
+                        maxLines: 1,
+                        softWrap: false,
+                      ),
+                      SizedBox(width: widget.marqueeSpacing),
+                      Text(
+                        widget.text,
+                        style: widget.style,
+                        maxLines: 1,
+                        softWrap: false,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

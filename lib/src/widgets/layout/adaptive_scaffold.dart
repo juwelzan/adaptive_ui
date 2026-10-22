@@ -53,7 +53,7 @@ class AdaptiveNavigationDestination {
 /// A responsive [Scaffold] that dynamically presents a bottom [NavigationBar]
 /// on compact mobile viewports, and switches to a side [NavigationRail] on tablets
 /// and desktop screens.
-class AdaptiveScaffold extends StatelessWidget {
+class AdaptiveScaffold extends StatefulWidget {
   const AdaptiveScaffold({
     super.key,
     this.appBar,
@@ -132,29 +132,37 @@ class AdaptiveScaffold extends StatelessWidget {
   /// Defaults to [Breakpoint.expanded] (840dp).
   final Breakpoint extendedBreakpoint;
 
+  @override
+  State<AdaptiveScaffold> createState() => _AdaptiveScaffoldState();
+}
+
+class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
+  final GlobalKey _bodyKey =
+      GlobalKey(debugLabel: 'adaptive_scaffold_body_key');
+
   AdaptiveNavigationType _resolveType(AdaptiveLayoutData layout) {
-    if (navigationType != AdaptiveNavigationType.auto) {
-      if ((navigationType == AdaptiveNavigationType.extendedRail ||
-              navigationType == AdaptiveNavigationType.rail) &&
+    if (widget.navigationType != AdaptiveNavigationType.auto) {
+      if ((widget.navigationType == AdaptiveNavigationType.extendedRail ||
+              widget.navigationType == AdaptiveNavigationType.rail) &&
           layout.availableWidth > 0 &&
           layout.availableWidth <
-              (navigationType == AdaptiveNavigationType.extendedRail
+              (widget.navigationType == AdaptiveNavigationType.extendedRail
                   ? 360.0
                   : 200.0)) {
         return AdaptiveNavigationType.bottom;
       }
-      return navigationType;
+      return widget.navigationType;
     }
-    if (destinations.isEmpty) {
+    if (widget.destinations.isEmpty) {
       return AdaptiveNavigationType.none;
     }
     // Prevent starving body width when window is small or during resize
     if (layout.availableWidth >= 840.0 &&
-        layout.containerBreakpoint.index >= extendedBreakpoint.index) {
+        layout.containerBreakpoint.index >= widget.extendedBreakpoint.index) {
       return AdaptiveNavigationType.extendedRail;
     }
     if (layout.availableWidth >= 500.0 &&
-        layout.containerBreakpoint.index >= railBreakpoint.index) {
+        layout.containerBreakpoint.index >= widget.railBreakpoint.index) {
       return AdaptiveNavigationType.rail;
     }
     return AdaptiveNavigationType.bottom;
@@ -165,18 +173,20 @@ class AdaptiveScaffold extends StatelessWidget {
     return AdaptiveBuilder(
       builder: (BuildContext context, AdaptiveLayoutData layout) {
         final AdaptiveNavigationType resolvedType = _resolveType(layout);
+        final Widget bodyWidget =
+            KeyedSubtree(key: _bodyKey, child: widget.body);
 
         switch (resolvedType) {
           case AdaptiveNavigationType.auto:
           case AdaptiveNavigationType.bottom:
             return Scaffold(
-              appBar: appBar,
-              body: body,
+              appBar: widget.appBar,
+              body: bodyWidget,
               bottomNavigationBar: NavigationBar(
-                selectedIndex: selectedIndex,
-                onDestinationSelected: onDestinationSelected,
+                selectedIndex: widget.selectedIndex,
+                onDestinationSelected: widget.onDestinationSelected,
                 destinations:
-                    destinations.map((AdaptiveNavigationDestination d) {
+                    widget.destinations.map((AdaptiveNavigationDestination d) {
                   return NavigationDestination(
                     icon: d.icon,
                     selectedIcon: d.selectedIcon,
@@ -185,13 +195,13 @@ class AdaptiveScaffold extends StatelessWidget {
                   );
                 }).toList(),
               ),
-              floatingActionButton: floatingActionButton,
-              floatingActionButtonLocation: floatingActionButtonLocation,
-              drawer: drawer,
-              endDrawer: endDrawer,
-              bottomSheet: bottomSheet,
-              backgroundColor: backgroundColor,
-              resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+              floatingActionButton: widget.floatingActionButton,
+              floatingActionButtonLocation: widget.floatingActionButtonLocation,
+              drawer: widget.drawer,
+              endDrawer: widget.endDrawer,
+              bottomSheet: widget.bottomSheet,
+              backgroundColor: widget.backgroundColor,
+              resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
             );
 
           case AdaptiveNavigationType.rail:
@@ -200,16 +210,16 @@ class AdaptiveScaffold extends StatelessWidget {
                 resolvedType == AdaptiveNavigationType.extendedRail;
 
             return Scaffold(
-              appBar: appBar,
+              appBar: widget.appBar,
               body: Row(
                 children: <Widget>[
                   NavigationRail(
                     extended: isExtended,
-                    selectedIndex: selectedIndex,
-                    onDestinationSelected: onDestinationSelected,
-                    leading: railHeader,
-                    trailing: railTrailing,
-                    destinations: destinations.map(
+                    selectedIndex: widget.selectedIndex,
+                    onDestinationSelected: widget.onDestinationSelected,
+                    leading: widget.railHeader,
+                    trailing: widget.railTrailing,
+                    destinations: widget.destinations.map(
                       (AdaptiveNavigationDestination d) {
                         return NavigationRailDestination(
                           icon: d.icon,
@@ -219,50 +229,45 @@ class AdaptiveScaffold extends StatelessWidget {
                       },
                     ).toList(),
                   ),
-                  if (includeRailDivider)
+                  if (widget.includeRailDivider)
                     const VerticalDivider(width: 1, thickness: 1),
                   Expanded(
-                    child: AdaptiveBuilder(
-                      builder:
-                          (BuildContext ctx, AdaptiveLayoutData bodyLayout) {
-                        return body;
-                      },
-                    ),
+                    child: bodyWidget,
                   ),
                 ],
               ),
-              floatingActionButton: floatingActionButton,
-              floatingActionButtonLocation: floatingActionButtonLocation,
-              drawer: drawer,
-              endDrawer: endDrawer,
-              bottomSheet: bottomSheet,
-              backgroundColor: backgroundColor,
-              resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+              floatingActionButton: widget.floatingActionButton,
+              floatingActionButtonLocation: widget.floatingActionButtonLocation,
+              drawer: widget.drawer,
+              endDrawer: widget.endDrawer,
+              bottomSheet: widget.bottomSheet,
+              backgroundColor: widget.backgroundColor,
+              resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
             );
 
           case AdaptiveNavigationType.drawer:
             return Scaffold(
-              appBar: appBar,
-              body: body,
-              drawer: drawer ??
+              appBar: widget.appBar,
+              body: bodyWidget,
+              drawer: widget.drawer ??
                   Drawer(
                     child: ListView(
                       padding: EdgeInsets.zero,
                       children: <Widget>[
-                        if (railHeader != null) railHeader!,
-                        ...destinations.asMap().entries.map(
+                        if (widget.railHeader != null) widget.railHeader!,
+                        ...widget.destinations.asMap().entries.map(
                           (MapEntry<int, AdaptiveNavigationDestination> entry) {
                             final int index = entry.key;
                             final AdaptiveNavigationDestination d = entry.value;
                             return ListTile(
-                              leading: index == selectedIndex
+                              leading: index == widget.selectedIndex
                                   ? (d.selectedIcon ?? d.icon)
                                   : d.icon,
                               title: Text(d.label),
-                              selected: index == selectedIndex,
+                              selected: index == widget.selectedIndex,
                               onTap: () {
                                 Navigator.of(context).maybePop();
-                                onDestinationSelected?.call(index);
+                                widget.onDestinationSelected?.call(index);
                               },
                             );
                           },
@@ -270,25 +275,25 @@ class AdaptiveScaffold extends StatelessWidget {
                       ],
                     ),
                   ),
-              endDrawer: endDrawer,
-              floatingActionButton: floatingActionButton,
-              floatingActionButtonLocation: floatingActionButtonLocation,
-              bottomSheet: bottomSheet,
-              backgroundColor: backgroundColor,
-              resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+              endDrawer: widget.endDrawer,
+              floatingActionButton: widget.floatingActionButton,
+              floatingActionButtonLocation: widget.floatingActionButtonLocation,
+              bottomSheet: widget.bottomSheet,
+              backgroundColor: widget.backgroundColor,
+              resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
             );
 
           case AdaptiveNavigationType.none:
             return Scaffold(
-              appBar: appBar,
-              body: body,
-              drawer: drawer,
-              endDrawer: endDrawer,
-              floatingActionButton: floatingActionButton,
-              floatingActionButtonLocation: floatingActionButtonLocation,
-              bottomSheet: bottomSheet,
-              backgroundColor: backgroundColor,
-              resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+              appBar: widget.appBar,
+              body: bodyWidget,
+              drawer: widget.drawer,
+              endDrawer: widget.endDrawer,
+              floatingActionButton: widget.floatingActionButton,
+              floatingActionButtonLocation: widget.floatingActionButtonLocation,
+              bottomSheet: widget.bottomSheet,
+              backgroundColor: widget.backgroundColor,
+              resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
             );
         }
       },
