@@ -764,5 +764,89 @@ void main() {
         expect(tester.takeException(), isNull);
       }
     });
+
+    // 16. WrapSlot protects against RenderFlex overflow in collapsed rail mode
+    testWidgets(
+        'prevents RenderFlex overflow when header/footer contains wide content in collapsed rail mode',
+        (tester) async {
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: AdaptiveSidebar(
+          isExpanded: false,
+          collapsedWidth: 72.0,
+          header: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 14.0,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 32.0,
+                  height: 32.0,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 10.0),
+                const Expanded(
+                  child: Text('Acme Cloud Wide Title That Might Overflow'),
+                ),
+              ],
+            ),
+          ),
+          footer: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                const CircleAvatar(radius: 16.0),
+                const SizedBox(width: 10.0),
+                const Expanded(
+                  child: Text('Jane Doe Footer Text'),
+                ),
+              ],
+            ),
+          ),
+          items: sampleItems,
+          selectedIndex: 0,
+        ),
+      );
+
+      // Verify no RenderFlex exception occurred
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AdaptiveSidebar), findsOneWidget);
+    });
+
+    // 17. onExpansionChanged callback
+    testWidgets('invokes onExpansionChanged when rail toggle button is clicked',
+        (tester) async {
+      bool? latestExpanded;
+
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: AdaptiveSidebar(
+          enableRailToggle: true,
+          isExpanded: true,
+          onExpansionChanged: (v) {
+            latestExpanded = v;
+          },
+          items: sampleItems,
+          selectedIndex: 0,
+        ),
+      );
+
+      final Finder toggleButton =
+          find.byKey(const Key('adaptive_sidebar_rail_toggle'));
+      expect(toggleButton, findsOneWidget);
+
+      await tester.tap(toggleButton);
+      await tester.pumpAndSettle();
+
+      expect(latestExpanded, isFalse);
+
+      await tester.tap(toggleButton);
+      await tester.pumpAndSettle();
+
+      expect(latestExpanded, isTrue);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

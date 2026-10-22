@@ -756,6 +756,7 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
         vertical: 14.0,
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: 32.0,
@@ -793,6 +794,7 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
     final footerWidget = Padding(
       padding: const EdgeInsets.all(12.0),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           const CircleAvatar(
             radius: 16.0,
@@ -845,6 +847,12 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
         expansionMode: _expansionMode,
         isExpanded: _forceExpanded,
         enableRailToggle: _enableRailToggle,
+        onExpansionChanged: (v) {
+          setState(() {
+            _forceExpanded = v;
+            _lastAction = 'Sidebar ${v ? 'expanded' : 'collapsed'}';
+          });
+        },
         mobileBreakpoint: _mobileBreakpoint,
         selectedIndex: _selectedDestination,
         onItemSelected: (idx) {
@@ -877,6 +885,12 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
             expansionMode: _expansionMode,
             isExpanded: _forceExpanded,
             enableRailToggle: _enableRailToggle,
+            onExpansionChanged: (v) {
+              setState(() {
+                _forceExpanded = v;
+                _lastAction = 'Sidebar ${v ? 'expanded' : 'collapsed'}';
+              });
+            },
             mobileBreakpoint: _mobileBreakpoint,
             selectedIndex: _selectedDestination,
             onItemSelected: (idx) {

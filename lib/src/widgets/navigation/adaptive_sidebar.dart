@@ -1,5 +1,7 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../core/adaptive_breakpoints.dart';
 import '../../core/adaptive_layout_data.dart';
@@ -61,6 +63,7 @@ class AdaptiveSidebar extends StatefulWidget {
     this.elevation,
     this.border,
     this.enableRailToggle = false,
+    this.onExpansionChanged,
     this.child,
     this.mobileBreakpoint = 600.0,
     this.bottomNavigation = const AdaptiveBottomNavigationConfig(),
@@ -127,6 +130,9 @@ class AdaptiveSidebar extends StatefulWidget {
 
   /// Optional callback invoked when a submenu expands or collapses.
   final void Function(int index, bool isExpanded)? onSubmenuExpansionChanged;
+
+  /// Optional callback invoked when the sidebar rail expands or collapses.
+  final ValueChanged<bool>? onExpansionChanged;
 
   /// Optional header widget placed at the top of the sidebar.
   final Widget? header;
@@ -220,6 +226,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
   @override
   void initState() {
     super.initState();
+    _internalExpanded = widget.isExpanded ?? true;
     _initSubmenuStates();
     if (widget.pageController == null &&
         (widget.pages != null || widget.pageBuilder != null)) {
@@ -231,6 +238,10 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
   @override
   void didUpdateWidget(covariant AdaptiveSidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.isExpanded != null &&
+        widget.isExpanded != oldWidget.isExpanded) {
+      _internalExpanded = widget.isExpanded!;
+    }
     if (widget.items != oldWidget.items) {
       _initSubmenuStates();
     }
@@ -297,6 +308,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
   void _toggleRailExpansion() {
     setState(() {
       _internalExpanded = !_internalExpanded;
+      widget.onExpansionChanged?.call(_internalExpanded);
     });
   }
 
@@ -435,8 +447,9 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
         // Resolve expanded state
         final bool autoExpanded = layout.containerBreakpoint.index >=
             widget.autoExpandBreakpoint.index;
-        final bool resolvedExpanded = widget.isExpanded ??
-            (widget.enableRailToggle ? _internalExpanded : autoExpanded);
+        final bool resolvedExpanded = widget.enableRailToggle
+            ? _internalExpanded
+            : (widget.isExpanded ?? autoExpanded);
 
         final double targetWidth = resolvedExpanded
             ? styleSpec.expandedWidth
@@ -509,11 +522,31 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
           );
         }
 
+        Widget wrapSlot(Widget slotChild) {
+          final double slotMaxWidth = math.max(
+            effectiveWidth,
+            math.max(
+              styleSpec.expandedWidth,
+              styleSpec.collapsedWidth,
+            ),
+          );
+          return ClipRect(
+            clipBehavior: Clip.hardEdge,
+            child: OverflowBox(
+              alignment: AlignmentDirectional.centerStart,
+              minWidth: 0.0,
+              maxWidth: slotMaxWidth,
+              fit: OverflowBoxFit.deferToChild,
+              child: slotChild,
+            ),
+          );
+        }
+
         Widget sidebarContent = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (widget.header != null) ClipRect(child: widget.header!),
-            if (widget.leading != null) ClipRect(child: widget.leading!),
+            if (widget.header != null) wrapSlot(widget.header!),
+            if (widget.leading != null) wrapSlot(widget.leading!),
             Expanded(
               child: SingleChildScrollView(
                 padding: styleSpec.padding,
@@ -523,7 +556,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
                   children: [
                     ...renderedTiles,
                     if (widget.trailing != null)
-                      ClipRect(child: widget.trailing!),
+                      wrapSlot(widget.trailing!),
                   ],
                 ),
               ),
@@ -549,7 +582,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
                   onPressed: _toggleRailExpansion,
                 ),
               ),
-            if (widget.footer != null) ClipRect(child: widget.footer!),
+            if (widget.footer != null) wrapSlot(widget.footer!),
           ],
         );
 
