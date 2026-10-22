@@ -34,7 +34,7 @@ typedef AdaptiveLayoutWidgetBuilder = Widget Function(
 ///
 /// Local breakpoint configurations can be supplied via [breakpoints] to override
 /// the ambient scope for this specific component subtree.
-class AdaptiveLayoutBuilder extends StatelessWidget {
+class AdaptiveLayoutBuilder extends StatefulWidget {
   /// Creates a declarative responsive layout builder.
   const AdaptiveLayoutBuilder({
     super.key,
@@ -47,6 +47,7 @@ class AdaptiveLayoutBuilder extends StatelessWidget {
     this.builder,
     this.child,
     this.breakpoints,
+    this.preserveState = false,
   }) : assert(
           compact != null ||
               medium != null ||
@@ -85,7 +86,18 @@ class AdaptiveLayoutBuilder extends StatelessWidget {
   /// Optional custom breakpoint configuration to override the ambient scope.
   final AdaptiveBreakpoints? breakpoints;
 
-  Widget _selectWidget(BuildContext context, AdaptiveLayoutData layout) {
+  /// Whether to preserve state of child components across breakpoint layout switches.
+  ///
+  /// When true, wraps the active slot content in a stable [KeyedSubtree] so that
+  /// shared stateful components (such as form inputs, scroll positions, or stateful widgets)
+  /// retain their state when parent constraints cross breakpoint thresholds.
+  final bool preserveState;
+
+  Widget _selectWidget(
+    BuildContext context,
+    AdaptiveLayoutData layout, [
+    Widget? effectiveChild,
+  ]) {
     AdaptiveLayoutSlotBuilder? selectedBuilder;
 
     switch (layout.containerBreakpoint) {
@@ -115,11 +127,19 @@ class AdaptiveLayoutBuilder extends StatelessWidget {
     }
 
     if (builder != null) {
-      return builder!(context, layout, child);
+      return builder!(context, layout, effectiveChild ?? child);
     }
 
     return const SizedBox.shrink();
   }
+
+  @override
+  State<AdaptiveLayoutBuilder> createState() => _AdaptiveLayoutBuilderState();
+}
+
+class _AdaptiveLayoutBuilderState extends State<AdaptiveLayoutBuilder> {
+  final GlobalKey _stateKey = GlobalKey();
+  final GlobalKey _childKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -128,16 +148,26 @@ class AdaptiveLayoutBuilder extends StatelessWidget {
         final AdaptiveLayoutData layout = AdaptiveContext.resolve(
           context,
           constraints,
-          breakpoints: breakpoints,
+          breakpoints: widget.breakpoints,
         );
 
         final AdaptiveScope? scope = AdaptiveScope.maybeOf(context);
-        final Widget content = _selectWidget(context, layout);
+
+        Widget? effectiveChild = widget.child;
+        if (widget.preserveState && effectiveChild != null) {
+          effectiveChild = KeyedSubtree(key: _childKey, child: effectiveChild);
+        }
+
+        Widget content = widget._selectWidget(context, layout, effectiveChild);
+
+        if (widget.preserveState) {
+          content = KeyedSubtree(key: _stateKey, child: content);
+        }
 
         if (scope != null) {
           return AdaptiveScope(
-            config: breakpoints != null
-                ? scope.config.copyWith(breakpoints: breakpoints)
+            config: widget.breakpoints != null
+                ? scope.config.copyWith(breakpoints: widget.breakpoints)
                 : scope.config,
             theme: scope.theme,
             layout: layout,

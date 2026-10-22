@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'forms_showcase.dart';
+import 'layout_showcase.dart';
 import 'motion_showcase.dart';
 import 'sidebar_showcase.dart';
 import 'theme_showcase.dart';
@@ -188,6 +189,11 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           selectedIcon: Icon(Icons.dynamic_form),
           label: 'Forms',
         ),
+        AdaptiveNavigationDestination(
+          icon: Icon(Icons.grid_view_outlined),
+          selectedIcon: Icon(Icons.grid_view),
+          label: 'Layout',
+        ),
       ],
       body: AdaptiveCubitListener<ShowcaseCubit, ShowcaseState>.adaptive(
         listenWhen: (prev, curr) =>
@@ -211,7 +217,8 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           4 => ThemeShowcaseTab(layout: layout),
           5 => MotionShowcaseTab(layout: layout),
           6 => SidebarShowcaseTab(layout: layout),
-          _ => FormsShowcaseTab(layout: layout),
+          7 => FormsShowcaseTab(layout: layout),
+          _ => LayoutShowcaseTab(layout: layout),
         },
       ),
     );

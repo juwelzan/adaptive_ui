@@ -383,5 +383,40 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Full name is required'), findsNothing);
     });
+
+    testWidgets(
+        'navigates to Layout tab and exercises Phase 9 layout system features',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(const AdaptiveShowcaseApp());
+      await tester.pumpAndSettle();
+
+      // Navigate to Layout tab
+      await tester.tap(find.text('Layout'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Adaptive Layout Builder (Live Constraint Simulator)'),
+          findsOneWidget);
+      expect(find.byType(AdaptiveLayoutBuilder), findsWidgets);
+
+      // Scroll ListView to reveal grid and row/column sections
+      await tester.drag(find.byType(ListView).first, const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Responsive Grid System & Lazy Collections'),
+          findsOneWidget);
+
+      await tester.drag(find.byType(ListView).first, const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      expect(find.text('AdaptiveRow & AdaptiveColumn with Wrapping'),
+          findsOneWidget);
+    });
   });
 }

@@ -278,11 +278,13 @@ adaptive_ui/
 │       ├── adaptive_bottom_navigation_bar_test.dart
 │       ├── adaptive_forms_test.dart                   # Phase 6 forms, inputs, validation, search, selection
 │       ├── adaptive_container_animation_test.dart
+│       ├── adaptive_layout_system_test.dart
 │       └── adaptive_shimmer_skeleton_test.dart
-├── example/                                   # Real-world 8-tab studio showcase (12 tests)
+├── example/                                   # Real-world 9-tab studio showcase (13 tests)
 │   ├── lib/
-│   │   ├── main.dart                          # Studio app with BLoC state & 8-tab router
+│   │   ├── main.dart                          # Studio app with BLoC state & 9-tab router
 │   │   ├── forms_showcase.dart                # Phase 6 Adaptive Forms & Input System showcase tab
+│   │   ├── layout_showcase.dart               # Phase 9 Adaptive Layout Builder & Grid System showcase tab
 │   │   ├── theme_showcase.dart                # Phase 5 Theme Engine & Design System Studio
 │   │   ├── motion_showcase.dart               # Phase 4 motion & skeleton showcase tab
 │   │   └── sidebar_showcase.dart              # AdaptiveSidebar 2.0 Studio showcase tab
@@ -299,6 +301,7 @@ adaptive_ui/
 
 | Area | Test Suite File | Test Count | Status | Key Verifications |
 | :--- | :--- | :--- | :--- | :--- |
+| **Phase 9 Adaptive Layout & Grid System** | `adaptive_layout_system_test.dart`, `adaptive_grid_test.dart`, `adaptive_layout_builder_test.dart`, `adaptive_row_column_test.dart` | 28 | Pass | `AdaptiveLayoutBuilder` slot selection (`compact`, `medium`, `expanded`, `large`), custom `AdaptiveBreakpoints`, access to `layout.constraints` and `layout.availableWidth`, state preservation across breakpoint layout transitions via `preserveState: true` (`KeyedSubtree` + `_childKey`), nested container constraints vs global window, `AdaptiveGrid` dynamic column calculation with configurable `maxColumns` and `minColumns`, small (1 item) and large (500 items lazy builder) collections, `SliverAdaptiveGrid` & `SliverAdaptiveGrid.builder` integration in `CustomScrollView`, `AdaptiveRow` auto-collapsing on `minItemWidth` threshold, optional `wrap: true` with `runSpacing`, explicit `direction` override (`Axis.vertical` / `Axis.horizontal`), `AdaptiveColumn` with `maxContentWidth` centering, 2.0x accessibility text scaling under tight constraints, and RTL text directionality. |
 | **Phase 6 Adaptive Forms & Inputs** | `adaptive_forms_test.dart` | 22 | Pass | `AdaptiveTextField` validation, required asterisks, initialValue, error/helper styles, `AdaptiveSearchField` debounced timer callbacks and clear button, `AdaptiveDropdownField` items, selection, validation and FormField state, `AdaptiveCheckbox` & `AdaptiveCheckboxFormField` tap-to-toggle and error text, `AdaptiveSwitch` & `AdaptiveSwitchFormField` tap-to-toggle and subtitle, `AdaptiveSlider` & `AdaptiveSliderFormField` value formatting, divisions, and min/max labels, `AdaptiveRadioGroup` & `AdaptiveRadioGroupFormField` responsive layouts (auto, vertical, horizontal, wrap) and value selection, `AdaptiveForm` proxying to `AdaptiveFormState` (`validate`, `save`, `reset`), `AdaptiveFormSection` multi-column wide vs single-column compact collapse, 2.0x text scaling, 48dp touch targets, narrow constraints (<120dp), and internal vs developer controller lifecycle ownership. |
 | **Adaptive Design System & Theme Engine** | `adaptive_design_system_test.dart` | 19 | Pass | Theme defaults, light & dark constructors, semantic color roles, `AdaptiveColors.lerp()`, typography scale, `AdaptiveTextVariant` resolution, `AdaptiveElevations` shadows, `AdaptiveDensity` multipliers, `AdaptiveThemeData.lerp()`, precedence rules (explicit prop > component theme > global token > ambient theme), `AnimatedAdaptiveTheme` transitions, reduced-motion instant snapping, RTL layout rendering, accessibility `TextScaler(2.0)`, and backward compatibility without explicit theme. |
 | **Core Token Resolution** | `adaptive_theme_test.dart` | 3 | Pass | Default token fallback, subtree overrides, nested `AdaptiveTheme` scope isolation. |
@@ -311,7 +314,7 @@ adaptive_ui/
 | **AdaptiveContainer Motion** | `adaptive_container_animation_test.dart` | 4 | Pass | Animated property transitions (decoration, radii, padding, opacity), state preservation of stateful children, tap/hover callbacks, reduced-motion bypass. |
 | **AdaptiveShimmer & Skeletons** | `adaptive_shimmer_skeleton_test.dart` | 6 | Pass | GPU gradient sweep, conditional `AdaptiveSkeleton` switcher toggles, `AdaptiveSkeletonText` multi-line layout, `AdaptiveSkeletonList` item count, reduced-motion handling. |
 | **Phase 8 Performance Engine & Rendering** | `adaptive_performance_engine_test.dart` | 10 | Pass | Shimmer ticker halted under reduced motion & dynamic toggle, Skeleton CurvedAnimation disposal & ticker stop, AdaptiveText native paragraph release via `TextPainter.dispose()` & static child reuse in `AnimatedBuilder`, `AdaptiveScaffold` body state preservation across compact-to-expanded viewport resize via `GlobalKey` (`_bodyKey`), `AdaptiveBottomNavPainter` dynamic progress resolution from `animation.value` with zero widget rebuilds, `shouldRepaint` property equality, and 50-frame stress painting without leaks. |
-| **Showcase Example App** | `example/test/widget_test.dart` | 12 | Pass | 8-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, AdaptiveSidebar Studio tab with Phase 7 bottom nav styles and submenu controls, Phase 5 Theme Studio tab, and Phase 6 Forms & Input System showcase tab. |
+| **Showcase Example App** | `example/test/widget_test.dart` | 13 | Pass | 9-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, AdaptiveSidebar Studio tab with Phase 7 bottom nav styles and submenu controls, Phase 5 Theme Studio tab, Phase 6 Forms & Input System showcase tab, and Phase 9 Adaptive Layout Builder & Responsive Grid showcase tab. |
 
 ---
 
@@ -319,9 +322,9 @@ adaptive_ui/
 
 - **Static Analysis**: `flutter analyze . example` passing with **0 issues**.
 - **Code Formatting**: `dart format . example` passing 100% cleanly across all Dart files.
-- **Automated Tests**: **297 tests passing** across workspace:
-  - Package Tests: **285 tests passing** (up from 275).
-  - Example App Tests: **12 tests passing**.
+- **Automated Tests**: **313 tests passing** across workspace:
+  - Package Tests: **300 tests passing** (up from 285).
+  - Example App Tests: **13 tests passing** (up from 12).
 
 ---
 
@@ -333,3 +336,4 @@ adaptive_ui/
 4. **Guarded Infinite Constraints**: In marquees, skeleton loaders, and sidebar columns, measured bounds prevent unbounded RenderFlex or RenderConstrainedOverflowBox exceptions in scroll views.
 5. **No Third-Party Responsive or Animation Dependencies**: Rely purely on native Flutter layout primitives (`LayoutBuilder`, `MediaQueryData`, `TextPainter`, `ShaderMask`, `AnimatedContainer`, `AnimatedCrossFade`, `SlideTransition`, `FadeTransition`, `OverlayEntry`) and existing `flutter_bloc`.
 6. **Deterministic Testing**: Repeating animations schedule ongoing frames; tests use discrete `tester.pump(duration)` or `pumpAndSettle()` with deterministic controllers.
+

@@ -12,6 +12,8 @@ class AdaptiveColumn extends StatelessWidget {
     this.mainAxisAlignment = MainAxisAlignment.start,
     this.crossAxisAlignment = CrossAxisAlignment.start,
     this.mainAxisSize = MainAxisSize.max,
+    this.maxContentWidth,
+    this.alignment = Alignment.topCenter,
     required this.children,
   });
 
@@ -27,6 +29,15 @@ class AdaptiveColumn extends StatelessWidget {
   /// Main axis sizing.
   final MainAxisSize mainAxisSize;
 
+  /// Optional maximum content width for the column.
+  ///
+  /// When parent constraints exceed this value, the column is constrained to [maxContentWidth]
+  /// and aligned according to [alignment] (defaults to [Alignment.topCenter]).
+  final double? maxContentWidth;
+
+  /// Alignment applied when [maxContentWidth] is constrained. Defaults to [Alignment.topCenter].
+  final AlignmentGeometry alignment;
+
   /// The column children.
   final List<Widget> children;
 
@@ -34,7 +45,7 @@ class AdaptiveColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     if (children.isEmpty) return const SizedBox.shrink();
 
-    if (spacing == null) {
+    if (spacing == null && maxContentWidth == null) {
       return Column(
         mainAxisSize: mainAxisSize,
         mainAxisAlignment: mainAxisAlignment,
@@ -45,7 +56,7 @@ class AdaptiveColumn extends StatelessWidget {
 
     return AdaptiveBuilder(
       builder: (BuildContext ctx, AdaptiveLayoutData layout) {
-        final double resolvedSpacing = spacing!.resolve(layout);
+        final double resolvedSpacing = spacing?.resolve(layout) ?? 0.0;
         final List<Widget> spacedChildren = <Widget>[];
 
         for (int i = 0; i < children.length; i++) {
@@ -55,12 +66,25 @@ class AdaptiveColumn extends StatelessWidget {
           }
         }
 
-        return Column(
+        final Widget column = Column(
           mainAxisSize: mainAxisSize,
           mainAxisAlignment: mainAxisAlignment,
           crossAxisAlignment: crossAxisAlignment,
           children: spacedChildren,
         );
+
+        if (maxContentWidth != null &&
+            layout.availableWidth > maxContentWidth!) {
+          return Align(
+            alignment: alignment,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxContentWidth!),
+              child: column,
+            ),
+          );
+        }
+
+        return column;
       },
     );
   }
