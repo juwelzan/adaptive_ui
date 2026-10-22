@@ -848,5 +848,99 @@ void main() {
       expect(latestExpanded, isTrue);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('renders customSubmenuBuilder when provided on sidebar item',
+        (tester) async {
+      final items = [
+        AdaptiveSidebarItem(
+          icon: const Icon(Icons.folder),
+          label: const Text('Custom Submenu Parent'),
+          initiallyExpanded: true,
+          children: const [
+            AdaptiveSidebarItem(
+              icon: Icon(Icons.star),
+              label: Text('Child Star'),
+            ),
+          ],
+          customSubmenuBuilder: (context, children) => Container(
+            key: const Key('custom_submenu_container'),
+            padding: const EdgeInsets.all(8.0),
+            child: const Text('Custom Submenu Content'),
+          ),
+        ),
+      ];
+
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: AdaptiveSidebar(
+          isExpanded: true,
+          items: items,
+          selectedIndex: 0,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('custom_submenu_container')), findsOneWidget);
+      expect(find.text('Custom Submenu Content'), findsOneWidget);
+    });
+
+    testWidgets(
+        'supports nested child submenu accordion coordination at depth 1',
+        (tester) async {
+      final items = [
+        AdaptiveSidebarItem(
+          icon: const Icon(Icons.folder),
+          label: const Text('Top Parent'),
+          initiallyExpanded: true,
+          children: const [
+            AdaptiveSidebarItem(
+              icon: Icon(Icons.folder_open),
+              label: Text('Submenu Alpha'),
+              children: [
+                AdaptiveSidebarItem(
+                  icon: Icon(Icons.circle),
+                  label: Text('Alpha Grandchild'),
+                ),
+              ],
+            ),
+            AdaptiveSidebarItem(
+              icon: Icon(Icons.folder_open),
+              label: Text('Submenu Beta'),
+              children: [
+                AdaptiveSidebarItem(
+                  icon: Icon(Icons.circle),
+                  label: Text('Beta Grandchild'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ];
+
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: AdaptiveSidebar(
+          isExpanded: true,
+          expansionMode: AdaptiveSubmenuExpansionMode.accordion,
+          items: items,
+          selectedIndex: 0,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Submenu Alpha'), findsOneWidget);
+      expect(find.text('Submenu Beta'), findsOneWidget);
+
+      // Open Submenu Alpha
+      await tester.tap(find.text('Submenu Alpha'));
+      await tester.pumpAndSettle();
+      expect(find.text('Alpha Grandchild'), findsOneWidget);
+
+      // Open Submenu Beta - with accordion mode, Submenu Alpha should close
+      await tester.tap(find.text('Submenu Beta'));
+      await tester.pumpAndSettle();
+      expect(find.text('Beta Grandchild'), findsOneWidget);
+      expect(find.text('Alpha Grandchild'), findsNothing);
+    });
   });
 }

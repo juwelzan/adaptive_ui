@@ -391,11 +391,39 @@ enum AdaptiveBottomNavLabelBehavior {
   neverShow,
 }
 
+/// The visual design styles for [AdaptiveBottomNavigationBar].
+enum AdaptiveBottomNavigationStyle {
+  /// Familiar, clean bottom navigation with conventional selected states
+  /// and traditional icon + label alignment.
+  classic,
+
+  /// Elevated floating navigation surface with outer margin, rounded corners,
+  /// and soft shadow depth.
+  floating,
+
+  /// Rounded active-item pill indicator that smoothly encapsulates the selected
+  /// destination horizontally.
+  pill,
+
+  /// Material 3 Expressive style featuring prominent active container geometry,
+  /// tonal contrast, and expressive motion.
+  materialExpressive,
+
+  /// Compact, low-profile visual treatment with restrained decoration,
+  /// minimal height, and subtle active dot indicator.
+  minimal,
+
+  /// Translucent frosted glass appearance with backdrop filter blur,
+  /// semi-transparent surface, and subtle glassy highlight border.
+  glass,
+}
+
 /// Dedicated, immutable configuration object for the mobile bottom navigation bar
 /// within [AdaptiveSidebar].
 @immutable
 class AdaptiveBottomNavigationConfig {
   const AdaptiveBottomNavigationConfig({
+    this.style = AdaptiveBottomNavigationStyle.materialExpressive,
     this.backgroundColor,
     this.selectedColor,
     this.unselectedColor,
@@ -406,13 +434,15 @@ class AdaptiveBottomNavigationConfig {
     this.indicatorColor,
     this.indicatorShape,
     this.indicatorSize,
-    this.height = 80.0,
+    this.height,
     this.padding,
+    this.margin,
     this.itemSpacing,
     this.border,
     this.borderRadius,
-    this.elevation = 3.0,
+    this.elevation,
     this.shadowColor,
+    this.blurSigma = 12.0,
     this.animationDuration,
     this.animationCurve,
     this.labelBehavior = AdaptiveBottomNavLabelBehavior.alwaysShow,
@@ -423,6 +453,10 @@ class AdaptiveBottomNavigationConfig {
     this.moreIcon = const Icon(Icons.more_horiz),
     this.moreLabel = 'More',
   });
+
+  /// The visual design style for this bottom navigation bar.
+  /// Defaults to [AdaptiveBottomNavigationStyle.materialExpressive].
+  final AdaptiveBottomNavigationStyle style;
 
   /// Primary background color of the mobile navigation bar.
   final Color? backgroundColor;
@@ -454,11 +488,15 @@ class AdaptiveBottomNavigationConfig {
   /// Size of the active indicator pill.
   final Size? indicatorSize;
 
-  /// Height of the bottom navigation bar excluding safe-area insets. Defaults to 80.0 dp.
-  final double height;
+  /// Height of the bottom navigation bar excluding safe-area insets.
+  /// If null, resolves to the natural default for the configured [style].
+  final double? height;
 
   /// Outer padding surrounding the destinations bar.
   final EdgeInsetsGeometry? padding;
+
+  /// Outer margin surrounding the navigation bar (especially used in floating and glass styles).
+  final EdgeInsetsGeometry? margin;
 
   /// Spacing between consecutive destination items.
   final double? itemSpacing;
@@ -469,11 +507,14 @@ class AdaptiveBottomNavigationConfig {
   /// Border radius applied to the navigation bar container.
   final BorderRadiusGeometry? borderRadius;
 
-  /// Surface elevation depth. Defaults to 3.0.
-  final double elevation;
+  /// Surface elevation depth. If null, resolves to the natural default for the configured [style].
+  final double? elevation;
 
   /// Shadow color cast when [elevation] > 0.
   final Color? shadowColor;
+
+  /// Gaussian blur sigma applied when [style] is [AdaptiveBottomNavigationStyle.glass].
+  final double blurSigma;
 
   /// Duration for transition animations.
   final Duration? animationDuration;
@@ -504,6 +545,7 @@ class AdaptiveBottomNavigationConfig {
 
   /// Creates a copy of this configuration with given properties replaced.
   AdaptiveBottomNavigationConfig copyWith({
+    AdaptiveBottomNavigationStyle? style,
     Color? backgroundColor,
     Color? selectedColor,
     Color? unselectedColor,
@@ -516,11 +558,13 @@ class AdaptiveBottomNavigationConfig {
     Size? indicatorSize,
     double? height,
     EdgeInsetsGeometry? padding,
+    EdgeInsetsGeometry? margin,
     double? itemSpacing,
     Border? border,
     BorderRadiusGeometry? borderRadius,
     double? elevation,
     Color? shadowColor,
+    double? blurSigma,
     Duration? animationDuration,
     Curve? animationCurve,
     AdaptiveBottomNavLabelBehavior? labelBehavior,
@@ -532,6 +576,7 @@ class AdaptiveBottomNavigationConfig {
     String? moreLabel,
   }) {
     return AdaptiveBottomNavigationConfig(
+      style: style ?? this.style,
       backgroundColor: backgroundColor ?? this.backgroundColor,
       selectedColor: selectedColor ?? this.selectedColor,
       unselectedColor: unselectedColor ?? this.unselectedColor,
@@ -544,11 +589,13 @@ class AdaptiveBottomNavigationConfig {
       indicatorSize: indicatorSize ?? this.indicatorSize,
       height: height ?? this.height,
       padding: padding ?? this.padding,
+      margin: margin ?? this.margin,
       itemSpacing: itemSpacing ?? this.itemSpacing,
       border: border ?? this.border,
       borderRadius: borderRadius ?? this.borderRadius,
       elevation: elevation ?? this.elevation,
       shadowColor: shadowColor ?? this.shadowColor,
+      blurSigma: blurSigma ?? this.blurSigma,
       animationDuration: animationDuration ?? this.animationDuration,
       animationCurve: animationCurve ?? this.animationCurve,
       labelBehavior: labelBehavior ?? this.labelBehavior,
@@ -566,6 +613,7 @@ class AdaptiveBottomNavigationConfig {
       identical(this, other) ||
       other is AdaptiveBottomNavigationConfig &&
           runtimeType == other.runtimeType &&
+          style == other.style &&
           backgroundColor == other.backgroundColor &&
           selectedColor == other.selectedColor &&
           unselectedColor == other.unselectedColor &&
@@ -578,11 +626,13 @@ class AdaptiveBottomNavigationConfig {
           indicatorSize == other.indicatorSize &&
           height == other.height &&
           padding == other.padding &&
+          margin == other.margin &&
           itemSpacing == other.itemSpacing &&
           border == other.border &&
           borderRadius == other.borderRadius &&
           elevation == other.elevation &&
           shadowColor == other.shadowColor &&
+          blurSigma == other.blurSigma &&
           animationDuration == other.animationDuration &&
           animationCurve == other.animationCurve &&
           labelBehavior == other.labelBehavior &&
@@ -594,6 +644,7 @@ class AdaptiveBottomNavigationConfig {
 
   @override
   int get hashCode => Object.hash(
+        style,
         backgroundColor,
         selectedColor,
         unselectedColor,
@@ -606,14 +657,13 @@ class AdaptiveBottomNavigationConfig {
         indicatorSize,
         height,
         padding,
+        margin,
         itemSpacing,
         border,
         borderRadius,
         elevation,
         shadowColor,
-        animationDuration,
-        animationCurve,
-        labelBehavior,
+        blurSigma,
       );
 }
 
@@ -642,6 +692,7 @@ class AdaptiveSidebarItem {
     this.visibleOnMobile = true,
     this.visibleOnDesktop = true,
     this.customBuilder,
+    this.customSubmenuBuilder,
   });
 
   /// Unique identifier for this item, used for hierarchy tracking and selection.
@@ -691,6 +742,11 @@ class AdaptiveSidebarItem {
 
   /// Optional custom widget builder for this destination item.
   final Widget Function(BuildContext context, bool isSelected)? customBuilder;
+
+  /// Optional custom widget builder for rendering this item's nested child submenus.
+  final Widget Function(
+          BuildContext context, List<AdaptiveSidebarItem> children)?
+      customSubmenuBuilder;
 
   /// Whether this navigation item has nested child items.
   bool get hasChildren => children.isNotEmpty;

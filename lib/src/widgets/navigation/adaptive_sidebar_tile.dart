@@ -21,6 +21,7 @@ class AdaptiveSidebarTile extends StatefulWidget {
     required this.submenuAnimation,
     required this.duration,
     required this.curve,
+    this.expansionMode = AdaptiveSubmenuExpansionMode.independent,
     this.indentation = 16.0,
     this.onDestinationSelected,
     this.selectedIndex,
@@ -39,6 +40,7 @@ class AdaptiveSidebarTile extends StatefulWidget {
   final AdaptiveSubmenuAnimation submenuAnimation;
   final Duration duration;
   final Curve curve;
+  final AdaptiveSubmenuExpansionMode expansionMode;
   final double indentation;
   final ValueChanged<int>? onDestinationSelected;
   final int? selectedIndex;
@@ -52,6 +54,7 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
     with SingleTickerProviderStateMixin {
   bool _isHovered = false;
   late bool _internalSubmenuExpanded;
+  final Set<int> _expandedChildIndices = <int>{};
   AnimationController? _submenuController;
   Animation<double>? _submenuAnimation;
   final GlobalKey<AdaptiveDropdownState> _dropdownKey =
@@ -62,6 +65,11 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
     super.initState();
     _internalSubmenuExpanded =
         widget.isSubmenuExpanded || widget.item.initiallyExpanded;
+    for (int i = 0; i < widget.item.children.length; i++) {
+      if (widget.item.children[i].initiallyExpanded) {
+        _expandedChildIndices.add(i);
+      }
+    }
     if (widget.item.hasChildren) {
       _initSubmenuController();
     }
@@ -86,8 +94,16 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
     if (widget.item.hasChildren) {
       if (_submenuController == null) {
         _initSubmenuController();
-      } else if (widget.duration != oldWidget.duration) {
-        _submenuController!.duration = widget.duration;
+      } else {
+        if (widget.duration != oldWidget.duration) {
+          _submenuController!.duration = widget.duration;
+        }
+        if (widget.curve != oldWidget.curve) {
+          _submenuAnimation = CurvedAnimation(
+            parent: _submenuController!,
+            curve: widget.curve,
+          );
+        }
       }
 
       if (widget.onSubmenuToggle != null) {
@@ -105,6 +121,19 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
       _submenuController = null;
       _submenuAnimation = null;
     }
+  }
+
+  void _toggleChildSubmenu(int childIndex) {
+    setState(() {
+      if (_expandedChildIndices.contains(childIndex)) {
+        _expandedChildIndices.remove(childIndex);
+      } else {
+        if (widget.expansionMode == AdaptiveSubmenuExpansionMode.accordion) {
+          _expandedChildIndices.clear();
+        }
+        _expandedChildIndices.add(childIndex);
+      }
+    });
   }
 
   @override
@@ -284,6 +313,11 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
       return tile;
     }
 
+    final String parentKey = widget.item.id ??
+        (widget.item.labelText.isNotEmpty
+            ? widget.item.labelText
+            : 'item_${widget.itemIndex}');
+
     int childRunningIndex = widget.itemIndex + 1;
     final List<Widget> childWidgets = [];
     for (int i = 0; i < widget.item.children.length; i++) {
@@ -297,20 +331,27 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
           widget.selectedIndex! > thisChildIndex &&
           widget.selectedIndex! < thisChildIndex + childSubtreeCount;
 
+      final String childKey = childItem.id ??
+          (childItem.labelText.isNotEmpty
+              ? '${parentKey}_${childItem.labelText}'
+              : '${parentKey}_child_$i');
+
       childWidgets.add(
         AdaptiveSidebarTile(
-          key: ValueKey('${widget.item.id ?? widget.item.label}_child_$i'),
+          key: ValueKey(childKey),
           item: childItem,
           depth: widget.depth + 1,
           itemIndex: thisChildIndex,
           isSelected: isChildSelected,
           isAncestorOfSelected: isChildAncestor,
           isExpandedSidebar: widget.isExpandedSidebar,
-          isSubmenuExpanded: false,
+          isSubmenuExpanded: _expandedChildIndices.contains(i),
           onTap: childItem.enabled
               ? () => widget.onDestinationSelected?.call(thisChildIndex)
               : null,
-          onSubmenuToggle: null,
+          onSubmenuToggle:
+              childItem.hasChildren ? () => _toggleChildSubmenu(i) : null,
+          expansionMode: widget.expansionMode,
           styleSpec: widget.styleSpec,
           submenuAnimation: widget.submenuAnimation,
           duration: widget.duration,
@@ -322,19 +363,21 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
       );
     }
 
-    // Build nested submenu with configured expansion animation
+    // Build nested submenu with configured expansion animation or custom builder
+    final Widget submenuContent = widget.item.customSubmenuBuilder != null
+        ? widget.item.customSubmenuBuilder!(context, widget.item.children)
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: childWidgets,
+          );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         tile,
-        _buildSubmenuTransition(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: childWidgets,
-          ),
-        ),
+        _buildSubmenuTransition(child: submenuContent),
       ],
     );
   }

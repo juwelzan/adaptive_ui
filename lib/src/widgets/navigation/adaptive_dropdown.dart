@@ -10,8 +10,11 @@ class AdaptiveDropdown<T> extends StatefulWidget {
   const AdaptiveDropdown({
     super.key,
     required this.trigger,
-    required this.items,
+    this.items = const [],
     this.onSelected,
+    this.builder,
+    this.customContent,
+    this.barrierDismissible = true,
     this.width = 220.0,
     this.maxHeight = 320.0,
     this.offset = const Offset(0, 6),
@@ -31,6 +34,16 @@ class AdaptiveDropdown<T> extends StatefulWidget {
 
   /// Callback invoked when an item is selected.
   final ValueChanged<T>? onSelected;
+
+  /// Optional custom builder for the entire dropdown popup contents.
+  /// Receives the build context and a dismiss callback.
+  final Widget Function(BuildContext context, VoidCallback close)? builder;
+
+  /// Optional custom widget rendered inside the dropdown surface instead of [items].
+  final Widget? customContent;
+
+  /// Whether tapping outside the dropdown surface dismisses the menu. Defaults to `true`.
+  final bool barrierDismissible;
 
   /// Menu width in logical pixels.
   final double width;
@@ -68,13 +81,14 @@ class AdaptiveDropdownState<T> extends State<AdaptiveDropdown<T>>
     with SingleTickerProviderStateMixin {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
-  late final AnimationController _animController;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<double> _scaleAnimation;
+  late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
   int _focusedIndex = -1;
+  bool _isClosing = false;
 
-  /// Whether the dropdown menu is currently visible.
-  bool get isOpen => _overlayEntry != null;
+  /// Whether the dropdown menu is currently visible and not in the process of closing.
+  bool get isOpen => _overlayEntry != null && !_isClosing;
 
   /// Toggles the dropdown menu between open and closed states.
   void toggle() => _toggleDropdown();
@@ -93,6 +107,10 @@ class AdaptiveDropdownState<T> extends State<AdaptiveDropdown<T>>
       duration: widget.animationDuration,
     );
 
+    _initAnimations();
+  }
+
+  void _initAnimations() {
     _fadeAnimation = CurvedAnimation(
       parent: _animController,
       curve: widget.animationCurve,
@@ -107,8 +125,21 @@ class AdaptiveDropdownState<T> extends State<AdaptiveDropdown<T>>
   }
 
   @override
+  void didUpdateWidget(covariant AdaptiveDropdown<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.animationDuration != oldWidget.animationDuration) {
+      _animController.duration = widget.animationDuration;
+    }
+    if (widget.animationCurve != oldWidget.animationCurve) {
+      _initAnimations();
+    }
+  }
+
+  @override
   void dispose() {
-    _closeDropdown(animate: false);
+    _isClosing = true;
+    _overlayEntry?.remove();
+    _overlayEntry = null;
     _animController.dispose();
     super.dispose();
   }
@@ -116,13 +147,13 @@ class AdaptiveDropdownState<T> extends State<AdaptiveDropdown<T>>
   void _toggleDropdown() {
     if (isOpen) {
       _closeDropdown();
-    } else {
+    } else if (!_isClosing) {
       _openDropdown();
     }
   }
 
   void _openDropdown() {
-    if (isOpen) return;
+    if (isOpen || _isClosing) return;
 
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null || !renderBox.hasSize) return;
@@ -131,19 +162,31 @@ class AdaptiveDropdownState<T> extends State<AdaptiveDropdown<T>>
     final Offset triggerPosition = renderBox.localToGlobal(Offset.zero);
     final Size screenSize = MediaQuery.of(context).size;
 
-    // Calculate safe popup position
+    // Calculate width constrained safely to screen boundaries
+    final double maxAllowedWidth = math.max(100.0, screenSize.width - 24.0);
+    final double effectiveWidth = math.min(widget.width, maxAllowedWidth);
+
+    // Calculate safe horizontal position
     double left = triggerPosition.dx + widget.offset.dx;
-    if (left + widget.width > screenSize.width - 12.0) {
-      left = math.max(12.0, screenSize.width - widget.width - 12.0);
+    if (left + effectiveWidth > screenSize.width - 12.0) {
+      left = math.max(12.0, screenSize.width - effectiveWidth - 12.0);
     }
+    if (left < 12.0) {
+      left = 12.0;
+    }
+
+    // Calculate height and safe vertical position
+    final double maxAllowedHeight = math.max(80.0, screenSize.height - 24.0);
+    final double effectiveMaxHeight =
+        math.min(widget.maxHeight, maxAllowedHeight);
 
     double top = triggerPosition.dy + triggerSize.height + widget.offset.dy;
     bool openUpward = false;
-    if (top + widget.maxHeight > screenSize.height - 24.0) {
+    if (top + effectiveMaxHeight > screenSize.height - 16.0) {
       // If not enough room below, open above trigger
       top = math.max(
         12.0,
-        triggerPosition.dy - widget.maxHeight - widget.offset.dy,
+        triggerPosition.dy - effectiveMaxHeight - widget.offset.dy,
       );
       openUpward = true;
     }
@@ -165,16 +208,37 @@ class AdaptiveDropdownState<T> extends State<AdaptiveDropdown<T>>
           width: 1.0,
         );
 
+        final Widget menuContent = widget.builder != null
+            ? widget.builder!(overlayContext, () => _closeDropdown())
+            : widget.customContent != null
+                ? widget.customContent!
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(vertical: 6.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (int i = 0; i < widget.items.length; i++)
+                          _buildDropdownTile(
+                            widget.items[i],
+                            isFocused: _focusedIndex == i,
+                            theme: theme,
+                            isDark: isDark,
+                          ),
+                      ],
+                    ),
+                  );
+
         return Stack(
           children: [
             // Outside tap dismiss barrier
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: _closeDropdown,
-                child: const ColoredBox(color: Colors.transparent),
+            if (widget.barrierDismissible)
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: _closeDropdown,
+                  child: const ColoredBox(color: Colors.transparent),
+                ),
               ),
-            ),
             // Positioned Dropdown Surface
             Positioned(
               left: left,
@@ -221,9 +285,9 @@ class AdaptiveDropdownState<T> extends State<AdaptiveDropdown<T>>
                             BorderRadius.circular(widget.borderRadius),
                         color: menuBg,
                         child: Container(
-                          width: widget.width,
+                          width: effectiveWidth,
                           constraints:
-                              BoxConstraints(maxHeight: widget.maxHeight),
+                              BoxConstraints(maxHeight: effectiveMaxHeight),
                           decoration: BoxDecoration(
                             borderRadius:
                                 BorderRadius.circular(widget.borderRadius),
@@ -232,22 +296,7 @@ class AdaptiveDropdownState<T> extends State<AdaptiveDropdown<T>>
                           child: ClipRRect(
                             borderRadius:
                                 BorderRadius.circular(widget.borderRadius),
-                            child: SingleChildScrollView(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 6.0),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  for (int i = 0; i < widget.items.length; i++)
-                                    _buildDropdownTile(
-                                      widget.items[i],
-                                      isFocused: _focusedIndex == i,
-                                      theme: theme,
-                                      isDark: isDark,
-                                    ),
-                                ],
-                              ),
-                            ),
+                            child: menuContent,
                           ),
                         ),
                       ),
@@ -279,17 +328,23 @@ class AdaptiveDropdownState<T> extends State<AdaptiveDropdown<T>>
   }
 
   void _closeDropdown({bool animate = true}) {
-    if (!isOpen) return;
+    if (_overlayEntry == null || _isClosing) return;
 
-    if (animate) {
-      _animController.reverse().then((_) {
-        _overlayEntry?.remove();
-        _overlayEntry = null;
-      });
-    } else {
+    if (!animate) {
+      _isClosing = false;
       _overlayEntry?.remove();
       _overlayEntry = null;
+      return;
     }
+
+    _isClosing = true;
+    _animController.reverse().then((_) {
+      if (mounted) {
+        _overlayEntry?.remove();
+        _overlayEntry = null;
+        _isClosing = false;
+      }
+    });
   }
 
   void _selectItem(AdaptiveDropdownItem<T> item) {

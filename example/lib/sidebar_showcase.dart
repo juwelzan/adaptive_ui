@@ -69,6 +69,8 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
   _ItemDensity _density = _ItemDensity.standard;
 
   // Bottom navigation customization
+  AdaptiveBottomNavigationStyle _bottomNavStyle =
+      AdaptiveBottomNavigationStyle.materialExpressive;
   AdaptiveBottomNavOverflowPolicy _overflowPolicy =
       AdaptiveBottomNavOverflowPolicy.auto;
   AdaptiveBottomNavLabelBehavior _labelBehavior =
@@ -402,6 +404,30 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                       runSpacing: 10.0,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
+                        // Style Selector
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Style: ', style: theme.textTheme.bodySmall),
+                            DropdownButton<AdaptiveBottomNavigationStyle>(
+                              value: _bottomNavStyle,
+                              underline: const SizedBox(),
+                              borderRadius: BorderRadius.circular(10.0),
+                              items:
+                                  AdaptiveBottomNavigationStyle.values.map((s) {
+                                return DropdownMenuItem(
+                                  value: s,
+                                  child: Text(s.name.toUpperCase()),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _bottomNavStyle = val);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                         // Overflow Policy
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -875,6 +901,7 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
           });
         },
         bottomNavigation: AdaptiveBottomNavigationConfig(
+          style: _bottomNavStyle,
           overflowPolicy: _overflowPolicy,
           labelBehavior: _labelBehavior,
           height: _bottomNavHeight,
@@ -919,6 +946,7 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
               });
             },
             bottomNavigation: AdaptiveBottomNavigationConfig(
+              style: _bottomNavStyle,
               overflowPolicy: _overflowPolicy,
               labelBehavior: _labelBehavior,
               height: _bottomNavHeight,
@@ -1114,6 +1142,11 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                     _currentModel == AdaptiveSidebarModel.classic
                         ? 'Classic'
                         : 'Floating',
+                  ),
+                  const SizedBox(width: 16.0),
+                  _buildMetricChip(
+                    'Bottom Style',
+                    _bottomNavStyle.name,
                   ),
                   const SizedBox(width: 16.0),
                   _buildMetricChip(

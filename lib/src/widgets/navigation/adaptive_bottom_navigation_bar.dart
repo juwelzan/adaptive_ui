@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../theme/adaptive_motion.dart';
@@ -9,7 +10,8 @@ export 'adaptive_sidebar_models.dart'
     show
         AdaptiveBottomNavLabelBehavior,
         AdaptiveBottomNavOverflowPolicy,
-        AdaptiveBottomNavigationConfig;
+        AdaptiveBottomNavigationConfig,
+        AdaptiveBottomNavigationStyle;
 
 /// Specification for a destination in [AdaptiveBottomNavigationBar].
 @immutable
@@ -66,7 +68,10 @@ class AdaptiveBottomNavigationDestination {
   final Widget Function(BuildContext context, bool isSelected)? customBuilder;
 }
 
-/// A responsive, Material 3-aligned bottom navigation bar with animated indicators,
+/// A responsive, multi-style bottom navigation bar with 6 distinct design presentations
+/// ([AdaptiveBottomNavigationStyle.classic], [AdaptiveBottomNavigationStyle.floating],
+/// [AdaptiveBottomNavigationStyle.pill], [AdaptiveBottomNavigationStyle.materialExpressive],
+/// [AdaptiveBottomNavigationStyle.minimal], and [AdaptiveBottomNavigationStyle.glass]),
 /// safe area handling, configurable overflow policies (scroll, menu, auto), and
 /// constraint-safe layout across 1 to 10+ destinations.
 class AdaptiveBottomNavigationBar extends StatelessWidget {
@@ -77,10 +82,12 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
     this.selectedIndex = 0,
     this.onDestinationSelected,
     this.onItemSelected,
+    this.style,
     this.config,
     this.labelBehavior,
     this.height,
     this.elevation,
+    this.margin,
     this.backgroundColor,
     this.indicatorColor,
     this.selectedColor,
@@ -117,6 +124,10 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
   /// Callback invoked when a destination is selected (unified API).
   final ValueChanged<int>? onItemSelected;
 
+  /// The visual design style for this bottom navigation bar.
+  /// If null, resolves from [config.style] or defaults to [AdaptiveBottomNavigationStyle.materialExpressive].
+  final AdaptiveBottomNavigationStyle? style;
+
   /// Dedicated configuration object for bottom navigation styling and policies.
   final AdaptiveBottomNavigationConfig? config;
 
@@ -128,6 +139,9 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
 
   /// Surface elevation depth.
   final double? elevation;
+
+  /// Outer margin surrounding the navigation bar.
+  final EdgeInsetsGeometry? margin;
 
   /// Background color of the bar.
   final Color? backgroundColor;
@@ -207,24 +221,105 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
         config?.animationCurve ??
         AdaptiveMotion.emphasizedCurve;
 
-    final double effectiveHeight =
-        height ?? config?.height ?? adaptiveTheme.bottomNavTheme.height ?? 80.0;
+    final AdaptiveBottomNavigationStyle effectiveStyle = style ??
+        config?.style ??
+        AdaptiveBottomNavigationStyle.materialExpressive;
+
+    final double effectiveHeight = height ??
+        config?.height ??
+        adaptiveTheme.bottomNavTheme.height ??
+        switch (effectiveStyle) {
+          AdaptiveBottomNavigationStyle.classic => 64.0,
+          AdaptiveBottomNavigationStyle.floating => 68.0,
+          AdaptiveBottomNavigationStyle.pill => 64.0,
+          AdaptiveBottomNavigationStyle.minimal => 58.0,
+          AdaptiveBottomNavigationStyle.glass => 68.0,
+          AdaptiveBottomNavigationStyle.materialExpressive => 80.0,
+        };
 
     final double effectiveElevation = elevation ??
         config?.elevation ??
         adaptiveTheme.bottomNavTheme.elevation ??
-        3.0;
+        switch (effectiveStyle) {
+          AdaptiveBottomNavigationStyle.classic => 8.0,
+          AdaptiveBottomNavigationStyle.floating => 6.0,
+          AdaptiveBottomNavigationStyle.pill => 4.0,
+          AdaptiveBottomNavigationStyle.minimal => 0.0,
+          AdaptiveBottomNavigationStyle.glass => 0.0,
+          AdaptiveBottomNavigationStyle.materialExpressive => 3.0,
+        };
+
+    final BorderRadiusGeometry? effectiveBorderRadius = borderRadius ??
+        config?.borderRadius ??
+        switch (effectiveStyle) {
+          AdaptiveBottomNavigationStyle.classic => null,
+          AdaptiveBottomNavigationStyle.floating => BorderRadius.circular(28.0),
+          AdaptiveBottomNavigationStyle.pill => BorderRadius.circular(32.0),
+          AdaptiveBottomNavigationStyle.minimal => null,
+          AdaptiveBottomNavigationStyle.glass => BorderRadius.circular(24.0),
+          AdaptiveBottomNavigationStyle.materialExpressive => null,
+        };
+
+    final EdgeInsetsGeometry? effectiveMargin = margin ??
+        config?.margin ??
+        switch (effectiveStyle) {
+          AdaptiveBottomNavigationStyle.classic => null,
+          AdaptiveBottomNavigationStyle.floating =>
+            const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 12.0),
+          AdaptiveBottomNavigationStyle.pill =>
+            const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 8.0),
+          AdaptiveBottomNavigationStyle.minimal => null,
+          AdaptiveBottomNavigationStyle.glass =>
+            const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 10.0),
+          AdaptiveBottomNavigationStyle.materialExpressive => null,
+        };
+
+    final Border? effectiveBorder = border ??
+        config?.border ??
+        switch (effectiveStyle) {
+          AdaptiveBottomNavigationStyle.classic => Border(
+              top: BorderSide(
+                color:
+                    isDark ? const Color(0xFF2E323D) : const Color(0xFFE5E7EB),
+                width: 1.0,
+              ),
+            ),
+          AdaptiveBottomNavigationStyle.floating => Border.all(
+              color: isDark ? const Color(0xFF383C4A) : const Color(0xFFE2E8F0),
+              width: 1.0,
+            ),
+          AdaptiveBottomNavigationStyle.pill => Border.all(
+              color: isDark ? const Color(0xFF323644) : const Color(0xFFE5E7EB),
+              width: 1.0,
+            ),
+          AdaptiveBottomNavigationStyle.minimal => Border(
+              top: BorderSide(
+                color:
+                    isDark ? const Color(0xFF2A2D37) : const Color(0xFFEEEEEE),
+                width: 1.0,
+              ),
+            ),
+          AdaptiveBottomNavigationStyle.glass => Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : Colors.black.withValues(alpha: 0.08),
+              width: 1.0,
+            ),
+          AdaptiveBottomNavigationStyle.materialExpressive => null,
+        };
+
+    final Color effectiveBg = backgroundColor ??
+        config?.backgroundColor ??
+        adaptiveTheme.bottomNavTheme.backgroundColor ??
+        (effectiveStyle == AdaptiveBottomNavigationStyle.glass
+            ? (isDark ? const Color(0x99181A20) : const Color(0xB3FFFFFF))
+            : adaptiveTheme.colors.surface);
 
     final AdaptiveBottomNavLabelBehavior effectiveLabelBehavior =
         labelBehavior ??
             config?.labelBehavior ??
             adaptiveTheme.bottomNavTheme.labelBehavior ??
             AdaptiveBottomNavLabelBehavior.alwaysShow;
-
-    final Color effectiveBg = backgroundColor ??
-        config?.backgroundColor ??
-        adaptiveTheme.bottomNavTheme.backgroundColor ??
-        adaptiveTheme.colors.surface;
 
     final Color effectiveIndicator = indicatorColor ??
         config?.indicatorColor ??
@@ -242,10 +337,6 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
         config?.unselectedColor ??
         adaptiveTheme.bottomNavTheme.unselectedColor ??
         adaptiveTheme.colors.onSurfaceVariant;
-
-    final Border? effectiveBorder = border ?? config?.border;
-    final BorderRadiusGeometry? effectiveBorderRadius =
-        borderRadius ?? config?.borderRadius;
 
     final bool effectiveUseSafeArea =
         useSafeArea ?? config?.useSafeArea ?? true;
@@ -294,6 +385,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                 destination: resolvedDestinations[0],
                 isSelected: selectedIndex == 0,
                 labelBehavior: effectiveLabelBehavior,
+                style: effectiveStyle,
                 onTap: resolvedDestinations[0].enabled
                     ? () => _handleSelected(0)
                     : null,
@@ -322,6 +414,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                       destination: resolvedDestinations[i],
                       isSelected: selectedIndex == i,
                       labelBehavior: effectiveLabelBehavior,
+                      style: effectiveStyle,
                       onTap: resolvedDestinations[i].enabled
                           ? () => _handleSelected(i)
                           : null,
@@ -356,6 +449,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                     destination: primaryItems[i],
                     isSelected: selectedIndex == i,
                     labelBehavior: effectiveLabelBehavior,
+                    style: effectiveStyle,
                     onTap: primaryItems[i].enabled
                         ? () => _handleSelected(i)
                         : null,
@@ -377,6 +471,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                   ),
                   isSelected: isMoreSelected,
                   labelBehavior: effectiveLabelBehavior,
+                  style: effectiveStyle,
                   onTap: () {
                     _showMoreMenu(
                       ctx,
@@ -409,6 +504,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                     destination: resolvedDestinations[i],
                     isSelected: selectedIndex == i,
                     labelBehavior: effectiveLabelBehavior,
+                    style: effectiveStyle,
                     onTap: resolvedDestinations[i].enabled
                         ? () => _handleSelected(i)
                         : null,
@@ -424,8 +520,13 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
           );
         }
 
+        final double textScale = MediaQuery.textScalerOf(ctx).scale(1.0);
+        final double scaledHeight = textScale > 1.0
+            ? effectiveHeight + (textScale - 1.0) * 24.0
+            : effectiveHeight;
+
         Widget content = SizedBox(
-          height: effectiveHeight,
+          height: scaledHeight,
           child: barItems,
         );
 
@@ -433,9 +534,36 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
           content = SafeArea(top: false, child: content);
         }
 
-        return Material(
+        Widget barSurface = Container(
+          decoration: BoxDecoration(
+            color: effectiveStyle == AdaptiveBottomNavigationStyle.glass
+                ? effectiveBg
+                : null,
+            border: effectiveBorder,
+            borderRadius: effectiveBorderRadius,
+          ),
+          child: content,
+        );
+
+        if (effectiveStyle == AdaptiveBottomNavigationStyle.glass) {
+          barSurface = ClipRRect(
+            borderRadius: (effectiveBorderRadius as BorderRadius?) ??
+                BorderRadius.circular(24.0),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: config?.blurSigma ?? 12.0,
+                sigmaY: config?.blurSigma ?? 12.0,
+              ),
+              child: barSurface,
+            ),
+          );
+        }
+
+        Widget result = Material(
           elevation: effectiveElevation,
-          color: effectiveBg,
+          color: effectiveStyle == AdaptiveBottomNavigationStyle.glass
+              ? Colors.transparent
+              : effectiveBg,
           shape: effectiveBorderRadius != null
               ? RoundedRectangleBorder(
                   borderRadius: effectiveBorderRadius,
@@ -443,14 +571,17 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                 )
               : null,
           shadowColor: config?.shadowColor,
-          child: Container(
-            decoration: BoxDecoration(
-              border: effectiveBorder,
-              borderRadius: effectiveBorderRadius,
-            ),
-            child: content,
-          ),
+          child: barSurface,
         );
+
+        if (effectiveMargin != null) {
+          result = Padding(
+            padding: effectiveMargin,
+            child: result,
+          );
+        }
+
+        return result;
       },
     );
   }
@@ -582,6 +713,7 @@ class _AdaptiveBottomNavItem extends StatelessWidget {
     required this.destination,
     required this.isSelected,
     required this.labelBehavior,
+    required this.style,
     required this.onTap,
     required this.duration,
     required this.curve,
@@ -594,6 +726,7 @@ class _AdaptiveBottomNavItem extends StatelessWidget {
   final AdaptiveBottomNavigationDestination destination;
   final bool isSelected;
   final AdaptiveBottomNavLabelBehavior labelBehavior;
+  final AdaptiveBottomNavigationStyle style;
   final VoidCallback? onTap;
   final Duration duration;
   final Curve curve;
@@ -617,40 +750,6 @@ class _AdaptiveBottomNavItem extends StatelessWidget {
         : destination.icon;
 
     final double iconSize = config?.iconSize ?? 24.0;
-    final Size pillSize =
-        config?.indicatorSize ?? Size(isSelected ? 64.0 : 44.0, 32.0);
-
-    final Widget pill = AnimatedContainer(
-      duration: duration,
-      curve: curve,
-      width: pillSize.width,
-      height: pillSize.height,
-      decoration: BoxDecoration(
-        color: isSelected ? indicatorColor : Colors.transparent,
-        borderRadius: BorderRadius.circular(pillSize.height / 2.0),
-      ),
-      child: Center(
-        child: IconTheme(
-          data: IconThemeData(
-            color: effectiveIconColor,
-            size: iconSize,
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              iconWidget,
-              if (destination.badge != null)
-                Positioned(
-                  top: -4.0,
-                  right: -6.0,
-                  child: destination.badge!,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
 
     final bool showLabel = switch (labelBehavior) {
       AdaptiveBottomNavLabelBehavior.alwaysShow => true,
@@ -664,33 +763,216 @@ class _AdaptiveBottomNavItem extends StatelessWidget {
       color: isSelected ? selectedColor : unselectedColor,
     );
 
-    final TextStyle effectiveStyle = isSelected
+    final TextStyle effectiveLabelTextStyle = isSelected
         ? (config?.selectedLabelStyle ?? defaultLabelStyle)
         : (config?.unselectedLabelStyle ?? defaultLabelStyle);
 
     final Widget labelWidget = AnimatedDefaultTextStyle(
       duration: duration,
       curve: curve,
-      style: effectiveStyle,
+      style: effectiveLabelTextStyle,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      child: destination.labelWidget ?? Text(destination.label),
+      child: destination.labelWidget ??
+          Text(destination.label, style: effectiveLabelTextStyle),
     );
 
-    final Widget itemContent = Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        pill,
-        if (showLabel) ...[
-          const SizedBox(height: 4.0),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-            child: labelWidget,
-          ),
+    final Widget badgedIcon = IconTheme(
+      data: IconThemeData(
+        color: effectiveIconColor,
+        size: iconSize,
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          iconWidget,
+          if (destination.badge != null)
+            Positioned(
+              top: -4.0,
+              right: -6.0,
+              child: destination.badge!,
+            ),
         ],
-      ],
+      ),
     );
+
+    final Widget itemContent;
+
+    switch (style) {
+      case AdaptiveBottomNavigationStyle.pill:
+        // Pill style: when selected, displays a horizontal capsule with icon + label.
+        // When unselected, displays icon only.
+        itemContent = AnimatedContainer(
+          duration: duration,
+          curve: curve,
+          padding: EdgeInsets.symmetric(
+            horizontal: isSelected ? 14.0 : 8.0,
+            vertical: 8.0,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected ? indicatorColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              badgedIcon,
+              if (isSelected && showLabel) ...[
+                const SizedBox(width: 8.0),
+                Flexible(
+                  child: AnimatedOpacity(
+                    duration: duration,
+                    opacity: isSelected ? 1.0 : 0.0,
+                    child: labelWidget,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+
+      case AdaptiveBottomNavigationStyle.minimal:
+        // Minimal style: flat, clean, understated with a subtle animated underline indicator.
+        itemContent = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            badgedIcon,
+            if (showLabel) ...[
+              const SizedBox(height: 3.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                child: labelWidget,
+              ),
+            ],
+            const SizedBox(height: 3.0),
+            AnimatedContainer(
+              duration: duration,
+              curve: curve,
+              width: isSelected ? 16.0 : 0.0,
+              height: 2.5,
+              decoration: BoxDecoration(
+                color: isSelected ? selectedColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(2.0),
+              ),
+            ),
+          ],
+        );
+
+      case AdaptiveBottomNavigationStyle.classic:
+        // Classic style: traditional icon + label without container pill.
+        itemContent = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            badgedIcon,
+            if (showLabel) ...[
+              const SizedBox(height: 4.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                child: labelWidget,
+              ),
+            ],
+          ],
+        );
+
+      case AdaptiveBottomNavigationStyle.floating:
+        // Floating style: rounded indicator capsule behind icon, label below.
+        final Size pillSize =
+            config?.indicatorSize ?? Size(isSelected ? 56.0 : 40.0, 32.0);
+        itemContent = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: duration,
+              curve: curve,
+              width: pillSize.width,
+              height: pillSize.height,
+              decoration: BoxDecoration(
+                color: isSelected ? indicatorColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(16.0),
+              ),
+              child: Center(child: badgedIcon),
+            ),
+            if (showLabel) ...[
+              const SizedBox(height: 4.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                child: labelWidget,
+              ),
+            ],
+          ],
+        );
+
+      case AdaptiveBottomNavigationStyle.glass:
+        // Glass style: translucent frosted indicator container with soft border.
+        final Size pillSize =
+            config?.indicatorSize ?? Size(isSelected ? 56.0 : 40.0, 32.0);
+        itemContent = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: duration,
+              curve: curve,
+              width: pillSize.width,
+              height: pillSize.height,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? indicatorColor.withValues(alpha: 0.35)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16.0),
+                border: isSelected
+                    ? Border.all(
+                        color: indicatorColor.withValues(alpha: 0.45),
+                        width: 1.0,
+                      )
+                    : null,
+              ),
+              child: Center(child: badgedIcon),
+            ),
+            if (showLabel) ...[
+              const SizedBox(height: 4.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                child: labelWidget,
+              ),
+            ],
+          ],
+        );
+
+      case AdaptiveBottomNavigationStyle.materialExpressive:
+        // Material Expressive: M3 stadium pill container behind icon, label below.
+        final Size pillSize =
+            config?.indicatorSize ?? Size(isSelected ? 64.0 : 44.0, 32.0);
+        itemContent = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: duration,
+              curve: curve,
+              width: pillSize.width,
+              height: pillSize.height,
+              decoration: BoxDecoration(
+                color: isSelected ? indicatorColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(pillSize.height / 2.0),
+              ),
+              child: Center(child: badgedIcon),
+            ),
+            if (showLabel) ...[
+              const SizedBox(height: 4.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                child: labelWidget,
+              ),
+            ],
+          ],
+        );
+    }
 
     final bool hasOverlay = Overlay.maybeOf(context) != null;
 

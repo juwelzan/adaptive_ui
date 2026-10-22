@@ -190,5 +190,86 @@ void main() {
       expect(find.text('Item X'), findsNothing);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('clamps width safely to avoid screen bounds overflow',
+        (tester) async {
+      tester.view.physicalSize = const Size(200, 400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await pumpDropdownApp(
+        tester,
+        AdaptiveDropdown<String>(
+          width: 300.0, // wider than 200 screen
+          trigger: const Text('Narrow Trigger'),
+          items: const [
+            AdaptiveDropdownItem(value: 'item', label: Text('Clamped Item')),
+          ],
+        ),
+      );
+
+      await tester.tap(find.text('Narrow Trigger'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Clamped Item'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('supports custom builder and dismissal callback',
+        (tester) async {
+      await pumpDropdownApp(
+        tester,
+        AdaptiveDropdown<String>(
+          trigger: const Text('Open Custom'),
+          builder: (context, close) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Custom Header'),
+              ElevatedButton(
+                onPressed: close,
+                child: const Text('Close Button'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open Custom'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Custom Header'), findsOneWidget);
+      expect(find.text('Close Button'), findsOneWidget);
+
+      await tester.tap(find.text('Close Button'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Custom Header'), findsNothing);
+    });
+
+    testWidgets('rapid repeated taps do not create duplicate overlays',
+        (tester) async {
+      await pumpDropdownApp(
+        tester,
+        AdaptiveDropdown<String>(
+          trigger: const Text('Spam Trigger'),
+          items: const [
+            AdaptiveDropdownItem(value: 'val', label: Text('Target Entry')),
+          ],
+        ),
+      );
+
+      // Rapidly tap 3 times
+      await tester.tap(find.text('Spam Trigger'));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text('Spam Trigger'), warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text('Spam Trigger'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
   });
 }

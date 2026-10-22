@@ -476,12 +476,21 @@ AdaptiveSidebar(
 ```
 
 ### 3. AdaptiveBottomNavigationBar
-Material 3-aligned compact bottom navigation bar with animated indicator pills, label visibility policies, safe area padding, overflow management (`auto`, `menu`, `scroll`), and accessible touch targets ($\ge 48\text{dp}$). Accepts either legacy `destinations` or unified `items: List<AdaptiveSidebarItem>`.
+Compact bottom navigation system supporting **6 distinct design styles**, animated indicator pills, label visibility policies, safe area padding, overflow management (`auto`, `menu`, `scroll`), and accessible touch targets ($\ge 48\text{dp}$). Accepts either legacy `destinations` or unified `items: List<AdaptiveSidebarItem>`.
+
+**Available Styles (`AdaptiveBottomNavigationStyle`)**:
+- `classic`: Traditional bottom navigation with standard icon and label presentation (64dp height, 8dp elevation, crisp boundary border).
+- `floating`: Elevated floating surface with rounded corners and outer margins (68dp height, 6dp elevation, 28dp radius).
+- `pill`: Animated horizontal capsule (`[icon, label]`) for the selected destination with smooth expansion transitions and icon-only unselected destinations.
+- `materialExpressive`: Expressive Material 3 stadium container behind the active icon with label underneath (80dp height, 3dp elevation).
+- `minimal`: Restrained, flat visual treatment with no background pill, flat surface, and an animated underline indicator (58dp height, 0 elevation).
+- `glass`: Translucent frosted glass aesthetic utilizing GPU-accelerated `BackdropFilter` with configurable `blurSigma` and frosted active highlights.
 
 ```dart
 AdaptiveBottomNavigationBar(
   selectedIndex: _currentIndex,
   onDestinationSelected: (index) => setState(() => _currentIndex = index),
+  style: AdaptiveBottomNavigationStyle.pill, // or classic, floating, materialExpressive, minimal, glass
   labelBehavior: AdaptiveBottomNavLabelBehavior.onlyShowSelected,
   overflowPolicy: AdaptiveBottomNavOverflowPolicy.auto,
   items: sharedNavigationItems,

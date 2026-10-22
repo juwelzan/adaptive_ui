@@ -511,6 +511,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
               onTap:
                   item.enabled ? () => _onDestinationTapped(itemIndex) : null,
               onSubmenuToggle: () => _toggleSubmenu(i),
+              expansionMode: widget.expansionMode,
               styleSpec: styleSpec,
               submenuAnimation: widget.submenuAnimation,
               duration: duration,
@@ -555,8 +556,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     ...renderedTiles,
-                    if (widget.trailing != null)
-                      wrapSlot(widget.trailing!),
+                    if (widget.trailing != null) wrapSlot(widget.trailing!),
                   ],
                 ),
               ),
