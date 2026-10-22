@@ -393,6 +393,24 @@ enum AdaptiveBottomNavLabelBehavior {
 
 /// The visual design styles for [AdaptiveBottomNavigationBar].
 enum AdaptiveBottomNavigationStyle {
+  /// Classic navigation surface with a custom curved selected-item indicator.
+  classicCurve,
+
+  /// Compact floating navigation surface with a custom-painted active background island.
+  floatingIsland,
+
+  /// Flowing wave indicator with custom cubic Bezier geometry.
+  wave,
+
+  /// Moving pill indicator that smoothly glides along the navigation track.
+  pillMotion,
+
+  /// macOS-inspired dock design with distinctive shelf and item cushion.
+  dock,
+
+  /// Lightweight design with a custom-painted active sliding line.
+  minimalLine,
+
   /// Familiar, clean bottom navigation with conventional selected states
   /// and traditional icon + label alignment.
   classic,
@@ -424,6 +442,7 @@ enum AdaptiveBottomNavigationStyle {
 class AdaptiveBottomNavigationConfig {
   const AdaptiveBottomNavigationConfig({
     this.style = AdaptiveBottomNavigationStyle.materialExpressive,
+    this.customPainter,
     this.backgroundColor,
     this.selectedColor,
     this.unselectedColor,
@@ -457,6 +476,9 @@ class AdaptiveBottomNavigationConfig {
   /// The visual design style for this bottom navigation bar.
   /// Defaults to [AdaptiveBottomNavigationStyle.materialExpressive].
   final AdaptiveBottomNavigationStyle style;
+
+  /// Optional custom painter hook for developer-defined indicator geometry.
+  final CustomPainter? customPainter;
 
   /// Primary background color of the mobile navigation bar.
   final Color? backgroundColor;
@@ -546,6 +568,7 @@ class AdaptiveBottomNavigationConfig {
   /// Creates a copy of this configuration with given properties replaced.
   AdaptiveBottomNavigationConfig copyWith({
     AdaptiveBottomNavigationStyle? style,
+    CustomPainter? customPainter,
     Color? backgroundColor,
     Color? selectedColor,
     Color? unselectedColor,
@@ -577,6 +600,7 @@ class AdaptiveBottomNavigationConfig {
   }) {
     return AdaptiveBottomNavigationConfig(
       style: style ?? this.style,
+      customPainter: customPainter ?? this.customPainter,
       backgroundColor: backgroundColor ?? this.backgroundColor,
       selectedColor: selectedColor ?? this.selectedColor,
       unselectedColor: unselectedColor ?? this.unselectedColor,
@@ -614,6 +638,7 @@ class AdaptiveBottomNavigationConfig {
       other is AdaptiveBottomNavigationConfig &&
           runtimeType == other.runtimeType &&
           style == other.style &&
+          customPainter == other.customPainter &&
           backgroundColor == other.backgroundColor &&
           selectedColor == other.selectedColor &&
           unselectedColor == other.unselectedColor &&
@@ -645,10 +670,10 @@ class AdaptiveBottomNavigationConfig {
   @override
   int get hashCode => Object.hash(
         style,
+        customPainter,
         backgroundColor,
         selectedColor,
         unselectedColor,
-        selectedIconColor,
         selectedIconColor,
         selectedLabelStyle,
         unselectedLabelStyle,

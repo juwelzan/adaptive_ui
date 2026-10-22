@@ -412,5 +412,334 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     });
+
+    group('AdaptiveBottomNavPainter and Low-RAM Optimizations', () {
+      test('AdaptiveBottomNavPainter shouldRepaint returns false when properties are identical', () {
+        final animation = AlwaysStoppedAnimation(1.0);
+        final painter1 = AdaptiveBottomNavPainter(
+          repaint: animation,
+          style: AdaptiveBottomNavigationStyle.pillMotion,
+          progress: 1.0,
+          previousIndex: 0,
+          currentIndex: 1,
+          itemCount: 4,
+          indicatorColor: Colors.blue,
+          selectedColor: Colors.white,
+          unselectedColor: Colors.grey,
+          backgroundColor: Colors.black,
+          textDirection: TextDirection.ltr,
+        );
+
+        final painter2 = AdaptiveBottomNavPainter(
+          repaint: animation,
+          style: AdaptiveBottomNavigationStyle.pillMotion,
+          progress: 1.0,
+          previousIndex: 0,
+          currentIndex: 1,
+          itemCount: 4,
+          indicatorColor: Colors.blue,
+          selectedColor: Colors.white,
+          unselectedColor: Colors.grey,
+          backgroundColor: Colors.black,
+          textDirection: TextDirection.ltr,
+        );
+
+        expect(painter1.shouldRepaint(painter2), isFalse);
+      });
+
+      test('AdaptiveBottomNavPainter shouldRepaint returns true when properties change', () {
+        final animation = AlwaysStoppedAnimation(1.0);
+        final basePainter = AdaptiveBottomNavPainter(
+          repaint: animation,
+          style: AdaptiveBottomNavigationStyle.pillMotion,
+          progress: 1.0,
+          previousIndex: 0,
+          currentIndex: 1,
+          itemCount: 4,
+          indicatorColor: Colors.blue,
+          selectedColor: Colors.white,
+          unselectedColor: Colors.grey,
+          backgroundColor: Colors.black,
+          textDirection: TextDirection.ltr,
+        );
+
+        expect(
+          basePainter.shouldRepaint(AdaptiveBottomNavPainter(
+            repaint: animation,
+            style: AdaptiveBottomNavigationStyle.dock,
+            progress: 1.0,
+            previousIndex: 0,
+            currentIndex: 1,
+            itemCount: 4,
+            indicatorColor: Colors.blue,
+            selectedColor: Colors.white,
+            unselectedColor: Colors.grey,
+            backgroundColor: Colors.black,
+            textDirection: TextDirection.ltr,
+          )),
+          isTrue,
+        );
+
+        expect(
+          basePainter.shouldRepaint(AdaptiveBottomNavPainter(
+            repaint: animation,
+            style: AdaptiveBottomNavigationStyle.pillMotion,
+            progress: 0.5,
+            previousIndex: 0,
+            currentIndex: 1,
+            itemCount: 4,
+            indicatorColor: Colors.blue,
+            selectedColor: Colors.white,
+            unselectedColor: Colors.grey,
+            backgroundColor: Colors.black,
+            textDirection: TextDirection.ltr,
+          )),
+          isTrue,
+        );
+
+        expect(
+          basePainter.shouldRepaint(AdaptiveBottomNavPainter(
+            repaint: animation,
+            style: AdaptiveBottomNavigationStyle.pillMotion,
+            progress: 1.0,
+            previousIndex: 0,
+            currentIndex: 2,
+            itemCount: 4,
+            indicatorColor: Colors.blue,
+            selectedColor: Colors.white,
+            unselectedColor: Colors.grey,
+            backgroundColor: Colors.black,
+            textDirection: TextDirection.ltr,
+          )),
+          isTrue,
+        );
+
+        expect(
+          basePainter.shouldRepaint(AdaptiveBottomNavPainter(
+            repaint: animation,
+            style: AdaptiveBottomNavigationStyle.pillMotion,
+            progress: 1.0,
+            previousIndex: 0,
+            currentIndex: 1,
+            itemCount: 5,
+            indicatorColor: Colors.blue,
+            selectedColor: Colors.white,
+            unselectedColor: Colors.grey,
+            backgroundColor: Colors.black,
+            textDirection: TextDirection.ltr,
+          )),
+          isTrue,
+        );
+
+        expect(
+          basePainter.shouldRepaint(AdaptiveBottomNavPainter(
+            repaint: animation,
+            style: AdaptiveBottomNavigationStyle.pillMotion,
+            progress: 1.0,
+            previousIndex: 0,
+            currentIndex: 1,
+            itemCount: 4,
+            indicatorColor: Colors.red,
+            selectedColor: Colors.white,
+            unselectedColor: Colors.grey,
+            backgroundColor: Colors.black,
+            textDirection: TextDirection.ltr,
+          )),
+          isTrue,
+        );
+
+        expect(
+          basePainter.shouldRepaint(AdaptiveBottomNavPainter(
+            repaint: animation,
+            style: AdaptiveBottomNavigationStyle.pillMotion,
+            progress: 1.0,
+            previousIndex: 0,
+            currentIndex: 1,
+            itemCount: 4,
+            indicatorColor: Colors.blue,
+            selectedColor: Colors.white,
+            unselectedColor: Colors.grey,
+            backgroundColor: Colors.black,
+            textDirection: TextDirection.rtl,
+          )),
+          isTrue,
+        );
+      });
+
+      for (final style in [
+        AdaptiveBottomNavigationStyle.classicCurve,
+        AdaptiveBottomNavigationStyle.floatingIsland,
+        AdaptiveBottomNavigationStyle.wave,
+        AdaptiveBottomNavigationStyle.pillMotion,
+        AdaptiveBottomNavigationStyle.dock,
+        AdaptiveBottomNavigationStyle.minimalLine,
+      ]) {
+        testWidgets('renders CustomPainter style ${style.name} with AdaptiveBottomNavPainter', (tester) async {
+          await tester.pumpAdaptive(
+            size: const Size(390.0, 844.0),
+            child: AdaptiveBottomNavigationBar(
+              destinations: sampleDestinations,
+              selectedIndex: 1,
+              style: style,
+            ),
+          );
+
+          final customPaintFinder = find.byWidgetPredicate(
+            (w) => w is CustomPaint && w.painter is AdaptiveBottomNavPainter,
+          );
+          expect(customPaintFinder, findsOneWidget);
+
+          final customPaint = tester.widget<CustomPaint>(customPaintFinder);
+          final painter = customPaint.painter as AdaptiveBottomNavPainter;
+          expect(painter.style, equals(style));
+          expect(painter.currentIndex, equals(1));
+          expect(painter.itemCount, equals(3));
+        });
+      }
+
+      testWidgets('rapid repeated taps do not throw or leak animation state', (tester) async {
+        int selected = 0;
+        await tester.pumpAdaptive(
+          size: const Size(390.0, 844.0),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return AdaptiveBottomNavigationBar(
+                destinations: sampleDestinations,
+                selectedIndex: selected,
+                style: AdaptiveBottomNavigationStyle.pillMotion,
+                onDestinationSelected: (idx) {
+                  setState(() => selected = idx);
+                },
+              );
+            },
+          ),
+        );
+
+        // Tap rapidly across items
+        await tester.tap(find.text('Search'));
+        await tester.pump(const Duration(milliseconds: 10));
+        await tester.tap(find.text('Profile'));
+        await tester.pump(const Duration(milliseconds: 10));
+        await tester.tap(find.text('Home'));
+        await tester.pump(const Duration(milliseconds: 10));
+        await tester.tap(find.text('Profile'));
+        await tester.pumpAndSettle();
+
+        expect(selected, equals(2));
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('respects reduced-motion preference without animation delay', (tester) async {
+        int selected = 0;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: const MediaQueryData(disableAnimations: true),
+              child: Scaffold(
+                bottomNavigationBar: StatefulBuilder(
+                  builder: (context, setState) {
+                    return AdaptiveBottomNavigationBar(
+                      destinations: sampleDestinations,
+                      selectedIndex: selected,
+                      style: AdaptiveBottomNavigationStyle.wave,
+                      onDestinationSelected: (idx) {
+                        setState(() => selected = idx);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.text('Search'));
+        // With disableAnimations: true, no animation frames are scheduled
+        await tester.pump();
+        expect(selected, equals(1));
+      });
+
+      testWidgets('cleans up animation controllers cleanly upon unmount', (tester) async {
+        bool showBar = true;
+        await tester.pumpAdaptive(
+          size: const Size(390.0, 844.0),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                children: [
+                  if (showBar)
+                    AdaptiveBottomNavigationBar(
+                      destinations: sampleDestinations,
+                      selectedIndex: 0,
+                      style: AdaptiveBottomNavigationStyle.dock,
+                    ),
+                  ElevatedButton(
+                    onPressed: () => setState(() => showBar = false),
+                    child: const Text('Hide'),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+
+        expect(find.byType(AdaptiveBottomNavigationBar), findsOneWidget);
+        await tester.tap(find.text('Hide'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AdaptiveBottomNavigationBar), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('renders accurately under RTL layout directionality', (tester) async {
+        await tester.pumpAdaptive(
+          size: const Size(390.0, 844.0),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: AdaptiveBottomNavigationBar(
+              destinations: sampleDestinations,
+              selectedIndex: 0,
+              style: AdaptiveBottomNavigationStyle.classicCurve,
+            ),
+          ),
+        );
+
+        final customPaintFinder = find.byWidgetPredicate(
+          (w) => w is CustomPaint && w.painter is AdaptiveBottomNavPainter,
+        );
+        expect(customPaintFinder, findsOneWidget);
+        final painter = (tester.widget<CustomPaint>(customPaintFinder)).painter as AdaptiveBottomNavPainter;
+        expect(painter.textDirection, equals(TextDirection.rtl));
+      });
+
+      testWidgets('supports developer-supplied customPainter hook', (tester) async {
+        bool customPainterCalled = false;
+        final testPainter = _TestCustomPainter(() => customPainterCalled = true);
+
+        await tester.pumpAdaptive(
+          size: const Size(390.0, 844.0),
+          child: AdaptiveBottomNavigationBar(
+            destinations: sampleDestinations,
+            selectedIndex: 0,
+            customPainter: testPainter,
+          ),
+        );
+
+        expect(customPainterCalled, isTrue);
+      });
+    });
   });
+}
+
+class _TestCustomPainter extends CustomPainter {
+  _TestCustomPainter(this.onPaint);
+  final VoidCallback onPaint;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    onPaint();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

@@ -77,6 +77,7 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
       AdaptiveBottomNavLabelBehavior.alwaysShow;
   double _bottomNavHeight = 70.0;
   double _bottomNavElevation = 3.0;
+  bool _simulateReducedMotion = false;
 
   // PageView integration
   bool _enablePageView = true;
@@ -516,6 +517,66 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                                 onChanged: (v) =>
                                     setState(() => _bottomNavElevation = v),
                               ),
+                            ),
+                          ],
+                        ),
+                        // Engine badge & Reduced Motion toggle
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                                vertical: 4.0,
+                              ),
+                              decoration: BoxDecoration(
+                                color: switch (_bottomNavStyle) {
+                                  AdaptiveBottomNavigationStyle.classicCurve ||
+                                  AdaptiveBottomNavigationStyle.floatingIsland ||
+                                  AdaptiveBottomNavigationStyle.wave ||
+                                  AdaptiveBottomNavigationStyle.pillMotion ||
+                                  AdaptiveBottomNavigationStyle.dock ||
+                                  AdaptiveBottomNavigationStyle.minimalLine =>
+                                    Colors.green.withValues(alpha: 0.15),
+                                  _ =>
+                                    theme.colorScheme.surfaceContainerHighest,
+                                },
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Text(
+                                switch (_bottomNavStyle) {
+                                  AdaptiveBottomNavigationStyle.classicCurve ||
+                                  AdaptiveBottomNavigationStyle.floatingIsland ||
+                                  AdaptiveBottomNavigationStyle.wave ||
+                                  AdaptiveBottomNavigationStyle.pillMotion ||
+                                  AdaptiveBottomNavigationStyle.dock ||
+                                  AdaptiveBottomNavigationStyle.minimalLine =>
+                                    '⚡ CustomPainter (Low-RAM)',
+                                  _ => 'Standard Widget',
+                                },
+                                style: TextStyle(
+                                  fontSize: 11.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: switch (_bottomNavStyle) {
+                                    AdaptiveBottomNavigationStyle.classicCurve ||
+                                    AdaptiveBottomNavigationStyle.floatingIsland ||
+                                    AdaptiveBottomNavigationStyle.wave ||
+                                    AdaptiveBottomNavigationStyle.pillMotion ||
+                                    AdaptiveBottomNavigationStyle.dock ||
+                                    AdaptiveBottomNavigationStyle.minimalLine =>
+                                      Colors.green,
+                                    _ => theme.colorScheme.onSurfaceVariant,
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12.0),
+                            Text('Reduced Motion: ',
+                                style: theme.textTheme.bodySmall),
+                            Switch(
+                              value: _simulateReducedMotion,
+                              onChanged: (v) =>
+                                  setState(() => _simulateReducedMotion = v),
                             ),
                           ],
                         ),
@@ -976,23 +1037,28 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
         borderRadius: BorderRadius.circular(20.0),
         child: Theme(
           data: previewTheme,
-          child: targetWidth != null
-              ? Center(
-                  child: Container(
-                    width: targetWidth,
-                    decoration: BoxDecoration(
-                      border: Border.symmetric(
-                        vertical: BorderSide(
-                          color:
-                              previewTheme.dividerColor.withValues(alpha: 0.5),
-                          width: 2.0,
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              disableAnimations: _simulateReducedMotion,
+            ),
+            child: targetWidth != null
+                ? Center(
+                    child: Container(
+                      width: targetWidth,
+                      decoration: BoxDecoration(
+                        border: Border.symmetric(
+                          vertical: BorderSide(
+                            color:
+                                previewTheme.dividerColor.withValues(alpha: 0.5),
+                            width: 2.0,
+                          ),
                         ),
                       ),
+                      child: previewContent,
                     ),
-                    child: previewContent,
-                  ),
-                )
-              : previewContent,
+                  )
+                : previewContent,
+          ),
         ),
       ),
     );

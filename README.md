@@ -476,9 +476,17 @@ AdaptiveSidebar(
 ```
 
 ### 3. AdaptiveBottomNavigationBar
-Compact bottom navigation system supporting **6 distinct design styles**, animated indicator pills, label visibility policies, safe area padding, overflow management (`auto`, `menu`, `scroll`), and accessible touch targets ($\ge 48\text{dp}$). Accepts either legacy `destinations` or unified `items: List<AdaptiveSidebarItem>`.
+High-performance bottom navigation system supporting **12 distinct design styles**, including **6 CustomPainter-accelerated styles optimized for low-RAM devices (500 MB–1 GB RAM)**, smooth motion indicators, label visibility policies, safe area padding, overflow management (`auto`, `menu`, `scroll`), accessible touch targets ($\ge 48\text{dp}$), and optional developer `customPainter` hooks. Accepts either legacy `destinations` or unified `items: List<AdaptiveSidebarItem>`.
 
-**Available Styles (`AdaptiveBottomNavigationStyle`)**:
+**CustomPainter Low-RAM Accelerated Styles (`AdaptiveBottomNavigationStyle`)**:
+- `classicCurve`: Custom scooped cubic Bezier highlight curve dipping below the active tab with smooth top-edge geometry and soft fill.
+- `floatingIsland`: Compact floating navigation surface with a custom-painted rounded island container and crisp outline behind the active slot.
+- `wave`: Fluid sinusoidal wave crest indicator gliding smoothly between destinations across the top edge.
+- `pillMotion`: Moving pill indicator that glides along the navigation track with dynamic organic stretch physics (`sin(pi * progress)`).
+- `dock`: macOS dock-inspired treatment featuring a horizontal reflective shelf line, active item cushion halo, and active dock dot indicator.
+- `minimalLine`: High-performance sliding geometric line indicator with rounded stroke caps and a soft accent glow pill along the top edge.
+
+**Standard Widget-Decorated Styles**:
 - `classic`: Traditional bottom navigation with standard icon and label presentation (64dp height, 8dp elevation, crisp boundary border).
 - `floating`: Elevated floating surface with rounded corners and outer margins (68dp height, 6dp elevation, 28dp radius).
 - `pill`: Animated horizontal capsule (`[icon, label]`) for the selected destination with smooth expansion transitions and icon-only unselected destinations.
@@ -486,12 +494,18 @@ Compact bottom navigation system supporting **6 distinct design styles**, animat
 - `minimal`: Restrained, flat visual treatment with no background pill, flat surface, and an animated underline indicator (58dp height, 0 elevation).
 - `glass`: Translucent frosted glass aesthetic utilizing GPU-accelerated `BackdropFilter` with configurable `blurSigma` and frosted active highlights.
 
+**Low-RAM (500 MB–1 GB) Engineering Highlights**:
+- **Single Shared Controller**: Exactly one `AnimationController` drives indicator transitions across all items; zero multi-ticker overhead or controller leaks.
+- **Zero Heap Allocations in Paint**: Static `Paint` and `Path` instances are reused and reset per frame, preventing GC pauses during animations.
+- **Zero Rebuilds During Transitions**: Direct `super(repaint: animation)` connection repaints the canvas without triggering widget `build()` cycles.
+- **Zero `saveLayer()`**: Avoids off-screen compositing buffers and shader-heavy effects to preserve bandwidth on low-end GPUs and SoCs.
+
 ```dart
 AdaptiveBottomNavigationBar(
   selectedIndex: _currentIndex,
   onDestinationSelected: (index) => setState(() => _currentIndex = index),
-  style: AdaptiveBottomNavigationStyle.pill, // or classic, floating, materialExpressive, minimal, glass
-  labelBehavior: AdaptiveBottomNavLabelBehavior.onlyShowSelected,
+  style: AdaptiveBottomNavigationStyle.pillMotion, // or classicCurve, floatingIsland, wave, dock, minimalLine, etc.
+  labelBehavior: AdaptiveBottomNavLabelBehavior.alwaysShow,
   overflowPolicy: AdaptiveBottomNavOverflowPolicy.auto,
   items: sharedNavigationItems,
 )

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -68,13 +69,11 @@ class AdaptiveBottomNavigationDestination {
   final Widget Function(BuildContext context, bool isSelected)? customBuilder;
 }
 
-/// A responsive, multi-style bottom navigation bar with 6 distinct design presentations
-/// ([AdaptiveBottomNavigationStyle.classic], [AdaptiveBottomNavigationStyle.floating],
-/// [AdaptiveBottomNavigationStyle.pill], [AdaptiveBottomNavigationStyle.materialExpressive],
-/// [AdaptiveBottomNavigationStyle.minimal], and [AdaptiveBottomNavigationStyle.glass]),
+/// A responsive, multi-style bottom navigation bar with 12 distinct design presentations,
+/// custom painter acceleration for low-RAM devices, smooth motion indicators,
 /// safe area handling, configurable overflow policies (scroll, menu, auto), and
 /// constraint-safe layout across 1 to 10+ destinations.
-class AdaptiveBottomNavigationBar extends StatelessWidget {
+class AdaptiveBottomNavigationBar extends StatefulWidget {
   const AdaptiveBottomNavigationBar({
     super.key,
     this.destinations,
@@ -84,6 +83,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
     this.onItemSelected,
     this.style,
     this.config,
+    this.customPainter,
     this.labelBehavior,
     this.height,
     this.elevation,
@@ -130,6 +130,9 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
 
   /// Dedicated configuration object for bottom navigation styling and policies.
   final AdaptiveBottomNavigationConfig? config;
+
+  /// Optional custom painter hook for background decoration or custom active indicators.
+  final CustomPainter? customPainter;
 
   /// Label visibility behavior. Overrides [config] if provided.
   final AdaptiveBottomNavLabelBehavior? labelBehavior;
@@ -182,19 +185,101 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
   /// Text label for the 'More' destination.
   final String? moreLabel;
 
+  @override
+  State<AdaptiveBottomNavigationBar> createState() =>
+      _AdaptiveBottomNavigationBarState();
+}
+
+class _AdaptiveBottomNavigationBarState extends State<AdaptiveBottomNavigationBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late CurvedAnimation _curvedAnimation;
+  int _previousIndex = 0;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.selectedIndex;
+    _previousIndex = widget.selectedIndex;
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.animationDuration ??
+          widget.config?.animationDuration ??
+          AdaptiveMotion.standard,
+    );
+    _curvedAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: widget.animationCurve ??
+          widget.config?.animationCurve ??
+          AdaptiveMotion.emphasizedCurve,
+    );
+    _controller.value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(covariant AdaptiveBottomNavigationBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final Duration effectiveDuration = widget.animationDuration ??
+        widget.config?.animationDuration ??
+        AdaptiveMotion.standard;
+    if (_controller.duration != effectiveDuration) {
+      _controller.duration = effectiveDuration;
+    }
+
+    final Curve effectiveCurve = widget.animationCurve ??
+        widget.config?.animationCurve ??
+        AdaptiveMotion.emphasizedCurve;
+    if (_curvedAnimation.curve != effectiveCurve) {
+      _curvedAnimation.curve = effectiveCurve;
+    }
+
+    if (widget.selectedIndex != _currentIndex) {
+      _previousIndex = _currentIndex;
+      _currentIndex = widget.selectedIndex;
+
+      final bool reducedMotion = AdaptiveMotion.isReducedMotion(context);
+      if (reducedMotion || effectiveDuration == Duration.zero) {
+        _controller.value = 1.0;
+      } else {
+        _controller.forward(from: 0.0);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _curvedAnimation.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
   void _handleSelected(int index) {
-    onDestinationSelected?.call(index);
-    onItemSelected?.call(index);
+    widget.onDestinationSelected?.call(index);
+    widget.onItemSelected?.call(index);
   }
 
   List<AdaptiveBottomNavigationDestination> _resolveDestinations() {
-    if (items != null) {
-      return items!
+    if (widget.items != null) {
+      return widget.items!
           .where((AdaptiveSidebarItem item) => item.visibleOnMobile)
           .map(AdaptiveBottomNavigationDestination.fromSidebarItem)
           .toList();
     }
-    return destinations ?? const <AdaptiveBottomNavigationDestination>[];
+    return widget.destinations ?? const <AdaptiveBottomNavigationDestination>[];
+  }
+
+  static bool _isCustomPainterStyle(AdaptiveBottomNavigationStyle s) {
+    return switch (s) {
+      AdaptiveBottomNavigationStyle.classicCurve ||
+      AdaptiveBottomNavigationStyle.floatingIsland ||
+      AdaptiveBottomNavigationStyle.wave ||
+      AdaptiveBottomNavigationStyle.pillMotion ||
+      AdaptiveBottomNavigationStyle.dock ||
+      AdaptiveBottomNavigationStyle.minimalLine => true,
+      _ => false,
+    };
   }
 
   @override
@@ -213,71 +298,111 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
     // 4-tier precedence: direct parameter > config > theme > built-in defaults
     final Duration duration = reducedMotion
         ? Duration.zero
-        : (animationDuration ??
-            config?.animationDuration ??
+        : (widget.animationDuration ??
+            widget.config?.animationDuration ??
             AdaptiveMotion.standard);
 
-    final Curve effectiveCurve = animationCurve ??
-        config?.animationCurve ??
+    final Curve effectiveCurve = widget.animationCurve ??
+        widget.config?.animationCurve ??
         AdaptiveMotion.emphasizedCurve;
 
-    final AdaptiveBottomNavigationStyle effectiveStyle = style ??
-        config?.style ??
+    final AdaptiveBottomNavigationStyle effectiveStyle = widget.style ??
+        widget.config?.style ??
         AdaptiveBottomNavigationStyle.materialExpressive;
 
-    final double effectiveHeight = height ??
-        config?.height ??
+    final bool isCustomPainter = _isCustomPainterStyle(effectiveStyle) ||
+        widget.customPainter != null ||
+        widget.config?.customPainter != null;
+
+    final double effectiveHeight = widget.height ??
+        widget.config?.height ??
         adaptiveTheme.bottomNavTheme.height ??
         switch (effectiveStyle) {
           AdaptiveBottomNavigationStyle.classic => 64.0,
+          AdaptiveBottomNavigationStyle.classicCurve => 66.0,
           AdaptiveBottomNavigationStyle.floating => 68.0,
+          AdaptiveBottomNavigationStyle.floatingIsland => 68.0,
+          AdaptiveBottomNavigationStyle.wave => 64.0,
           AdaptiveBottomNavigationStyle.pill => 64.0,
+          AdaptiveBottomNavigationStyle.pillMotion => 66.0,
+          AdaptiveBottomNavigationStyle.dock => 68.0,
           AdaptiveBottomNavigationStyle.minimal => 58.0,
+          AdaptiveBottomNavigationStyle.minimalLine => 58.0,
           AdaptiveBottomNavigationStyle.glass => 68.0,
           AdaptiveBottomNavigationStyle.materialExpressive => 80.0,
         };
 
-    final double effectiveElevation = elevation ??
-        config?.elevation ??
+    final double effectiveElevation = widget.elevation ??
+        widget.config?.elevation ??
         adaptiveTheme.bottomNavTheme.elevation ??
         switch (effectiveStyle) {
           AdaptiveBottomNavigationStyle.classic => 8.0,
+          AdaptiveBottomNavigationStyle.classicCurve => 8.0,
           AdaptiveBottomNavigationStyle.floating => 6.0,
+          AdaptiveBottomNavigationStyle.floatingIsland => 6.0,
+          AdaptiveBottomNavigationStyle.wave => 6.0,
           AdaptiveBottomNavigationStyle.pill => 4.0,
+          AdaptiveBottomNavigationStyle.pillMotion => 4.0,
+          AdaptiveBottomNavigationStyle.dock => 6.0,
           AdaptiveBottomNavigationStyle.minimal => 0.0,
+          AdaptiveBottomNavigationStyle.minimalLine => 0.0,
           AdaptiveBottomNavigationStyle.glass => 0.0,
           AdaptiveBottomNavigationStyle.materialExpressive => 3.0,
         };
 
-    final BorderRadiusGeometry? effectiveBorderRadius = borderRadius ??
-        config?.borderRadius ??
+    final BorderRadiusGeometry? effectiveBorderRadius = widget.borderRadius ??
+        widget.config?.borderRadius ??
         switch (effectiveStyle) {
           AdaptiveBottomNavigationStyle.classic => null,
+          AdaptiveBottomNavigationStyle.classicCurve => null,
           AdaptiveBottomNavigationStyle.floating => BorderRadius.circular(28.0),
+          AdaptiveBottomNavigationStyle.floatingIsland =>
+            BorderRadius.circular(28.0),
+          AdaptiveBottomNavigationStyle.wave => null,
           AdaptiveBottomNavigationStyle.pill => BorderRadius.circular(32.0),
+          AdaptiveBottomNavigationStyle.pillMotion =>
+            BorderRadius.circular(32.0),
+          AdaptiveBottomNavigationStyle.dock => BorderRadius.circular(24.0),
           AdaptiveBottomNavigationStyle.minimal => null,
+          AdaptiveBottomNavigationStyle.minimalLine => null,
           AdaptiveBottomNavigationStyle.glass => BorderRadius.circular(24.0),
           AdaptiveBottomNavigationStyle.materialExpressive => null,
         };
 
-    final EdgeInsetsGeometry? effectiveMargin = margin ??
-        config?.margin ??
+    final EdgeInsetsGeometry? effectiveMargin = widget.margin ??
+        widget.config?.margin ??
         switch (effectiveStyle) {
           AdaptiveBottomNavigationStyle.classic => null,
+          AdaptiveBottomNavigationStyle.classicCurve => null,
           AdaptiveBottomNavigationStyle.floating =>
             const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 12.0),
+          AdaptiveBottomNavigationStyle.floatingIsland =>
+            const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 12.0),
+          AdaptiveBottomNavigationStyle.wave => null,
           AdaptiveBottomNavigationStyle.pill =>
             const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 8.0),
+          AdaptiveBottomNavigationStyle.pillMotion =>
+            const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 8.0),
+          AdaptiveBottomNavigationStyle.dock =>
+            const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 10.0),
           AdaptiveBottomNavigationStyle.minimal => null,
+          AdaptiveBottomNavigationStyle.minimalLine => null,
           AdaptiveBottomNavigationStyle.glass =>
             const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 10.0),
           AdaptiveBottomNavigationStyle.materialExpressive => null,
         };
 
-    final Border? effectiveBorder = border ??
-        config?.border ??
+    final Border? effectiveBorder = widget.border ??
+        widget.config?.border ??
         switch (effectiveStyle) {
           AdaptiveBottomNavigationStyle.classic => Border(
+              top: BorderSide(
+                color:
+                    isDark ? const Color(0xFF2E323D) : const Color(0xFFE5E7EB),
+                width: 1.0,
+              ),
+            ),
+          AdaptiveBottomNavigationStyle.classicCurve => Border(
               top: BorderSide(
                 color:
                     isDark ? const Color(0xFF2E323D) : const Color(0xFFE5E7EB),
@@ -288,11 +413,37 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
               color: isDark ? const Color(0xFF383C4A) : const Color(0xFFE2E8F0),
               width: 1.0,
             ),
+          AdaptiveBottomNavigationStyle.floatingIsland => Border.all(
+              color: isDark ? const Color(0xFF383C4A) : const Color(0xFFE2E8F0),
+              width: 1.0,
+            ),
+          AdaptiveBottomNavigationStyle.wave => Border(
+              top: BorderSide(
+                color:
+                    isDark ? const Color(0xFF2E323D) : const Color(0xFFE5E7EB),
+                width: 1.0,
+              ),
+            ),
           AdaptiveBottomNavigationStyle.pill => Border.all(
               color: isDark ? const Color(0xFF323644) : const Color(0xFFE5E7EB),
               width: 1.0,
             ),
+          AdaptiveBottomNavigationStyle.pillMotion => Border.all(
+              color: isDark ? const Color(0xFF323644) : const Color(0xFFE5E7EB),
+              width: 1.0,
+            ),
+          AdaptiveBottomNavigationStyle.dock => Border.all(
+              color: isDark ? const Color(0xFF383C4A) : const Color(0xFFE2E8F0),
+              width: 1.0,
+            ),
           AdaptiveBottomNavigationStyle.minimal => Border(
+              top: BorderSide(
+                color:
+                    isDark ? const Color(0xFF2A2D37) : const Color(0xFFEEEEEE),
+                width: 1.0,
+              ),
+            ),
+          AdaptiveBottomNavigationStyle.minimalLine => Border(
               top: BorderSide(
                 color:
                     isDark ? const Color(0xFF2A2D37) : const Color(0xFFEEEEEE),
@@ -308,50 +459,52 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
           AdaptiveBottomNavigationStyle.materialExpressive => null,
         };
 
-    final Color effectiveBg = backgroundColor ??
-        config?.backgroundColor ??
+    final Color effectiveBg = widget.backgroundColor ??
+        widget.config?.backgroundColor ??
         adaptiveTheme.bottomNavTheme.backgroundColor ??
         (effectiveStyle == AdaptiveBottomNavigationStyle.glass
             ? (isDark ? const Color(0x99181A20) : const Color(0xB3FFFFFF))
             : adaptiveTheme.colors.surface);
 
     final AdaptiveBottomNavLabelBehavior effectiveLabelBehavior =
-        labelBehavior ??
-            config?.labelBehavior ??
+        widget.labelBehavior ??
+            widget.config?.labelBehavior ??
             adaptiveTheme.bottomNavTheme.labelBehavior ??
             AdaptiveBottomNavLabelBehavior.alwaysShow;
 
-    final Color effectiveIndicator = indicatorColor ??
-        config?.indicatorColor ??
+    final Color effectiveIndicator = widget.indicatorColor ??
+        widget.config?.indicatorColor ??
         adaptiveTheme.bottomNavTheme.indicatorColor ??
         (isDark
             ? adaptiveTheme.colors.primary.withValues(alpha: 0.24)
             : adaptiveTheme.colors.primary.withValues(alpha: 0.14));
 
-    final Color effectiveSelected = selectedColor ??
-        config?.selectedColor ??
+    final Color effectiveSelected = widget.selectedColor ??
+        widget.config?.selectedColor ??
         adaptiveTheme.bottomNavTheme.selectedColor ??
         adaptiveTheme.colors.primary;
 
-    final Color effectiveUnselected = unselectedColor ??
-        config?.unselectedColor ??
+    final Color effectiveUnselected = widget.unselectedColor ??
+        widget.config?.unselectedColor ??
         adaptiveTheme.bottomNavTheme.unselectedColor ??
         adaptiveTheme.colors.onSurfaceVariant;
 
     final bool effectiveUseSafeArea =
-        useSafeArea ?? config?.useSafeArea ?? true;
+        widget.useSafeArea ?? widget.config?.useSafeArea ?? true;
 
-    final AdaptiveBottomNavOverflowPolicy effectivePolicy = overflowPolicy ??
-        config?.overflowPolicy ??
-        AdaptiveBottomNavOverflowPolicy.auto;
+    final AdaptiveBottomNavOverflowPolicy effectivePolicy =
+        widget.overflowPolicy ??
+            widget.config?.overflowPolicy ??
+            AdaptiveBottomNavOverflowPolicy.auto;
 
     final int effectiveMaxVisible =
-        maxVisibleItems ?? config?.maxVisibleItems ?? 5;
+        widget.maxVisibleItems ?? widget.config?.maxVisibleItems ?? 5;
 
     final Widget effectiveMoreIcon =
-        moreIcon ?? config?.moreIcon ?? const Icon(Icons.more_horiz);
+        widget.moreIcon ?? widget.config?.moreIcon ?? const Icon(Icons.more_horiz);
 
-    final String effectiveMoreLabel = moreLabel ?? config?.moreLabel ?? 'More';
+    final String effectiveMoreLabel =
+        widget.moreLabel ?? widget.config?.moreLabel ?? 'More';
 
     return LayoutBuilder(
       builder: (BuildContext ctx, BoxConstraints constraints) {
@@ -375,15 +528,21 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                             count > 2)));
 
         Widget barItems;
+        int visibleCount = count;
+        int effectiveIndex = widget.selectedIndex;
+        int effectivePrev = _previousIndex;
 
         if (count == 1) {
           // Exactly one item: render centered with comfortable width
+          visibleCount = 1;
+          effectiveIndex = 0;
+          effectivePrev = 0;
           barItems = Center(
             child: SizedBox(
               width: availableWidth.clamp(72.0, 160.0),
               child: _AdaptiveBottomNavItem(
                 destination: resolvedDestinations[0],
-                isSelected: selectedIndex == 0,
+                isSelected: widget.selectedIndex == 0,
                 labelBehavior: effectiveLabelBehavior,
                 style: effectiveStyle,
                 onTap: resolvedDestinations[0].enabled
@@ -394,12 +553,14 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                 indicatorColor: effectiveIndicator,
                 selectedColor: effectiveSelected,
                 unselectedColor: effectiveUnselected,
-                config: config,
+                config: widget.config,
+                isCustomPainter: isCustomPainter,
               ),
             ),
           );
         } else if (shouldScroll) {
           // Scroll policy: horizontally scrollable row of items
+          visibleCount = count;
           final double itemWidth = (availableWidth / count).clamp(68.0, 120.0);
           barItems = SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -412,7 +573,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                     width: itemWidth,
                     child: _AdaptiveBottomNavItem(
                       destination: resolvedDestinations[i],
-                      isSelected: selectedIndex == i,
+                      isSelected: widget.selectedIndex == i,
                       labelBehavior: effectiveLabelBehavior,
                       style: effectiveStyle,
                       onTap: resolvedDestinations[i].enabled
@@ -423,7 +584,8 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                       indicatorColor: effectiveIndicator,
                       selectedColor: effectiveSelected,
                       unselectedColor: effectiveUnselected,
-                      config: config,
+                      config: widget.config,
+                      isCustomPainter: isCustomPainter,
                     ),
                   ),
               ],
@@ -438,7 +600,10 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
           final List<AdaptiveBottomNavigationDestination> overflowItems =
               resolvedDestinations.sublist(primaryCount);
 
-          final bool isMoreSelected = selectedIndex >= primaryCount;
+          final bool isMoreSelected = widget.selectedIndex >= primaryCount;
+          visibleCount = primaryCount + 1;
+          effectiveIndex = isMoreSelected ? primaryCount : widget.selectedIndex;
+          effectivePrev = _previousIndex >= primaryCount ? primaryCount : _previousIndex;
 
           barItems = Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -447,7 +612,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                 Expanded(
                   child: _AdaptiveBottomNavItem(
                     destination: primaryItems[i],
-                    isSelected: selectedIndex == i,
+                    isSelected: widget.selectedIndex == i,
                     labelBehavior: effectiveLabelBehavior,
                     style: effectiveStyle,
                     onTap: primaryItems[i].enabled
@@ -458,7 +623,8 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                     indicatorColor: effectiveIndicator,
                     selectedColor: effectiveSelected,
                     unselectedColor: effectiveUnselected,
-                    config: config,
+                    config: widget.config,
+                    isCustomPainter: isCustomPainter,
                   ),
                 ),
               Expanded(
@@ -477,7 +643,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                       ctx,
                       overflowItems: overflowItems,
                       primaryCount: primaryCount,
-                      selectedIndex: selectedIndex,
+                      selectedIndex: widget.selectedIndex,
                       moreLabel: effectiveMoreLabel,
                       selectedColor: effectiveSelected,
                       onSelect: _handleSelected,
@@ -488,13 +654,17 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                   indicatorColor: effectiveIndicator,
                   selectedColor: effectiveSelected,
                   unselectedColor: effectiveUnselected,
-                  config: config,
+                  config: widget.config,
+                  isCustomPainter: isCustomPainter,
                 ),
               ),
             ],
           );
         } else {
           // Standard evenly-distributed row
+          visibleCount = count;
+          effectiveIndex = widget.selectedIndex.clamp(0, count - 1);
+          effectivePrev = _previousIndex.clamp(0, count - 1);
           barItems = Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -502,7 +672,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                 Expanded(
                   child: _AdaptiveBottomNavItem(
                     destination: resolvedDestinations[i],
-                    isSelected: selectedIndex == i,
+                    isSelected: widget.selectedIndex == i,
                     labelBehavior: effectiveLabelBehavior,
                     style: effectiveStyle,
                     onTap: resolvedDestinations[i].enabled
@@ -513,7 +683,8 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                     indicatorColor: effectiveIndicator,
                     selectedColor: effectiveSelected,
                     unselectedColor: effectiveUnselected,
-                    config: config,
+                    config: widget.config,
+                    isCustomPainter: isCustomPainter,
                   ),
                 ),
             ],
@@ -525,10 +696,44 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
             ? effectiveHeight + (textScale - 1.0) * 24.0
             : effectiveHeight;
 
-        Widget content = SizedBox(
-          height: scaledHeight,
-          child: barItems,
-        );
+        Widget content;
+        if (isCustomPainter && !shouldScroll) {
+          content = SizedBox(
+            height: scaledHeight,
+            child: Stack(
+              fit: StackFit.passthrough,
+              children: [
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: AdaptiveBottomNavPainter(
+                        repaint: _curvedAnimation,
+                        style: effectiveStyle,
+                        progress: _curvedAnimation.value,
+                        previousIndex: effectivePrev,
+                        currentIndex: effectiveIndex,
+                        itemCount: visibleCount,
+                        indicatorColor: effectiveIndicator,
+                        selectedColor: effectiveSelected,
+                        unselectedColor: effectiveUnselected,
+                        backgroundColor: effectiveBg,
+                        textDirection: Directionality.of(ctx),
+                        customPainter: widget.customPainter ??
+                            widget.config?.customPainter,
+                      ),
+                    ),
+                  ),
+                ),
+                barItems,
+              ],
+            ),
+          );
+        } else {
+          content = SizedBox(
+            height: scaledHeight,
+            child: barItems,
+          );
+        }
 
         if (effectiveUseSafeArea) {
           content = SafeArea(top: false, child: content);
@@ -551,8 +756,8 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                 BorderRadius.circular(24.0),
             child: BackdropFilter(
               filter: ImageFilter.blur(
-                sigmaX: config?.blurSigma ?? 12.0,
-                sigmaY: config?.blurSigma ?? 12.0,
+                sigmaX: widget.config?.blurSigma ?? 12.0,
+                sigmaY: widget.config?.blurSigma ?? 12.0,
               ),
               child: barSurface,
             ),
@@ -570,7 +775,7 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
                   side: effectiveBorder?.top ?? BorderSide.none,
                 )
               : null,
-          shadowColor: config?.shadowColor,
+          shadowColor: widget.config?.shadowColor,
           child: barSurface,
         );
 
@@ -708,6 +913,278 @@ class AdaptiveBottomNavigationBar extends StatelessWidget {
   }
 }
 
+/// High-performance [CustomPainter] powering distinctive bottom navigation indicators.
+///
+/// Designed specifically for lower-end Android devices (500 MB–1 GB RAM):
+/// - Reuses static `Paint` and `Path` instances without per-frame heap allocations.
+/// - Connects to the repaint listenable directly without rebuilding child widgets.
+/// - Avoids `saveLayer`, blur, or shader-heavy operations.
+/// - Accurately reports [shouldRepaint] based on visual property equality.
+class AdaptiveBottomNavPainter extends CustomPainter {
+  AdaptiveBottomNavPainter({
+    required Listenable repaint,
+    required this.style,
+    required this.progress,
+    required this.previousIndex,
+    required this.currentIndex,
+    required this.itemCount,
+    required this.indicatorColor,
+    required this.selectedColor,
+    required this.unselectedColor,
+    required this.backgroundColor,
+    required this.textDirection,
+    this.customPainter,
+  }) : super(repaint: repaint);
+
+  final AdaptiveBottomNavigationStyle style;
+  final double progress;
+  final int previousIndex;
+  final int currentIndex;
+  final int itemCount;
+  final Color indicatorColor;
+  final Color selectedColor;
+  final Color unselectedColor;
+  final Color backgroundColor;
+  final TextDirection textDirection;
+  final CustomPainter? customPainter;
+
+  // Zero-allocation pre-allocated static Paint and Path instances
+  static final Paint _fillPaint = Paint()..style = PaintingStyle.fill;
+  static final Paint _strokePaint = Paint()..style = PaintingStyle.stroke;
+  static final Path _path = Path();
+
+  double _getCenterX(double width, int index, int count) {
+    if (count <= 0) return width / 2.0;
+    final double slotWidth = width / count;
+    if (textDirection == TextDirection.rtl) {
+      return width - (index + 0.5) * slotWidth;
+    }
+    return (index + 0.5) * slotWidth;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (customPainter != null) {
+      customPainter!.paint(canvas, size);
+      return;
+    }
+
+    if (itemCount <= 0 || size.width <= 0 || size.height <= 0) {
+      return;
+    }
+
+    final int fromIdx = previousIndex.clamp(0, itemCount - 1);
+    final int toIdx = currentIndex.clamp(0, itemCount - 1);
+    final double fromX = _getCenterX(size.width, fromIdx, itemCount);
+    final double toX = _getCenterX(size.width, toIdx, itemCount);
+    final double centerX = lerpDouble(fromX, toX, progress) ?? toX;
+
+    switch (style) {
+      case AdaptiveBottomNavigationStyle.classicCurve:
+        _paintClassicCurve(canvas, size, centerX);
+      case AdaptiveBottomNavigationStyle.floatingIsland:
+        _paintFloatingIsland(canvas, size, centerX);
+      case AdaptiveBottomNavigationStyle.wave:
+        _paintWave(canvas, size, centerX);
+      case AdaptiveBottomNavigationStyle.pillMotion:
+        _paintPillMotion(canvas, size, centerX);
+      case AdaptiveBottomNavigationStyle.dock:
+        _paintDock(canvas, size, centerX);
+      case AdaptiveBottomNavigationStyle.minimalLine:
+        _paintMinimalLine(canvas, size, centerX);
+      default:
+        break;
+    }
+  }
+
+  void _paintClassicCurve(Canvas canvas, Size size, double centerX) {
+    final double slotWidth = size.width / (itemCount > 0 ? itemCount : 1);
+    final double curveWidth = slotWidth.clamp(52.0, 92.0);
+    const double dipDepth = 8.0;
+    final double halfW = curveWidth / 2.0;
+    final double left = (centerX - halfW).clamp(0.0, size.width);
+    final double right = (centerX + halfW).clamp(0.0, size.width);
+
+    _path.reset();
+    _path.moveTo(left, 0.0);
+    _path.cubicTo(
+      left + curveWidth * 0.28,
+      0.0,
+      centerX - curveWidth * 0.22,
+      dipDepth,
+      centerX,
+      dipDepth,
+    );
+    _path.cubicTo(
+      centerX + curveWidth * 0.22,
+      dipDepth,
+      right - curveWidth * 0.28,
+      0.0,
+      right,
+      0.0,
+    );
+
+    _strokePaint
+      ..color = selectedColor
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(_path, _strokePaint);
+
+    _path.lineTo(right, 0.0);
+    _path.lineTo(left, 0.0);
+    _path.close();
+    _fillPaint.color = indicatorColor.withValues(alpha: 0.20);
+    canvas.drawPath(_path, _fillPaint);
+  }
+
+  void _paintFloatingIsland(Canvas canvas, Size size, double centerX) {
+    const double islandW = 64.0;
+    const double islandH = 38.0;
+    final RRect rrect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(centerX, size.height * 0.44),
+        width: islandW,
+        height: islandH,
+      ),
+      const Radius.circular(19.0),
+    );
+
+    _fillPaint.color = indicatorColor;
+    canvas.drawRRect(rrect, _fillPaint);
+
+    _strokePaint
+      ..color = selectedColor.withValues(alpha: 0.28)
+      ..strokeWidth = 1.0;
+    canvas.drawRRect(rrect, _strokePaint);
+  }
+
+  void _paintWave(Canvas canvas, Size size, double centerX) {
+    const double waveW = 56.0;
+    final double left = centerX - waveW / 2.0;
+    final double right = centerX + waveW / 2.0;
+
+    _path.reset();
+    _path.moveTo(left, 0.0);
+    _path.cubicTo(
+      centerX - 14.0,
+      5.0,
+      centerX - 8.0,
+      6.0,
+      centerX,
+      6.0,
+    );
+    _path.cubicTo(
+      centerX + 8.0,
+      6.0,
+      centerX + 14.0,
+      5.0,
+      right,
+      0.0,
+    );
+
+    _strokePaint
+      ..color = selectedColor
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(_path, _strokePaint);
+
+    _path.lineTo(right, 0.0);
+    _path.lineTo(left, 0.0);
+    _path.close();
+    _fillPaint.color = indicatorColor.withValues(alpha: 0.22);
+    canvas.drawPath(_path, _fillPaint);
+  }
+
+  void _paintPillMotion(Canvas canvas, Size size, double centerX) {
+    // Dynamic organic breathing during motion using sin(pi * progress)
+    final double stretch =
+        1.0 + 0.16 * math.sin(math.pi * progress.clamp(0.0, 1.0));
+    final double pillW = 60.0 * stretch;
+    const double pillH = 34.0;
+
+    final RRect rrect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(centerX, size.height * 0.42),
+        width: pillW,
+        height: pillH,
+      ),
+      const Radius.circular(17.0),
+    );
+
+    _fillPaint.color = indicatorColor;
+    canvas.drawRRect(rrect, _fillPaint);
+  }
+
+  void _paintDock(Canvas canvas, Size size, double centerX) {
+    // Dock reflective shelf line
+    _strokePaint
+      ..color = unselectedColor.withValues(alpha: 0.20)
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(16.0, size.height - 7.0),
+      Offset(size.width - 16.0, size.height - 7.0),
+      _strokePaint,
+    );
+
+    // Active item cushion halo
+    final RRect cushion = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(centerX, size.height * 0.42),
+        width: 52.0,
+        height: 34.0,
+      ),
+      const Radius.circular(12.0),
+    );
+    _fillPaint.color = indicatorColor.withValues(alpha: 0.24);
+    canvas.drawRRect(cushion, _fillPaint);
+
+    // Active dock dot indicator
+    _fillPaint.color = selectedColor;
+    canvas.drawCircle(Offset(centerX, size.height - 4.5), 2.5, _fillPaint);
+  }
+
+  void _paintMinimalLine(Canvas canvas, Size size, double centerX) {
+    // Top-edge active indicator line
+    _strokePaint
+      ..color = selectedColor
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(centerX - 16.0, 2.0),
+      Offset(centerX + 16.0, 2.0),
+      _strokePaint,
+    );
+
+    // Subtle soft accent glow pill
+    final RRect accentPill = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(centerX, 3.5),
+        width: 36.0,
+        height: 6.0,
+      ),
+      const Radius.circular(3.0),
+    );
+    _fillPaint.color = indicatorColor.withValues(alpha: 0.16);
+    canvas.drawRRect(accentPill, _fillPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant AdaptiveBottomNavPainter oldDelegate) {
+    return oldDelegate.style != style ||
+        oldDelegate.progress != progress ||
+        oldDelegate.previousIndex != previousIndex ||
+        oldDelegate.currentIndex != currentIndex ||
+        oldDelegate.itemCount != itemCount ||
+        oldDelegate.indicatorColor != indicatorColor ||
+        oldDelegate.selectedColor != selectedColor ||
+        oldDelegate.unselectedColor != unselectedColor ||
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.textDirection != textDirection ||
+        oldDelegate.customPainter != customPainter;
+  }
+}
+
 class _AdaptiveBottomNavItem extends StatelessWidget {
   const _AdaptiveBottomNavItem({
     required this.destination,
@@ -720,6 +1197,7 @@ class _AdaptiveBottomNavItem extends StatelessWidget {
     required this.indicatorColor,
     required this.selectedColor,
     required this.unselectedColor,
+    required this.isCustomPainter,
     this.config,
   });
 
@@ -733,6 +1211,7 @@ class _AdaptiveBottomNavItem extends StatelessWidget {
   final Color indicatorColor;
   final Color selectedColor;
   final Color unselectedColor;
+  final bool isCustomPainter;
   final AdaptiveBottomNavigationConfig? config;
 
   @override
@@ -799,179 +1278,216 @@ class _AdaptiveBottomNavItem extends StatelessWidget {
 
     final Widget itemContent;
 
-    switch (style) {
-      case AdaptiveBottomNavigationStyle.pill:
-        // Pill style: when selected, displays a horizontal capsule with icon + label.
-        // When unselected, displays icon only.
-        itemContent = AnimatedContainer(
-          duration: duration,
-          curve: curve,
-          padding: EdgeInsets.symmetric(
-            horizontal: isSelected ? 14.0 : 8.0,
-            vertical: 8.0,
-          ),
-          decoration: BoxDecoration(
-            color: isSelected ? indicatorColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+    if (isCustomPainter) {
+      itemContent = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          badgedIcon,
+          if (showLabel) ...[
+            const SizedBox(height: 4.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+              child: labelWidget,
+            ),
+          ],
+        ],
+      );
+    } else {
+      switch (style) {
+        case AdaptiveBottomNavigationStyle.pill:
+          // Pill style: when selected, displays a horizontal capsule with icon + label.
+          itemContent = AnimatedContainer(
+            duration: duration,
+            curve: curve,
+            padding: EdgeInsets.symmetric(
+              horizontal: isSelected ? 14.0 : 8.0,
+              vertical: 8.0,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected ? indicatorColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                badgedIcon,
+                if (isSelected && showLabel) ...[
+                  const SizedBox(width: 8.0),
+                  Flexible(
+                    child: AnimatedOpacity(
+                      duration: duration,
+                      opacity: isSelected ? 1.0 : 0.0,
+                      child: labelWidget,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+
+        case AdaptiveBottomNavigationStyle.minimal:
+          // Minimal style: flat, clean, understated with a subtle animated underline indicator.
+          itemContent = Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               badgedIcon,
-              if (isSelected && showLabel) ...[
-                const SizedBox(width: 8.0),
-                Flexible(
-                  child: AnimatedOpacity(
-                    duration: duration,
-                    opacity: isSelected ? 1.0 : 0.0,
-                    child: labelWidget,
-                  ),
+              if (showLabel) ...[
+                const SizedBox(height: 3.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: labelWidget,
+                ),
+              ],
+              const SizedBox(height: 3.0),
+              AnimatedContainer(
+                duration: duration,
+                curve: curve,
+                width: isSelected ? 16.0 : 0.0,
+                height: 2.5,
+                decoration: BoxDecoration(
+                  color: isSelected ? selectedColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(2.0),
+                ),
+              ),
+            ],
+          );
+
+        case AdaptiveBottomNavigationStyle.classic:
+          // Classic style: traditional icon + label without container pill.
+          itemContent = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              badgedIcon,
+              if (showLabel) ...[
+                const SizedBox(height: 4.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: labelWidget,
                 ),
               ],
             ],
-          ),
-        );
+          );
 
-      case AdaptiveBottomNavigationStyle.minimal:
-        // Minimal style: flat, clean, understated with a subtle animated underline indicator.
-        itemContent = Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            badgedIcon,
-            if (showLabel) ...[
-              const SizedBox(height: 3.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                child: labelWidget,
+        case AdaptiveBottomNavigationStyle.floating:
+          // Floating style: rounded indicator capsule behind icon, label below.
+          final Size pillSize =
+              config?.indicatorSize ?? Size(isSelected ? 56.0 : 40.0, 32.0);
+          itemContent = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: duration,
+                curve: curve,
+                width: pillSize.width,
+                height: pillSize.height,
+                decoration: BoxDecoration(
+                  color: isSelected ? indicatorColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16.0),
+                ),
+                child: Center(child: badgedIcon),
               ),
+              if (showLabel) ...[
+                const SizedBox(height: 4.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: labelWidget,
+                ),
+              ],
             ],
-            const SizedBox(height: 3.0),
-            AnimatedContainer(
-              duration: duration,
-              curve: curve,
-              width: isSelected ? 16.0 : 0.0,
-              height: 2.5,
-              decoration: BoxDecoration(
-                color: isSelected ? selectedColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(2.0),
-              ),
-            ),
-          ],
-        );
+          );
 
-      case AdaptiveBottomNavigationStyle.classic:
-        // Classic style: traditional icon + label without container pill.
-        itemContent = Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            badgedIcon,
-            if (showLabel) ...[
-              const SizedBox(height: 4.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                child: labelWidget,
+        case AdaptiveBottomNavigationStyle.glass:
+          // Glass style: translucent frosted indicator container with soft border.
+          final Size pillSize =
+              config?.indicatorSize ?? Size(isSelected ? 56.0 : 40.0, 32.0);
+          itemContent = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: duration,
+                curve: curve,
+                width: pillSize.width,
+                height: pillSize.height,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? indicatorColor.withValues(alpha: 0.35)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16.0),
+                  border: isSelected
+                      ? Border.all(
+                          color: indicatorColor.withValues(alpha: 0.45),
+                          width: 1.0,
+                        )
+                      : null,
+                ),
+                child: Center(child: badgedIcon),
               ),
+              if (showLabel) ...[
+                const SizedBox(height: 4.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: labelWidget,
+                ),
+              ],
             ],
-          ],
-        );
+          );
 
-      case AdaptiveBottomNavigationStyle.floating:
-        // Floating style: rounded indicator capsule behind icon, label below.
-        final Size pillSize =
-            config?.indicatorSize ?? Size(isSelected ? 56.0 : 40.0, 32.0);
-        itemContent = Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: duration,
-              curve: curve,
-              width: pillSize.width,
-              height: pillSize.height,
-              decoration: BoxDecoration(
-                color: isSelected ? indicatorColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(16.0),
+        case AdaptiveBottomNavigationStyle.materialExpressive:
+          // Material Expressive: M3 stadium pill container behind icon, label below.
+          final Size pillSize =
+              config?.indicatorSize ?? Size(isSelected ? 64.0 : 44.0, 32.0);
+          itemContent = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: duration,
+                curve: curve,
+                width: pillSize.width,
+                height: pillSize.height,
+                decoration: BoxDecoration(
+                  color: isSelected ? indicatorColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(pillSize.height / 2.0),
+                ),
+                child: Center(child: badgedIcon),
               ),
-              child: Center(child: badgedIcon),
-            ),
-            if (showLabel) ...[
-              const SizedBox(height: 4.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                child: labelWidget,
-              ),
+              if (showLabel) ...[
+                const SizedBox(height: 4.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: labelWidget,
+                ),
+              ],
             ],
-          ],
-        );
+          );
 
-      case AdaptiveBottomNavigationStyle.glass:
-        // Glass style: translucent frosted indicator container with soft border.
-        final Size pillSize =
-            config?.indicatorSize ?? Size(isSelected ? 56.0 : 40.0, 32.0);
-        itemContent = Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: duration,
-              curve: curve,
-              width: pillSize.width,
-              height: pillSize.height,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? indicatorColor.withValues(alpha: 0.35)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16.0),
-                border: isSelected
-                    ? Border.all(
-                        color: indicatorColor.withValues(alpha: 0.45),
-                        width: 1.0,
-                      )
-                    : null,
-              ),
-              child: Center(child: badgedIcon),
-            ),
-            if (showLabel) ...[
-              const SizedBox(height: 4.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                child: labelWidget,
-              ),
+        case AdaptiveBottomNavigationStyle.classicCurve:
+        case AdaptiveBottomNavigationStyle.floatingIsland:
+        case AdaptiveBottomNavigationStyle.wave:
+        case AdaptiveBottomNavigationStyle.pillMotion:
+        case AdaptiveBottomNavigationStyle.dock:
+        case AdaptiveBottomNavigationStyle.minimalLine:
+          itemContent = Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              badgedIcon,
+              if (showLabel) ...[
+                const SizedBox(height: 4.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: labelWidget,
+                ),
+              ],
             ],
-          ],
-        );
-
-      case AdaptiveBottomNavigationStyle.materialExpressive:
-        // Material Expressive: M3 stadium pill container behind icon, label below.
-        final Size pillSize =
-            config?.indicatorSize ?? Size(isSelected ? 64.0 : 44.0, 32.0);
-        itemContent = Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: duration,
-              curve: curve,
-              width: pillSize.width,
-              height: pillSize.height,
-              decoration: BoxDecoration(
-                color: isSelected ? indicatorColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(pillSize.height / 2.0),
-              ),
-              child: Center(child: badgedIcon),
-            ),
-            if (showLabel) ...[
-              const SizedBox(height: 4.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                child: labelWidget,
-              ),
-            ],
-          ],
-        );
+          );
+      }
     }
 
     final bool hasOverlay = Overlay.maybeOf(context) != null;

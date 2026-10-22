@@ -105,17 +105,34 @@ All thresholds are immutable, equatable, and customizable per application or sub
   - Custom submenu header/content customization via `customSubmenuBuilder` on `AdaptiveSidebarItem`.
   - Hierarchical indentation, active ancestor highlighting, and `AdaptiveDropdown` overlay popups with viewport boundary clamping, double-tap protection, custom content/builders, keyboard Escape and barrier dismissal.
 
-### I. Feature C — `AdaptiveBottomNavigationBar` & Design System (Phase 7)
-- **6 Distinct Production-Quality Visual Styles (`AdaptiveBottomNavigationStyle`)**:
-  1. `classic`: Traditional bottom navigation bar (64dp height, 8dp elevation, top border, direct icon and label color transitions).
-  2. `floating`: Elevated floating surface with rounded corners and outer margins (68dp height, 6dp elevation, 28dp radius, rounded indicator capsule).
-  3. `pill`: Active-item animated horizontal capsule (`[icon, label]`) with smooth expansion transition; unselected destinations render icon only (64dp height, 4dp elevation, 32dp radius).
-  4. `materialExpressive`: Expressive Material 3 stadium container behind the active icon with label underneath (80dp height, 3dp elevation).
-  5. `minimal`: Restrained, flat visual treatment with no background pill, flat surface, and an animated underline indicator (58dp height, 0 elevation).
-  6. `glass`: Translucent frosted glass aesthetic utilizing GPU-accelerated `BackdropFilter` with configurable `blurSigma` (default 12dp) and frosted active highlights.
-- **Dynamic Text-Scale Resilience**: Automatically scales bar height proportionally with accessibility `MediaQuery.textScalerOf(context)` avoiding RenderFlex overflows under large text scaling (e.g. 2.0x).
+### I. Feature C — `AdaptiveBottomNavigationBar` & Design System (CustomPainter & Low-RAM Optimized)
+- **12 Distinct Visual Styles (`AdaptiveBottomNavigationStyle`)**:
+  - **6 Distinct CustomPainter-Accelerated Styles** (Engineered for constrained Android devices with 500 MB–1 GB RAM):
+    1. `classicCurve`: Custom scooped cubic Bezier highlight curve dipping below the active tab with smooth top-edge geometry and soft fill.
+    2. `floatingIsland`: Compact floating navigation surface with a custom-painted rounded island container and crisp outline behind the active slot.
+    3. `wave`: Fluid sinusoidal wave crest indicator gliding smoothly between destinations across the top edge.
+    4. `pillMotion`: Moving pill indicator that glides along the navigation track with dynamic organic stretch physics (`sin(pi * progress)`).
+    5. `dock`: macOS dock-inspired treatment featuring a horizontal reflective shelf line, active item cushion halo, and active dock dot indicator.
+    6. `minimalLine`: High-performance sliding geometric line indicator with rounded stroke caps and a soft accent glow pill along the top edge.
+  - **6 Standard Widget-Decorated Styles**:
+    7. `classic`: Traditional bottom navigation bar (64dp height, 8dp elevation, top border, direct icon and label color transitions).
+    8. `floating`: Elevated floating surface with rounded corners and outer margins (68dp height, 6dp elevation, 28dp radius, rounded indicator capsule).
+    9. `pill`: Active-item animated horizontal capsule (`[icon, label]`) with smooth expansion transition; unselected destinations render icon only (64dp height, 4dp elevation, 32dp radius).
+    10. `materialExpressive`: Expressive Material 3 stadium container behind the active icon with label underneath (80dp height, 3dp elevation).
+    11. `minimal`: Restrained, flat visual treatment with no background pill, flat surface, and an animated underline indicator (58dp height, 0 elevation).
+    12. `glass`: Translucent frosted glass aesthetic utilizing GPU-accelerated `BackdropFilter` with configurable `blurSigma` (default 12dp) and frosted active highlights.
+- **Strict Low-RAM (500 MB–1 GB RAM) Optimization Architecture**:
+  - **Single Shared Animation Controller**: Replaces individual per-item animation controllers with a single `AnimationController` on `_AdaptiveBottomNavigationBarState`, preventing resource leaks and multi-ticker scheduler overhead.
+  - **Zero-Allocation Canvas Painting**: Pre-allocates static `Paint` and `Path` instances (`_fillPaint`, `_strokePaint`, `_path.reset()`). Zero heap allocations during active 60fps/120fps glide transitions, completely eliminating GC pauses on low-end hardware.
+  - **Zero Rebuilds During Animation**: Passing `repaint: _curvedAnimation` directly to `super(repaint: ...)` inside [AdaptiveBottomNavPainter] enables Flutter's `RenderCustomPaint` to redraw the canvas without triggering `build()` or rebuilding child interactive widgets.
+  - **Zero `saveLayer()` & Restrained Effects**: No off-screen compositing layers or heavy blurs by default, protecting memory bandwidth on GPU/SoC constrained devices.
+  - **Resting Zero-Ticker Policy**: When animations complete or navigation is idle, the animation controller rests at 1.0 with 0 frames scheduled.
+  - **Rapid Tap Redirection**: Rapid taps immediately redirect animation forward from the current interpolated index without leaking or desynchronizing controller state.
+  - **Accessible Native Flutter Interactive Widgets**: Decorative geometry is painted on the canvas, while icons, labels, badges, semantics (`Semantics(button: true, selected: ...)`), and WCAG touch targets ($\ge 48\text{dp} \times 48\text{dp}$) remain fully accessible Flutter widgets stacked above the canvas.
+  - **Developer-Supplied CustomPainter Hook**: Developers can supply their own custom indicator or background painter via `customPainter` on `AdaptiveBottomNavigationBar` or `AdaptiveBottomNavigationConfig`.
+- **Dynamic Text-Scale & RTL Resilience**: Automatically scales bar height proportionally with accessibility `MediaQuery.textScalerOf(context)` avoiding RenderFlex overflows under large text scaling (e.g. 2.0x), and mirrors indicator geometry under `TextDirection.rtl`.
 - **Dual Destination Inputs**: Accepts both legacy `destinations: List<AdaptiveBottomNavigationDestination>` and unified `items: List<AdaptiveSidebarItem>`.
-- **Customizable Configuration (`AdaptiveBottomNavigationConfig`)**: Configures `style`, `margin`, `blurSigma`, `height`, `elevation`, `backgroundColor`, `selectedColor`, `unselectedColor`, `indicatorColor`, `indicatorSize`, `labelBehavior` (`alwaysShow`, `onlyShowSelected`, `neverShow`), `overflowPolicy` (`auto`, `menu`, `scroll`), `maxVisibleItems`, `padding`, `border`, `borderRadius`, and `shadow`.
+- **Customizable Configuration (`AdaptiveBottomNavigationConfig`)**: Configures `style`, `margin`, `blurSigma`, `height`, `elevation`, `backgroundColor`, `selectedColor`, `unselectedColor`, `indicatorColor`, `indicatorSize`, `customPainter`, `labelBehavior` (`alwaysShow`, `onlyShowSelected`, `neverShow`), `overflowPolicy` (`auto`, `menu`, `scroll`), `maxVisibleItems`, `padding`, `border`, `borderRadius`, and `shadow`.
 - **Accessible More Menu**: Full modal sheet fallback using `showGeneralDialog` with localized semantics to ensure accessibility in all contexts.
 - **WCAG Touch Target Compliance**: Enforces interactive hit targets $\ge 48\text{dp} \times 48\text{dp}$ and wraps content in `SafeArea(top: false, ...)` for native gesture bar avoidance.
 
@@ -289,7 +306,7 @@ adaptive_ui/
 | **AdaptiveDropdown** | `adaptive_dropdown_test.dart` | 11 | Pass | Trigger rendering, opening on tap, selecting item and callback invocation, outside barrier tap dismissal, Escape key dismissal, divider rendering, disabled item states, double-tap race condition guard, boundary clamping on width/height, custom builders, custom content, and safe overlay disposal. |
 | **Motion Tokens & Helpers** | `adaptive_text_animation_test.dart` | 8 | Pass | Reduced-motion resolution, duration collapsing, standard curves. |
 | **AdaptiveText Motion** | `adaptive_text_animation_test.dart`, `adaptive_text_test.dart` | 12 | Pass | Static short text, true constraint overflow marquee, typewriter, fadeIn, slideIn, controller lifecycle & TickerProviderStateMixin safety, reduced motion bypass. |
-| **AdaptiveBottomNavigationBar** | `adaptive_bottom_navigation_bar_test.dart` | 24 | Pass | Destination rendering, selection tap callback, 6 design styles (`classic`, `floating`, `pill`, `materialExpressive`, `minimal`, `glass`), pill active capsule, glass BackdropFilter, floating margin/elevation, minimal flat underline, custom colors, height, indicator size, destination counts (1, 2, 5, 10+), scroll and menu overflow sheets, narrow constraints (300dp) with 2.0x text scaling, touch target $\ge 48\text{dp}$, safe area padding. |
+| **AdaptiveBottomNavigationBar** | `adaptive_bottom_navigation_bar_test.dart` | 43 | Pass | Destination rendering, selection tap callback, 12 design styles (`classicCurve`, `floatingIsland`, `wave`, `pillMotion`, `dock`, `minimalLine`, `classic`, `floating`, `pill`, `materialExpressive`, `minimal`, `glass`), CustomPainter acceleration, `AdaptiveBottomNavPainter.shouldRepaint` property equality validation, zero allocation static paint/path reuse, rapid repeated tap redirection and leak-free controller safety, reduced motion immediate bypass, clean unmount controller disposal, RTL layout mirror geometry, developer-supplied `customPainter` hook, pill active capsule, glass BackdropFilter, floating margin/elevation, minimal flat underline, custom colors, height, indicator size, destination counts (1, 2, 5, 10+), scroll and menu overflow sheets, narrow constraints (300dp) with 2.0x text scaling, touch target $\ge 48\text{dp}$, safe area padding. |
 | **AdaptiveContainer Motion** | `adaptive_container_animation_test.dart` | 4 | Pass | Animated property transitions (decoration, radii, padding, opacity), state preservation of stateful children, tap/hover callbacks, reduced-motion bypass. |
 | **AdaptiveShimmer & Skeletons** | `adaptive_shimmer_skeleton_test.dart` | 6 | Pass | GPU gradient sweep, conditional `AdaptiveSkeleton` switcher toggles, `AdaptiveSkeletonText` multi-line layout, `AdaptiveSkeletonList` item count, reduced-motion handling. |
 | **Showcase Example App** | `example/test/widget_test.dart` | 12 | Pass | 8-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, AdaptiveSidebar Studio tab with Phase 7 bottom nav styles and submenu controls, Phase 5 Theme Studio tab, and Phase 6 Forms & Input System showcase tab. |
@@ -300,8 +317,8 @@ adaptive_ui/
 
 - **Static Analysis**: `flutter analyze . example` passing with **0 issues**.
 - **Code Formatting**: `dart format . example` passing 100% cleanly across all Dart files.
-- **Automated Tests**: **268 tests passing** across workspace:
-  - Package Tests: **256 tests passing** (up from 231).
+- **Automated Tests**: **287 tests passing** across workspace:
+  - Package Tests: **275 tests passing** (up from 256).
   - Example App Tests: **12 tests passing**.
 
 ---
