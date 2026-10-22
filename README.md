@@ -335,25 +335,76 @@ Supported animations:
 
 *All animations automatically collapse to static text when `MediaQuery.disableAnimations` or reduced-motion accessibility preference is active.*
 
-### 2. AdaptiveSidebar Navigation
-Composable responsive sidebar supporting both expanded mode (desktop) and compact rail mode (tablet) with smooth animated transitions.
+### 2. AdaptiveSidebar 2.0 Navigation System
+A modern, production-ready navigation system supporting **9 distinct visual design models**, animated nested submenus, interactive dropdown popups, and responsive rail transitions.
+
+#### Supported UI Design Models (`AdaptiveSidebarStyle`)
+- `classicModern`: Balanced spacing, crisp dividers, subtle active pill state.
+- `minimal`: Restrained borders, zero elevation, subtle typography and icon accenting.
+- `floating`: Rounded floating island sidebar with controlled outer margins and elevation shadows.
+- `glass`: Translucent surface with `BackdropFilter` Gaussian blur and high-contrast fallbacks.
+- `pillNavigation`: Capsule-shaped active indicators with animated selection background transitions.
+- `railExpandable`: Compact icon rail with interactive toggle button expanding to a full desktop sidebar.
+- `gradientAccent`: Gradient accent bar indicators and gradient fill for active destinations.
+- `darkPro`: High-contrast dark surface (`#11141E`) with slate borders and vibrant active indicators.
+- `materialExpressive`: Expressive shapes, rounded squircle items, and Material 3 interaction feedback.
 
 ```dart
 AdaptiveSidebar(
+  style: AdaptiveSidebarStyle.glass,
+  submenuAnimation: AdaptiveSubmenuAnimation.fadeSlide,
+  expansionMode: AdaptiveSubmenuExpansionMode.accordion,
   selectedIndex: _currentIndex,
   isExpanded: _isExpanded,
+  enableRailToggle: true,
   onDestinationSelected: (index) => setState(() => _currentIndex = index),
-  header: const SidebarHeader(),
-  items: const [
-    AdaptiveSidebarItem(
+  header: const SidebarBrandHeader(),
+  footer: const UserProfileFooter(),
+  items: [
+    const AdaptiveSidebarItem(
       icon: Icon(Icons.dashboard_outlined),
       selectedIcon: Icon(Icons.dashboard),
       label: Text('Dashboard'),
-      badge: Text('3', style: TextStyle(color: Colors.white, fontSize: 10)),
     ),
+    // Nested Animated Submenu
+    const AdaptiveSidebarItem(
+      icon: Icon(Icons.school_outlined),
+      selectedIcon: Icon(Icons.school),
+      label: Text('Academics'),
+      children: [
+        AdaptiveSidebarItem(
+          icon: Icon(Icons.class_outlined),
+          label: Text('Courses'),
+        ),
+        AdaptiveSidebarItem(
+          icon: Icon(Icons.menu_book_outlined),
+          label: Text('Syllabus'),
+        ),
+      ],
+    ),
+    // Contextual Dropdown Navigation
     AdaptiveSidebarItem(
+      icon: const Icon(Icons.auto_fix_high_rounded),
+      label: const Text('Actions'),
+      dropdownItems: [
+        AdaptiveDropdownItem(
+          value: 'create_doc',
+          icon: const Icon(Icons.add),
+          label: const Text('New Document'),
+          onTap: () => handleCreate(),
+        ),
+        const AdaptiveDropdownItem.divider(),
+        AdaptiveDropdownItem(
+          value: 'export',
+          icon: const Icon(Icons.download),
+          label: const Text('Export Data'),
+          onTap: () => handleExport(),
+        ),
+      ],
+      onDropdownSelected: (val) => print('Selected: $val'),
+    ),
+    const AdaptiveSidebarItem(
       icon: Icon(Icons.settings_outlined),
-      selectedIcon: Icon(Icons.settings),
       label: Text('Settings'),
     ),
   ],

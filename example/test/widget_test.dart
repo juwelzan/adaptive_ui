@@ -237,5 +237,58 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('5. AdaptiveBottomNavigationBar'), findsOneWidget);
     });
+
+    testWidgets('navigates to Sidebar 2.0 tab and exercises studio features',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(const AdaptiveShowcaseApp());
+      await tester.pumpAndSettle();
+
+      // Navigate to Sidebar 2.0 tab
+      await tester.tap(find.text('Sidebar 2.0'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('AdaptiveSidebar 2.0 Studio'), findsOneWidget);
+
+      // Verify style choice chip
+      expect(find.text('Floating'), findsOneWidget);
+      await tester.tap(find.text('Floating'));
+      await tester.pumpAndSettle();
+
+      // Scroll to reveal preview area
+      await tester.drag(
+        find.byType(SingleChildScrollView).first,
+        const Offset(0, -300),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify nested submenus work inside showcase
+      expect(find.text('Enrolled Courses'), findsNothing);
+      await tester.tap(find.text('Academics'));
+      await tester.pumpAndSettle();
+      expect(find.text('Enrolled Courses'), findsOneWidget);
+
+      // Select child destination
+      await tester.tap(find.text('Enrolled Courses'));
+      await tester.pumpAndSettle();
+
+      // Scroll inside sidebar to reveal Action Tools
+      await tester.drag(find.byType(AdaptiveSidebar), const Offset(0, -250));
+      await tester.pumpAndSettle();
+
+      // Verify dropdown action trigger
+      expect(find.text('Action Tools'), findsOneWidget);
+      await tester.tap(find.text('Action Tools'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('New Workspace'), findsOneWidget);
+      expect(find.text('Export Telemetry (CSV)'), findsOneWidget);
+    });
   });
 }

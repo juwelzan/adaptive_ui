@@ -1,46 +1,21 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../core/adaptive_breakpoints.dart';
 import '../../core/adaptive_layout_data.dart';
 import '../../theme/adaptive_motion.dart';
 import '../adaptive_builder.dart';
+import 'adaptive_sidebar_models.dart';
+import 'adaptive_sidebar_styles.dart';
+import 'adaptive_sidebar_tile.dart';
 
-/// Specification for a navigation item in [AdaptiveSidebar].
-@immutable
-class AdaptiveSidebarItem {
-  const AdaptiveSidebarItem({
-    required this.icon,
-    required this.label,
-    this.selectedIcon,
-    this.badge,
-    this.tooltip,
-    this.enabled = true,
-  });
+export 'adaptive_dropdown.dart';
+export 'adaptive_sidebar_models.dart';
+export 'adaptive_sidebar_styles.dart';
 
-  /// The icon widget displayed for this destination.
-  final Widget icon;
-
-  /// Optional icon displayed when this item is selected.
-  final Widget? selectedIcon;
-
-  /// The label widget describing this destination.
-  final Widget label;
-
-  /// Optional badge widget displayed adjacent to the icon or trailing edge.
-  final Widget? badge;
-
-  /// Tooltip text shown on hover or long-press, especially useful in collapsed mode.
-  final String? tooltip;
-
-  /// Whether this navigation item is interactive. Defaults to `true`.
-  final bool enabled;
-}
-
-/// A responsive, animated navigation sidebar supporting expanded and collapsed modes.
-///
-/// Automatically transitions between collapsed (icon-only, 72dp) and expanded (icon + label, 240dp)
-/// modes based on parent constraints or explicit configuration.
-class AdaptiveSidebar extends StatelessWidget {
+/// A modern, responsive, animated navigation sidebar supporting nine visual design
+/// models, animated hierarchical submenus, dropdown actions, and compact rail modes.
+class AdaptiveSidebar extends StatefulWidget {
   const AdaptiveSidebar({
     super.key,
     required this.items,
@@ -50,19 +25,25 @@ class AdaptiveSidebar extends StatelessWidget {
     this.autoExpandBreakpoint = Breakpoint.large,
     this.expandedWidth = 240.0,
     this.collapsedWidth = 72.0,
+    this.style = AdaptiveSidebarStyle.classicModern,
+    this.submenuAnimation = AdaptiveSubmenuAnimation.expand,
+    this.expansionMode = AdaptiveSubmenuExpansionMode.independent,
+    this.onSubmenuExpansionChanged,
     this.header,
     this.footer,
     this.leading,
     this.trailing,
     this.padding = const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
     this.itemSpacing = 4.0,
+    this.submenuIndentation = 16.0,
     this.animationDuration,
     this.animationCurve = AdaptiveMotion.emphasizedCurve,
     this.backgroundColor,
     this.selectedColor,
     this.indicatorColor,
-    this.elevation = 0.0,
+    this.elevation,
     this.border,
+    this.enableRailToggle = false,
   });
 
   /// The navigation items displayed in this sidebar.
@@ -71,7 +52,7 @@ class AdaptiveSidebar extends StatelessWidget {
   /// Index of the currently selected destination.
   final int selectedIndex;
 
-  /// Callback invoked when a navigation item is selected.
+  /// Callback invoked when a navigation destination is selected.
   final ValueChanged<int>? onDestinationSelected;
 
   /// Explicit expanded state. If `null`, automatically resolves based on [autoExpandBreakpoint].
@@ -86,6 +67,18 @@ class AdaptiveSidebar extends StatelessWidget {
 
   /// Width in logical pixels when collapsed. Defaults to 72.0 dp.
   final double collapsedWidth;
+
+  /// Visual design model applied to this sidebar. Defaults to [AdaptiveSidebarStyle.classicModern].
+  final AdaptiveSidebarStyle style;
+
+  /// Transition animation used when expanding/collapsing hierarchical submenus.
+  final AdaptiveSubmenuAnimation submenuAnimation;
+
+  /// Expansion policy for submenus (independent vs accordion).
+  final AdaptiveSubmenuExpansionMode expansionMode;
+
+  /// Optional callback invoked when a submenu expands or collapses.
+  final void Function(int index, bool isExpanded)? onSubmenuExpansionChanged;
 
   /// Optional header widget placed at the top of the sidebar.
   final Widget? header;
@@ -105,40 +98,99 @@ class AdaptiveSidebar extends StatelessWidget {
   /// Vertical spacing between consecutive navigation items. Defaults to 4.0 dp.
   final double itemSpacing;
 
+  /// Horizontal indentation applied to nested child items. Defaults to 16.0 dp.
+  final double submenuIndentation;
+
   /// Animation duration for expand/collapse and selection transitions.
   final Duration? animationDuration;
 
   /// Animation curve for expand/collapse transitions.
   final Curve animationCurve;
 
-  /// Background color of the sidebar. If null, resolves from theme surface.
+  /// Background color of the sidebar. If null, resolves from the active [style].
   final Color? backgroundColor;
 
-  /// Text and icon color for the selected item.
+  /// Text and icon color for the selected item. If null, resolves from the active [style].
   final Color? selectedColor;
 
-  /// Background color for the selected indicator pill.
+  /// Background color for the selected indicator pill. If null, resolves from the active [style].
   final Color? indicatorColor;
 
-  /// Elevation shadow depth.
-  final double elevation;
+  /// Elevation shadow depth. If null, resolves from the active [style].
+  final double? elevation;
 
-  /// Optional side border (e.g. divider on the trailing edge).
+  /// Optional exterior border. If null, resolves from the active [style].
   final Border? border;
+
+  /// Whether to render an interactive collapse/expand toggle button.
+  final bool enableRailToggle;
+
+  @override
+  State<AdaptiveSidebar> createState() => _AdaptiveSidebarState();
+}
+
+class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
+  final Set<int> _expandedSubmenus = <int>{};
+  bool _internalExpanded = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSubmenuStates();
+  }
+
+  @override
+  void didUpdateWidget(covariant AdaptiveSidebar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.items != oldWidget.items) {
+      _initSubmenuStates();
+    }
+  }
+
+  void _initSubmenuStates() {
+    for (int i = 0; i < widget.items.length; i++) {
+      if (widget.items[i].initiallyExpanded) {
+        _expandedSubmenus.add(i);
+      }
+    }
+  }
+
+  void _toggleSubmenu(int index) {
+    setState(() {
+      final bool currentlyExpanded = _expandedSubmenus.contains(index);
+      if (currentlyExpanded) {
+        _expandedSubmenus.remove(index);
+        widget.onSubmenuExpansionChanged?.call(index, false);
+      } else {
+        if (widget.expansionMode == AdaptiveSubmenuExpansionMode.accordion) {
+          _expandedSubmenus.clear();
+        }
+        _expandedSubmenus.add(index);
+        widget.onSubmenuExpansionChanged?.call(index, true);
+      }
+    });
+  }
+
+  void _toggleRailExpansion() {
+    setState(() {
+      _internalExpanded = !_internalExpanded;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return AdaptiveBuilder(
       builder: (BuildContext ctx, AdaptiveLayoutData layout) {
-        final ThemeData theme = Theme.of(ctx);
-        final bool isDark = theme.brightness == Brightness.dark;
         final bool reducedMotion = AdaptiveMotion.isReducedMotion(ctx);
 
-        final bool resolvedExpanded = isExpanded ??
-            (layout.containerBreakpoint.index >= autoExpandBreakpoint.index);
+        // Resolve expanded state
+        final bool autoExpanded = layout.containerBreakpoint.index >=
+            widget.autoExpandBreakpoint.index;
+        final bool resolvedExpanded = widget.isExpanded ??
+            (widget.enableRailToggle ? _internalExpanded : autoExpanded);
 
         final double targetWidth =
-            resolvedExpanded ? expandedWidth : collapsedWidth;
+            resolvedExpanded ? widget.expandedWidth : widget.collapsedWidth;
 
         // Ensure target width does not exceed bounded parent width
         final double effectiveWidth = layout.constraints.hasBoundedWidth
@@ -147,195 +199,175 @@ class AdaptiveSidebar extends StatelessWidget {
 
         final Duration duration = reducedMotion
             ? Duration.zero
-            : (animationDuration ?? AdaptiveMotion.standard);
+            : (widget.animationDuration ?? AdaptiveMotion.standard);
 
-        final Color bg = backgroundColor ??
-            (isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF9F9FB));
+        final AdaptiveSidebarStyleSpec styleSpec =
+            AdaptiveSidebarStyleSpec.resolve(
+          context: ctx,
+          style: widget.style,
+          customBackgroundColor: widget.backgroundColor,
+          customSelectedColor: widget.selectedColor,
+          customIndicatorColor: widget.indicatorColor,
+          customBorder: widget.border,
+          customElevation: widget.elevation,
+        );
 
-        final Color effectiveIndicator = indicatorColor ??
-            (isDark
-                ? theme.colorScheme.primary.withValues(alpha: 0.2)
-                : theme.colorScheme.primary.withValues(alpha: 0.12));
+        final bool hasOverlay = Overlay.maybeOf(ctx) != null;
 
-        final Color effectiveSelectedText =
-            selectedColor ?? theme.colorScheme.primary;
+        int runningIndex = 0;
+        final List<Widget> renderedTiles = <Widget>[];
 
-        final Color unselectedColor =
-            isDark ? const Color(0xFF8E8E93) : const Color(0xFF6C6C70);
+        for (int i = 0; i < widget.items.length; i++) {
+          final int itemIndex = runningIndex;
+          runningIndex++;
+
+          final AdaptiveSidebarItem item = widget.items[i];
+          final bool isSubmenuOpen = _expandedSubmenus.contains(i);
+
+          // Check if any descendant of this item is selected
+          bool isAncestor = false;
+          final List<int> childIndices = [];
+          if (item.hasChildren) {
+            for (int c = 0; c < item.children.length; c++) {
+              final int childIdx = runningIndex++;
+              childIndices.add(childIdx);
+              if (widget.selectedIndex == childIdx) {
+                isAncestor = true;
+              }
+            }
+          }
+
+          final bool isSelected = widget.selectedIndex == itemIndex;
+
+          if (i > 0 && widget.itemSpacing > 0) {
+            renderedTiles.add(SizedBox(height: widget.itemSpacing));
+          }
+
+          renderedTiles.add(
+            AdaptiveSidebarTile(
+              key: ValueKey(
+                  'sidebar_${widget.style.name}_${widget.submenuAnimation.name}_item_${item.id ?? i}'),
+              item: item,
+              depth: 0,
+              itemIndex: itemIndex,
+              isSelected: isSelected,
+              isAncestorOfSelected: isAncestor,
+              isExpandedSidebar: resolvedExpanded,
+              isSubmenuExpanded: isSubmenuOpen,
+              onTap: item.enabled
+                  ? () => widget.onDestinationSelected?.call(itemIndex)
+                  : null,
+              onSubmenuToggle: () => _toggleSubmenu(i),
+              styleSpec: styleSpec,
+              submenuAnimation: widget.submenuAnimation,
+              duration: duration,
+              curve: widget.animationCurve,
+              indentation: widget.submenuIndentation,
+              onDestinationSelected: widget.onDestinationSelected,
+              selectedIndex: widget.selectedIndex,
+            ),
+          );
+        }
 
         Widget sidebarContent = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (header != null) ClipRect(child: header!),
-            if (leading != null) ClipRect(child: leading!),
+            if (widget.header != null) ClipRect(child: widget.header!),
+            if (widget.leading != null) ClipRect(child: widget.leading!),
             Expanded(
               child: SingleChildScrollView(
-                padding: padding,
+                padding: widget.padding,
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (int i = 0; i < items.length; i++) ...[
-                      if (i > 0 && itemSpacing > 0)
-                        SizedBox(height: itemSpacing),
-                      _AdaptiveSidebarItemTile(
-                        item: items[i],
-                        isSelected: selectedIndex == i,
-                        isExpanded: resolvedExpanded,
-                        onTap: items[i].enabled
-                            ? () => onDestinationSelected?.call(i)
-                            : null,
-                        duration: duration,
-                        curve: animationCurve,
-                        indicatorColor: effectiveIndicator,
-                        selectedColor: effectiveSelectedText,
-                        unselectedColor: unselectedColor,
-                      ),
-                    ],
-                    if (trailing != null) ClipRect(child: trailing!),
+                    ...renderedTiles,
+                    if (widget.trailing != null)
+                      ClipRect(child: widget.trailing!),
                   ],
                 ),
               ),
             ),
-            if (footer != null) ClipRect(child: footer!),
+            if (widget.enableRailToggle)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                child: IconButton(
+                  key: const Key('adaptive_sidebar_rail_toggle'),
+                  icon: Icon(
+                    resolvedExpanded
+                        ? Icons.keyboard_double_arrow_left
+                        : Icons.keyboard_double_arrow_right,
+                    size: 20.0,
+                    color: styleSpec.inactiveIconColor,
+                  ),
+                  tooltip: hasOverlay
+                      ? (resolvedExpanded
+                          ? 'Collapse sidebar'
+                          : 'Expand sidebar')
+                      : null,
+                  onPressed: _toggleRailExpansion,
+                ),
+              ),
+            if (widget.footer != null) ClipRect(child: widget.footer!),
           ],
         );
 
-        return Material(
-          elevation: elevation,
-          color: bg,
-          child: Container(
-            decoration: BoxDecoration(border: border),
-            child: AnimatedContainer(
-              key: const Key('adaptive_sidebar_container'),
-              duration: duration,
-              curve: animationCurve,
-              width: effectiveWidth,
-              child: ClipRect(child: sidebarContent),
-            ),
+        Widget surface = AnimatedContainer(
+          key: const Key('adaptive_sidebar_container'),
+          duration: duration,
+          curve: widget.animationCurve,
+          width: effectiveWidth,
+          decoration: BoxDecoration(
+            color: styleSpec.useBackdropFilter
+                ? styleSpec.backgroundColor
+                : styleSpec.backgroundColor,
+            borderRadius: styleSpec.sidebarBorderRadius,
+            border: styleSpec.border,
+            boxShadow: styleSpec.elevation > 0.0
+                ? [
+                    BoxShadow(
+                      color: styleSpec.shadowColor,
+                      blurRadius: styleSpec.elevation * 2.0,
+                      offset: Offset(0, styleSpec.elevation / 2.0),
+                    ),
+                  ]
+                : null,
           ),
+          child: ClipRRect(
+            borderRadius: styleSpec.sidebarBorderRadius,
+            child: sidebarContent,
+          ),
+        );
+
+        // Frosted Glass Backdrop Filter
+        if (styleSpec.useBackdropFilter) {
+          surface = ClipRRect(
+            borderRadius: styleSpec.sidebarBorderRadius,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: styleSpec.blurSigma,
+                sigmaY: styleSpec.blurSigma,
+              ),
+              child: surface,
+            ),
+          );
+        }
+
+        // Floating Outer Margin
+        if (styleSpec.outerMargin != EdgeInsets.zero) {
+          surface = Padding(
+            padding: styleSpec.outerMargin,
+            child: surface,
+          );
+        }
+
+        return Material(
+          color: Colors.transparent,
+          elevation: 0.0,
+          child: surface,
         );
       },
     );
-  }
-}
-
-class _AdaptiveSidebarItemTile extends StatelessWidget {
-  const _AdaptiveSidebarItemTile({
-    required this.item,
-    required this.isSelected,
-    required this.isExpanded,
-    required this.onTap,
-    required this.duration,
-    required this.curve,
-    required this.indicatorColor,
-    required this.selectedColor,
-    required this.unselectedColor,
-  });
-
-  final AdaptiveSidebarItem item;
-  final bool isSelected;
-  final bool isExpanded;
-  final VoidCallback? onTap;
-  final Duration duration;
-  final Curve curve;
-  final Color indicatorColor;
-  final Color selectedColor;
-  final Color unselectedColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color itemColor = isSelected ? selectedColor : unselectedColor;
-    final Widget iconWidget =
-        isSelected ? (item.selectedIcon ?? item.icon) : item.icon;
-
-    final IconThemeData iconTheme = IconThemeData(
-      color: itemColor,
-      size: 22.0,
-    );
-
-    final String? tooltipText = item.tooltip ??
-        (!isExpanded && item.label is Text ? (item.label as Text).data : null);
-
-    final bool hasOverlay = Overlay.maybeOf(context) != null;
-
-    final Widget tile = Semantics(
-      button: true,
-      selected: isSelected,
-      enabled: item.enabled,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12.0),
-        child: AnimatedContainer(
-          duration: duration,
-          curve: curve,
-          constraints: const BoxConstraints(minHeight: 48.0),
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-          decoration: BoxDecoration(
-            color: isSelected ? indicatorColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: LayoutBuilder(
-            builder: (BuildContext ctx, BoxConstraints tileConstraints) {
-              final bool canFitExpanded =
-                  isExpanded && tileConstraints.maxWidth >= 80.0;
-
-              if (canFitExpanded) {
-                return ClipRect(
-                  child: Row(
-                    children: [
-                      IconTheme(data: iconTheme, child: iconWidget),
-                      const SizedBox(width: 12.0),
-                      Expanded(
-                        child: DefaultTextStyle(
-                          style: TextStyle(
-                            color: itemColor,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                            fontSize: 14.0,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          child: item.label,
-                        ),
-                      ),
-                      if (item.badge != null) ...[
-                        const SizedBox(width: 8.0),
-                        item.badge!,
-                      ],
-                    ],
-                  ),
-                );
-              }
-
-              return Center(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    IconTheme(data: iconTheme, child: iconWidget),
-                    if (item.badge != null)
-                      Positioned(
-                        top: -4.0,
-                        right: -6.0,
-                        child: item.badge!,
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-
-    if (hasOverlay && tooltipText != null && tooltipText.isNotEmpty) {
-      return Tooltip(
-        message: tooltipText,
-        waitDuration: const Duration(milliseconds: 600),
-        child: tile,
-      );
-    }
-
-    return tile;
   }
 }

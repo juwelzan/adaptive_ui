@@ -44,7 +44,10 @@ export 'src/widgets/layout/adaptive_wrap.dart';
 
 // Navigation Widgets
 export 'src/widgets/navigation/adaptive_bottom_navigation_bar.dart';
+export 'src/widgets/navigation/adaptive_dropdown.dart';
 export 'src/widgets/navigation/adaptive_sidebar.dart';
+export 'src/widgets/navigation/adaptive_sidebar_models.dart';
+export 'src/widgets/navigation/adaptive_sidebar_styles.dart';
 
 // Typography Widgets
 export 'src/widgets/typography/adaptive_auto_size_text.dart';

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'motion_showcase.dart';
+import 'sidebar_showcase.dart';
 
 void main() {
   runApp(const AdaptiveShowcaseApp());
@@ -170,6 +171,11 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           selectedIcon: Icon(Icons.auto_awesome),
           label: 'Motion',
         ),
+        AdaptiveNavigationDestination(
+          icon: Icon(Icons.view_sidebar_outlined),
+          selectedIcon: Icon(Icons.view_sidebar),
+          label: 'Sidebar 2.0',
+        ),
       ],
       body: AdaptiveCubitListener<ShowcaseCubit, ShowcaseState>.adaptive(
         listenWhen: (prev, curr) =>
@@ -190,7 +196,8 @@ class _ShowcaseHomeScreenState extends AdaptiveState<ShowcaseHomeScreen> {
           1 => _buildGranularRebuildLabTab(context, layout),
           2 => _buildStateTransitionsTab(context, layout),
           3 => _buildConstrainedBoxTab(context, layout),
-          _ => MotionShowcaseTab(layout: layout),
+          4 => MotionShowcaseTab(layout: layout),
+          _ => SidebarShowcaseTab(layout: layout),
         },
       ),
     );

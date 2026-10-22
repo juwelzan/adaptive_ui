@@ -192,5 +192,370 @@ void main() {
       // Verify it didn't throw RenderFlex overflow and rendered icon safely
       expect(find.byIcon(Icons.analytics), findsOneWidget);
     });
+
+    testWidgets('renders all 9 distinct design models cleanly without errors',
+        (tester) async {
+      const styles = AdaptiveSidebarStyle.values;
+      expect(styles.length, equals(9));
+
+      for (final style in styles) {
+        await tester.pumpAdaptive(
+          size: const Size(1200.0, 800.0),
+          child: AdaptiveSidebar(
+            isExpanded: true,
+            style: style,
+            items: sampleItems,
+            selectedIndex: 0,
+          ),
+        );
+
+        expect(find.text('Dashboard'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
+    });
+
+    testWidgets('animated submenus expand and collapse on parent tap',
+        (tester) async {
+      final List<AdaptiveSidebarItem> hierarchicalItems = [
+        const AdaptiveSidebarItem(
+          icon: Icon(Icons.school),
+          label: Text('Academics'),
+          children: [
+            AdaptiveSidebarItem(
+              icon: Icon(Icons.class_),
+              label: Text('Classes'),
+            ),
+            AdaptiveSidebarItem(
+              icon: Icon(Icons.book),
+              label: Text('Subjects'),
+            ),
+          ],
+        ),
+        const AdaptiveSidebarItem(
+          icon: Icon(Icons.person),
+          label: Text('Profile'),
+        ),
+      ];
+
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: AdaptiveSidebar(
+          isExpanded: true,
+          items: hierarchicalItems,
+          selectedIndex: 0,
+        ),
+      );
+
+      // Initially closed
+      expect(find.text('Classes'), findsNothing);
+
+      // Tap parent item to expand submenu
+      await tester.tap(find.text('Academics'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Classes'), findsOneWidget);
+      expect(find.text('Subjects'), findsOneWidget);
+
+      // Tap again to collapse
+      await tester.tap(find.text('Academics'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Classes'), findsNothing);
+    });
+
+    testWidgets('accordion mode closes other open submenus when expanding',
+        (tester) async {
+      final List<AdaptiveSidebarItem> hierarchicalItems = [
+        const AdaptiveSidebarItem(
+          icon: Icon(Icons.folder),
+          label: Text('Folder A'),
+          initiallyExpanded: true,
+          children: [
+            AdaptiveSidebarItem(
+                icon: Icon(Icons.file_copy), label: Text('File A1')),
+          ],
+        ),
+        const AdaptiveSidebarItem(
+          icon: Icon(Icons.folder),
+          label: Text('Folder B'),
+          children: [
+            AdaptiveSidebarItem(
+                icon: Icon(Icons.file_copy), label: Text('File B1')),
+          ],
+        ),
+      ];
+
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: AdaptiveSidebar(
+          isExpanded: true,
+          expansionMode: AdaptiveSubmenuExpansionMode.accordion,
+          items: hierarchicalItems,
+        ),
+      );
+
+      // Folder A initially open
+      expect(find.text('File A1'), findsOneWidget);
+      expect(find.text('File B1'), findsNothing);
+
+      // Tap Folder B
+      await tester.tap(find.text('Folder B'));
+      await tester.pumpAndSettle();
+
+      // Folder B opened, Folder A closed
+      expect(find.text('File B1'), findsOneWidget);
+      expect(find.text('File A1'), findsNothing);
+    });
+
+    testWidgets('highlights parent item when a child destination is selected',
+        (tester) async {
+      final List<AdaptiveSidebarItem> hierarchicalItems = [
+        const AdaptiveSidebarItem(
+          icon: Icon(Icons.folder),
+          label: Text('Projects'),
+          initiallyExpanded: true,
+          children: [
+            AdaptiveSidebarItem(icon: Icon(Icons.star), label: Text('Alpha')),
+          ],
+        ),
+      ];
+
+      // Index 1 corresponds to child 'Alpha'
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: AdaptiveSidebar(
+          isExpanded: true,
+          items: hierarchicalItems,
+          selectedIndex: 1,
+        ),
+      );
+
+      expect(find.text('Projects'), findsOneWidget);
+      expect(find.text('Alpha'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('interactive rail toggle expands and collapses sidebar',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AdaptiveSidebar(
+              enableRailToggle: true,
+              items: sampleItems,
+              selectedIndex: 0,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Starts expanded by internal default
+      expect(find.text('Dashboard'), findsOneWidget);
+
+      // Tap rail toggle button
+      await tester.tap(find.byTooltip('Collapse sidebar'));
+      await tester.pumpAndSettle();
+
+      // Label collapsed
+      expect(find.byTooltip('Expand sidebar'), findsOneWidget);
+    });
+
+    testWidgets('sidebar item with dropdownItems displays trigger and menu',
+        (tester) async {
+      String? selectedDropdown;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AdaptiveSidebar(
+              isExpanded: true,
+              items: [
+                AdaptiveSidebarItem(
+                  icon: const Icon(Icons.more_vert),
+                  label: const Text('Actions'),
+                  dropdownItems: [
+                    const AdaptiveDropdownItem(
+                      value: 'new_folder',
+                      label: Text('New Folder'),
+                    ),
+                  ],
+                  onDropdownSelected: (val) => selectedDropdown = val,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Actions'), findsOneWidget);
+
+      // Tap item to open its dropdown
+      await tester.tap(find.text('Actions'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('New Folder'), findsOneWidget);
+
+      // Tap dropdown option
+      await tester.tap(find.text('New Folder'));
+      await tester.pumpAndSettle();
+
+      expect(selectedDropdown, equals('new_folder'));
+    });
+
+    testWidgets(
+        'fires onSubmenuExpansionChanged callback on expand and collapse',
+        (tester) async {
+      int? changedIndex;
+      bool? isExpandedState;
+
+      final List<AdaptiveSidebarItem> items = [
+        const AdaptiveSidebarItem(
+          icon: Icon(Icons.folder),
+          label: Text('Documents'),
+          children: [
+            AdaptiveSidebarItem(
+              icon: Icon(Icons.file_copy),
+              label: Text('Doc 1'),
+            ),
+          ],
+        ),
+      ];
+
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: AdaptiveSidebar(
+          isExpanded: true,
+          items: items,
+          onSubmenuExpansionChanged: (index, expanded) {
+            changedIndex = index;
+            isExpandedState = expanded;
+          },
+        ),
+      );
+
+      // Expand
+      await tester.tap(find.text('Documents'));
+      await tester.pumpAndSettle();
+
+      expect(changedIndex, equals(0));
+      expect(isExpandedState, isTrue);
+
+      // Collapse
+      await tester.tap(find.text('Documents'));
+      await tester.pumpAndSettle();
+
+      expect(changedIndex, equals(0));
+      expect(isExpandedState, isFalse);
+    });
+
+    testWidgets('supports all 5 AdaptiveSubmenuAnimation transitions',
+        (tester) async {
+      const animations = AdaptiveSubmenuAnimation.values;
+      expect(animations.length, equals(5));
+
+      for (final anim in animations) {
+        await tester.pumpWidget(
+          MaterialApp(
+            key: ValueKey(anim),
+            home: Scaffold(
+              body: AdaptiveSidebar(
+                key: ValueKey(anim),
+                isExpanded: true,
+                submenuAnimation: anim,
+                items: const [
+                  AdaptiveSidebarItem(
+                    icon: Icon(Icons.folder),
+                    label: Text('Folder'),
+                    children: [
+                      AdaptiveSidebarItem(
+                        icon: Icon(Icons.file_present),
+                        label: Text('File'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Folder'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('File'), findsOneWidget);
+      }
+    });
+
+    testWidgets('supports multi-level deep nested submenus (depth 2+)',
+        (tester) async {
+      int? selectedDest;
+
+      final List<AdaptiveSidebarItem> nested = [
+        const AdaptiveSidebarItem(
+          icon: Icon(Icons.folder),
+          label: Text('Level 0'),
+          initiallyExpanded: true,
+          children: [
+            AdaptiveSidebarItem(
+              icon: Icon(Icons.folder_open),
+              label: Text('Level 1'),
+              children: [
+                AdaptiveSidebarItem(
+                  icon: Icon(Icons.insert_drive_file),
+                  label: Text('Level 2 Leaf'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ];
+
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: AdaptiveSidebar(
+          isExpanded: true,
+          items: nested,
+          onDestinationSelected: (idx) => selectedDest = idx,
+        ),
+      );
+
+      expect(find.text('Level 0'), findsOneWidget);
+      expect(find.text('Level 1'), findsOneWidget);
+
+      // Tap Level 1 to expand Level 2
+      await tester.tap(find.text('Level 1'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Level 2 Leaf'), findsOneWidget);
+
+      // Tap Level 2 leaf
+      await tester.tap(find.text('Level 2 Leaf'));
+      await tester.pumpAndSettle();
+
+      // Top level is 0, level 1 is 1, level 2 is 2
+      expect(selectedDest, equals(2));
+    });
+
+    testWidgets('respects reduced motion setting without throwing',
+        (tester) async {
+      await tester.pumpAdaptive(
+        size: const Size(1200.0, 800.0),
+        child: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: AdaptiveSidebar(
+            isExpanded: true,
+            style: AdaptiveSidebarStyle.materialExpressive,
+            items: sampleItems,
+            selectedIndex: 0,
+          ),
+        ),
+      );
+
+      expect(find.text('Dashboard'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

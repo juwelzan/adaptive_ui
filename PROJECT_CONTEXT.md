@@ -61,12 +61,34 @@ All thresholds are immutable, equatable, and customizable per application or sub
 - **Entrance Motions**: Supports `fadeIn`, `slideIn` (from subtle vertical offset), and `typewriter` (progressive character emission) with lifecycle-safe animation controllers.
 - **Accessibility & Semantics**: Preserves full screen-reader announcements via `Semantics(label: ...)` and collapses immediately to static text under reduced-motion mode.
 
-### H. Feature B — `AdaptiveSidebar` Navigation
-- **Responsive Modes**: Adapts between expanded mode (240dp default) and compact rail mode (72dp default) based on `isExpanded` or `autoExpandBreakpoint` (`Breakpoint.expanded`).
-- **Animated Width Transition**: Uses `AnimatedContainer` with `AdaptiveMotion.medium` duration and `AdaptiveMotion.standardCurve` for smooth drawer/rail toggles.
-- **Animated Selection Pill**: Item tiles feature Material 3 animated selection background pill with theme-derived active indicator color.
-- **Overflow & Overlay Safety**: Item list is wrapped in `SingleChildScrollView` to prevent vertical height overflows. Tooltips verify ambient `Overlay.maybeOf(context)` presence to allow safe rendering in isolated unit tests.
-- **Item Badges & Tooltips**: Supports custom item badges (e.g., notification counts) and automatic icon tooltips in collapsed mode.
+### H. Feature B — `AdaptiveSidebar 2.0` Modern Navigation System
+- **9 Distinct Visual Models (`AdaptiveSidebarStyle`)**:
+  1. `classicModern`: Balanced spacing, crisp dividers, subtle active pill state.
+  2. `minimal`: Restrained borders, zero elevation, subtle typography and icon accenting.
+  3. `floating`: Rounded floating island sidebar with controlled outer margins and elevation shadows.
+  4. `glass`: Translucent surface with `BackdropFilter` Gaussian blur and high-contrast fallbacks.
+  5. `pillNavigation`: Capsule-shaped active indicators with animated selection background transitions.
+  6. `railExpandable`: Compact icon rail with interactive toggle button expanding to a full desktop sidebar.
+  7. `gradientAccent`: Gradient accent bar indicators and gradient fill for active destinations.
+  8. `darkPro`: High-contrast dark surface (`#11141E`) with slate borders and vibrant active indicators.
+  9. `materialExpressive`: Expressive shapes, rounded squircle items, and Material 3 interaction feedback.
+- **Advanced Animated Submenus**:
+  - 5 typed transition animations (`AdaptiveSubmenuAnimation.expand`, `fade`, `slide`, `fadeSlide`, `sizeTransition`).
+  - Dual expansion policies (`AdaptiveSubmenuExpansionMode.independent` vs `.accordion`).
+  - Depth-aware multi-tier recursion with hierarchical indenting (`depth * indentation`).
+  - Active ancestor highlighting: Parents stay visually highlighted when a child descendant is selected.
+  - Offstage & Ticker optimization: Collapsed submenus use `Offstage` and `TickerMode(enabled: false)` to eliminate layout cost and pause tickers.
+  - External expansion callbacks (`onSubmenuExpansionChanged`).
+- **Interactive Popup Dropdown Navigation (`AdaptiveDropdown`)**:
+  - Real overlay popup component with `CompositedTransformTarget` and `LayerLink`.
+  - Outside-tap barrier dismissal and keyboard Escape key dismissal.
+  - Safe screen bounding (auto-flips upward if bottom screen space is insufficient).
+  - Programmatic control via `AdaptiveDropdownState` (`open()`, `close()`, `toggle()`).
+  - Clean disposal: Safely unlinks and removes overlay entries when the parent widget unmounts.
+- **Responsive Modes & Width Clamping**:
+  - Smooth implicit width transitions between expanded (default 240dp) and compact rail (default 72dp) modes.
+  - Interactive rail toggle button with tooltip and semantics.
+  - Safe width clamping against narrow parent constraints (guarded with `LayoutBuilder` against `RenderFlex` overflow).
 
 ### I. Feature C — `AdaptiveBottomNavigationBar`
 - **Material 3 Alignment**: Compact horizontal bar with centered animated indicator pill (`AnimatedContainer`), badge placement, and label visibility policies (`alwaysShow`, `onlyShowSelected`, `neverShow`).
@@ -142,7 +164,11 @@ adaptive_ui/
 │       │   │   ├── adaptive_text.dart             # Marquee, FadeIn, SlideIn, Typewriter text
 │       │   │   └── adaptive_text_style.dart
 │       │   ├── navigation/                    # Responsive navigation components
-│       │   │   ├── adaptive_sidebar.dart          # Expandable desktop/tablet sidebar & rail
+│       │   │   ├── adaptive_sidebar.dart          # AdaptiveSidebar 2.0 (9 design models)
+│       │   │   ├── adaptive_sidebar_models.dart   # Navigation models, enums & dropdown items
+│       │   │   ├── adaptive_sidebar_styles.dart   # Style specifications for all 9 visual models
+│       │   │   ├── adaptive_sidebar_tile.dart     # Hierarchical animated item tile
+│       │   │   ├── adaptive_dropdown.dart         # Accessible overlay dropdown popup
 │       │   │   └── adaptive_bottom_navigation_bar.dart # Material 3 bottom navigation bar
 │       │   ├── controls/                      # Accessible touch targets (>= 48dp)
 │       │   │   ├── adaptive_button.dart
@@ -181,17 +207,19 @@ adaptive_ui/
 │       └── diagnostics/                       # Live telemetry & debug banner
 │           ├── adaptive_debug_overlay.dart
 │           └── adaptive_diagnostics.dart
-├── test/                                      # Automated test suite (137 tests)
+├── test/                                      # Automated test suite (157 tests)
 │   ├── widgets/
+│   │   ├── adaptive_sidebar_test.dart         # 18 comprehensive sidebar tests
+│   │   ├── adaptive_dropdown_test.dart        # 7 dropdown unit tests
 │   │   ├── adaptive_text_animation_test.dart
-│   │   ├── adaptive_sidebar_test.dart
 │   │   ├── adaptive_bottom_navigation_bar_test.dart
 │   │   ├── adaptive_container_animation_test.dart
 │   │   └── adaptive_shimmer_skeleton_test.dart
-├── example/                                   # Real-world 5-tab studio showcase with tests (9 tests)
+├── example/                                   # Real-world 6-tab studio showcase (10 tests)
 │   ├── lib/
-│   │   ├── main.dart                          # Studio app with BLoC state & tab router
-│   │   └── motion_showcase.dart               # Dedicated Phase 4 motion & skeleton showcase
+│   │   ├── main.dart                          # Studio app with BLoC state & 6-tab router
+│   │   ├── motion_showcase.dart               # Phase 4 motion & skeleton showcase tab
+│   │   └── sidebar_showcase.dart              # AdaptiveSidebar 2.0 Studio showcase tab
 │   └── test/
 │       └── widget_test.dart
 ├── doc/                                       # Technical architectural specifications
@@ -201,28 +229,28 @@ adaptive_ui/
 
 ---
 
-## 4. Phase 4 Test Matrix (Focused Suites & Regression Coverage)
+## 4. Test Matrix (Automated Verification)
 
 | Area | Test Suite File | Test Count | Status | Key Verifications |
 | :--- | :--- | :--- | :--- | :--- |
+| **AdaptiveSidebar 2.0** | `adaptive_sidebar_test.dart` | 18 | Pass | All 9 visual design models, expanded (240dp) vs collapsed (72dp) modes, narrow constraint resilience (56dp/50dp width guards without overflow), selection tap callbacks, 5 submenu animation transitions (`expand`, `fade`, `slide`, `fadeSlide`, `sizeTransition`), multi-level deep nesting (depth 2+), accordion vs independent expansion, parent ancestor highlighting, interactive rail toggle, dropdown integration, reduced-motion bypass. |
+| **AdaptiveDropdown** | `adaptive_dropdown_test.dart` | 7 | Pass | Trigger rendering, opening on tap, selecting item and callback invocation, outside barrier tap dismissal, Escape key dismissal, divider rendering, disabled item states, and safe overlay disposal. |
 | **Motion Tokens & Helpers** | `adaptive_text_animation_test.dart` | 8 | Pass | Reduced-motion resolution, duration collapsing, standard curves. |
 | **AdaptiveText Motion** | `adaptive_text_animation_test.dart`, `adaptive_text_test.dart` | 12 | Pass | Static short text, true constraint overflow marquee, typewriter, fadeIn, slideIn, controller lifecycle & TickerProviderStateMixin safety, reduced motion bypass. |
-| **AdaptiveSidebar** | `adaptive_sidebar_test.dart` | 8 | Pass | Expanded (240dp) vs collapsed (72dp) modes, narrow constraint resilience (LayoutBuilder width guard against RenderFlex overflow), selection callbacks, long scrollable lists, auto-expand breakpoint, badges, safe overlay tooltips. |
 | **AdaptiveBottomNavigationBar** | `adaptive_bottom_navigation_bar_test.dart` | 6 | Pass | Destination rendering, selection tap callback, label visibility modes (`alwaysShow`, `onlyShowSelected`, `neverShow`), touch target $\ge 48\text{dp}$, safe area padding. |
 | **AdaptiveContainer Motion** | `adaptive_container_animation_test.dart` | 4 | Pass | Animated property transitions (decoration, radii, padding, opacity), state preservation of stateful children, tap/hover callbacks, reduced-motion bypass. |
 | **AdaptiveShimmer & Skeletons** | `adaptive_shimmer_skeleton_test.dart` | 6 | Pass | GPU gradient sweep, conditional `AdaptiveSkeleton` switcher toggles, `AdaptiveSkeletonText` multi-line layout, `AdaptiveSkeletonList` item count, reduced-motion handling. |
-| **Showcase Example App** | `example/test/widget_test.dart` | 9 | Pass | 5-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 interactive Motion tab. |
+| **Showcase Example App** | `example/test/widget_test.dart` | 10 | Pass | 6-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, and AdaptiveSidebar 2.0 Studio tab. |
 
 ---
 
 ## 5. Current Progress & Verification Matrix
 
-- **Static Analysis**: `flutter analyze .` (package) passing with **0 issues**.
-- **Example Analysis**: `flutter analyze .` (example) passing with **0 issues**.
-- **Code Formatting**: `dart format .` passing 100% cleanly across all files.
-- **Automated Tests**: **149 tests passing** across package and example suites:
-  - Package Tests: **140 tests passing** (up from 137).
-  - Example App Tests: **9 tests passing**.
+- **Static Analysis**: `flutter analyze . example` passing with **0 issues**.
+- **Code Formatting**: `dart format .` passing 100% cleanly across all 113 Dart files.
+- **Automated Tests**: **167 tests passing** across workspace:
+  - Package Tests: **157 tests passing** (up from 140).
+  - Example App Tests: **10 tests passing** (up from 9).
 
 ---
 
@@ -231,6 +259,6 @@ adaptive_ui/
 1. **Keep Public APIs Deliberate**: All exports are declared in `lib/adaptive_ui.dart`. Internal implementation details reside in `lib/src/`.
 2. **Never Force Animations Unconditionally**: Static presentation is always the performant default. Motion is opt-in via explicit typed enums (`AdaptiveTextAnimation.marquee`) or boolean toggles (`animateChanges: true`).
 3. **Respect Reduced Motion Everywhere**: `AdaptiveMotion.isReducedMotion(context)` checks `MediaQuery.disableAnimationsOf(context)` and immediately disables timers, marquees, and transitions for accessibility compliance.
-4. **Guarded Infinite Constraints**: In marquees and skeleton loaders, measured bounds prevent unbounded RenderFlex or RenderConstrainedOverflowBox exceptions in scroll views.
-5. **No Third-Party Responsive or Animation Dependencies**: Rely purely on native Flutter layout primitives (`LayoutBuilder`, `MediaQueryData`, `TextPainter`, `ShaderMask`, `AnimatedContainer`, `AnimatedCrossFade`, `SlideTransition`, `FadeTransition`) and existing `flutter_bloc`.
-6. **Deterministic Testing**: Repeating animations schedule ongoing frames; tests use discrete `tester.pump(duration)` instead of open-ended `pumpAndSettle()`.
+4. **Guarded Infinite Constraints**: In marquees, skeleton loaders, and sidebar columns, measured bounds prevent unbounded RenderFlex or RenderConstrainedOverflowBox exceptions in scroll views.
+5. **No Third-Party Responsive or Animation Dependencies**: Rely purely on native Flutter layout primitives (`LayoutBuilder`, `MediaQueryData`, `TextPainter`, `ShaderMask`, `AnimatedContainer`, `AnimatedCrossFade`, `SlideTransition`, `FadeTransition`, `OverlayEntry`) and existing `flutter_bloc`.
+6. **Deterministic Testing**: Repeating animations schedule ongoing frames; tests use discrete `tester.pump(duration)` or `pumpAndSettle()` with deterministic controllers.
