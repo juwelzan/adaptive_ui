@@ -286,18 +286,24 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.devices_rounded, size: 18.0),
-                          const SizedBox(width: 8.0),
-                          Text(
-                            'Responsive Switching & Mobile Settings',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            const Icon(Icons.devices_rounded, size: 18.0),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Text(
+                                'Responsive Switching & Mobile Settings',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8.0),
                       Switch(
                         value: _enableResponsiveSettings,
                         onChanged: (v) =>
@@ -511,18 +517,24 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.tune_rounded, size: 18.0),
-                          const SizedBox(width: 8.0),
-                          Text(
-                            'Custom Style Overrides (AdaptiveSidebarStyleData)',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            const Icon(Icons.tune_rounded, size: 18.0),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Text(
+                                'Custom Style Overrides (AdaptiveSidebarStyleData)',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8.0),
                       Switch(
                         value: _enableCustomStyle,
                         onChanged: (v) =>
@@ -966,7 +978,10 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -988,7 +1003,6 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8.0),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10.0,
@@ -1047,11 +1061,14 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                         color: Colors.amber,
                       ),
                       const SizedBox(width: 8.0),
-                      Text(
-                        'Event Telemetry & Actions',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: previewTheme.colorScheme.onSurface,
+                      Expanded(
+                        child: Text(
+                          'Event Telemetry & Actions',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: previewTheme.colorScheme.onSurface,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
