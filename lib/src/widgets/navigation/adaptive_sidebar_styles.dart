@@ -289,9 +289,8 @@ class AdaptiveSidebarStyleSpec {
         border: resolvedBorder ??
             Border(
               right: BorderSide(
-                color: isDark
-                    ? const Color(0xFF2C2C2E)
-                    : const Color(0xFFE5E7EB),
+                color:
+                    isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E7EB),
                 width: 1.0,
               ),
             ),
@@ -345,8 +344,8 @@ class AdaptiveSidebarStyleSpec {
     switch (effectiveFloatingMode) {
       // Mode 1: Elevated (Default floating mode)
       case AdaptiveFloatingSidebarMode.elevated:
-        final Color bg = resolvedBg ??
-            (isDark ? const Color(0xFF1E212B) : Colors.white);
+        final Color bg =
+            resolvedBg ?? (isDark ? const Color(0xFF1E212B) : Colors.white);
         final Color activeText = resolvedSelectedColor ?? primary;
         final Color inactiveText =
             isDark ? const Color(0xFF9E9EA7) : const Color(0xFF64748B);
@@ -355,14 +354,13 @@ class AdaptiveSidebarStyleSpec {
 
         return AdaptiveSidebarStyleSpec(
           backgroundColor: bg,
-          outerMargin:
-              resolvedOuterMargin ?? const EdgeInsets.all(12.0),
+          outerMargin: resolvedOuterMargin ?? const EdgeInsets.all(12.0),
           sidebarBorderRadius:
               resolvedBorderRadius ?? BorderRadius.circular(16.0),
           border: resolvedBorder ??
               Border.all(
-                color: scheme.outlineVariant
-                    .withValues(alpha: isDark ? 0.3 : 0.2),
+                color:
+                    scheme.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.2),
                 width: 1.0,
               ),
           elevation: resolvedElevation ?? 3.0,
@@ -429,8 +427,7 @@ class AdaptiveSidebarStyleSpec {
 
         return AdaptiveSidebarStyleSpec(
           backgroundColor: bg,
-          outerMargin:
-              resolvedOuterMargin ?? const EdgeInsets.all(10.0),
+          outerMargin: resolvedOuterMargin ?? const EdgeInsets.all(10.0),
           sidebarBorderRadius:
               resolvedBorderRadius ?? BorderRadius.circular(12.0),
           border: resolvedBorder ??

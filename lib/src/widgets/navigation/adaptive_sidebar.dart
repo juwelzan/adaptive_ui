@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import '../../core/adaptive_breakpoints.dart';
 import '../../core/adaptive_layout_data.dart';
 import '../../theme/adaptive_motion.dart';
-import '../../theme/adaptive_theme.dart';
-import '../../theme/adaptive_theme_data.dart';
 import '../adaptive_builder.dart';
 import 'adaptive_sidebar_models.dart';
 import 'adaptive_sidebar_styles.dart';
@@ -15,19 +13,29 @@ export 'adaptive_dropdown.dart';
 export 'adaptive_sidebar_models.dart';
 export 'adaptive_sidebar_styles.dart';
 
-/// A modern, responsive, animated navigation sidebar supporting nine visual design
-/// models, animated hierarchical submenus, dropdown actions, and compact rail modes.
+/// A modern, responsive, animated navigation sidebar supporting two primary models
+/// ([AdaptiveSidebarModel.classic] and [AdaptiveSidebarModel.floating]), three floating
+/// modes ([AdaptiveFloatingSidebarMode.elevated], [AdaptiveFloatingSidebarMode.inset],
+/// [AdaptiveFloatingSidebarMode.minimal]), animated hierarchical submenus, dropdown actions,
+/// and compact rail modes.
 class AdaptiveSidebar extends StatefulWidget {
   const AdaptiveSidebar({
     super.key,
     required this.items,
     this.selectedIndex = 0,
+    this.onItemSelected,
     this.onDestinationSelected,
     this.isExpanded,
     this.autoExpandBreakpoint = Breakpoint.large,
-    this.expandedWidth = 240.0,
-    this.collapsedWidth = 72.0,
-    this.style = AdaptiveSidebarStyle.classicModern,
+    this.expandedWidth,
+    this.collapsedWidth,
+    this.model = AdaptiveSidebarModel.classic,
+    this.floatingMode = AdaptiveFloatingSidebarMode.elevated,
+    this.style,
+    @Deprecated(
+      'Use model and floatingMode with style (AdaptiveSidebarStyleData) instead.',
+    )
+    this.legacyStyle,
     this.submenuAnimation = AdaptiveSubmenuAnimation.expand,
     this.expansionMode = AdaptiveSubmenuExpansionMode.independent,
     this.onSubmenuExpansionChanged,
@@ -35,11 +43,11 @@ class AdaptiveSidebar extends StatefulWidget {
     this.footer,
     this.leading,
     this.trailing,
-    this.padding = const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-    this.itemSpacing = 4.0,
-    this.submenuIndentation = 16.0,
+    this.padding,
+    this.itemSpacing,
+    this.submenuIndentation,
     this.animationDuration,
-    this.animationCurve = AdaptiveMotion.emphasizedCurve,
+    this.animationCurve,
     this.backgroundColor,
     this.selectedColor,
     this.indicatorColor,
@@ -55,7 +63,18 @@ class AdaptiveSidebar extends StatefulWidget {
   final int selectedIndex;
 
   /// Callback invoked when a navigation destination is selected.
+  final ValueChanged<int>? onItemSelected;
+
+  /// Callback invoked when a navigation destination is selected.
+  ///
+  /// Maintained for backward compatibility. Use [onItemSelected] in new code.
   final ValueChanged<int>? onDestinationSelected;
+
+  /// Invokes both [onItemSelected] and [onDestinationSelected] if provided.
+  void _handleItemSelected(int index) {
+    onItemSelected?.call(index);
+    onDestinationSelected?.call(index);
+  }
 
   /// Explicit expanded state. If `null`, automatically resolves based on [autoExpandBreakpoint].
   final bool? isExpanded;
@@ -64,14 +83,27 @@ class AdaptiveSidebar extends StatefulWidget {
   /// Defaults to [Breakpoint.large] (1200dp).
   final Breakpoint autoExpandBreakpoint;
 
-  /// Width in logical pixels when expanded. Defaults to 240.0 dp.
-  final double expandedWidth;
+  /// Width in logical pixels when expanded. If null, resolves from [style] or defaults to 240.0 dp.
+  final double? expandedWidth;
 
-  /// Width in logical pixels when collapsed. Defaults to 72.0 dp.
-  final double collapsedWidth;
+  /// Width in logical pixels when collapsed. If null, resolves from [style] or defaults to 72.0 dp.
+  final double? collapsedWidth;
 
-  /// Visual design model applied to this sidebar. Defaults to [AdaptiveSidebarStyle.classicModern].
-  final AdaptiveSidebarStyle style;
+  /// The primary architectural design model for this sidebar. Defaults to [AdaptiveSidebarModel.classic].
+  final AdaptiveSidebarModel model;
+
+  /// The presentation mode when [model] is [AdaptiveSidebarModel.floating].
+  /// Defaults to [AdaptiveFloatingSidebarMode.elevated].
+  final AdaptiveFloatingSidebarMode floatingMode;
+
+  /// Centralized style data configuration for overriding visual appearance and dimensions.
+  final AdaptiveSidebarStyleData? style;
+
+  /// Legacy visual style enum, deprecated in favor of [model] and [floatingMode].
+  @Deprecated(
+    'Use model and floatingMode with style (AdaptiveSidebarStyleData) instead.',
+  )
+  final AdaptiveSidebarStyle? legacyStyle;
 
   /// Transition animation used when expanding/collapsing hierarchical submenus.
   final AdaptiveSubmenuAnimation submenuAnimation;
@@ -94,34 +126,34 @@ class AdaptiveSidebar extends StatefulWidget {
   /// Optional widget placed immediately after the navigation items.
   final Widget? trailing;
 
-  /// Outer padding applied around sidebar contents.
-  final EdgeInsetsGeometry padding;
+  /// Outer padding applied around sidebar contents. If null, resolves from [style] or model default.
+  final EdgeInsetsGeometry? padding;
 
-  /// Vertical spacing between consecutive navigation items. Defaults to 4.0 dp.
-  final double itemSpacing;
+  /// Vertical spacing between consecutive navigation items. If null, resolves from [style] or model default.
+  final double? itemSpacing;
 
-  /// Horizontal indentation applied to nested child items. Defaults to 16.0 dp.
-  final double submenuIndentation;
+  /// Horizontal indentation applied to nested child items. If null, resolves from [style] or defaults to 16.0 dp.
+  final double? submenuIndentation;
 
   /// Animation duration for expand/collapse and selection transitions.
   final Duration? animationDuration;
 
   /// Animation curve for expand/collapse transitions.
-  final Curve animationCurve;
+  final Curve? animationCurve;
 
-  /// Background color of the sidebar. If null, resolves from the active [style].
+  /// Background color of the sidebar. If null, resolves according to 4-tier precedence.
   final Color? backgroundColor;
 
-  /// Text and icon color for the selected item. If null, resolves from the active [style].
+  /// Text and icon color for the selected item. If null, resolves according to 4-tier precedence.
   final Color? selectedColor;
 
-  /// Background color for the selected indicator pill. If null, resolves from the active [style].
+  /// Background color for the selected indicator pill. If null, resolves according to 4-tier precedence.
   final Color? indicatorColor;
 
-  /// Elevation shadow depth. If null, resolves from the active [style].
+  /// Elevation shadow depth. If null, resolves according to 4-tier precedence.
   final double? elevation;
 
-  /// Optional exterior border. If null, resolves from the active [style].
+  /// Optional exterior border. If null, resolves according to 4-tier precedence.
   final Border? border;
 
   /// Whether to render an interactive collapse/expand toggle button.
@@ -185,40 +217,44 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
       builder: (BuildContext ctx, AdaptiveLayoutData layout) {
         final bool reducedMotion = AdaptiveMotion.isReducedMotion(ctx);
 
+        final AdaptiveSidebarStyleSpec styleSpec =
+            AdaptiveSidebarStyleSpec.resolve(
+          context: ctx,
+          model: widget.model,
+          floatingMode: widget.floatingMode,
+          styleData: widget.style,
+          style: widget.legacyStyle,
+          customBackgroundColor: widget.backgroundColor,
+          customSelectedColor: widget.selectedColor,
+          customIndicatorColor: widget.indicatorColor,
+          customBorder: widget.border,
+          customElevation: widget.elevation,
+          customPadding: widget.padding,
+          customItemSpacing: widget.itemSpacing,
+          customExpandedWidth: widget.expandedWidth,
+          customCollapsedWidth: widget.collapsedWidth,
+          customSubmenuIndentation: widget.submenuIndentation,
+          customAnimationDuration: widget.animationDuration,
+          customAnimationCurve: widget.animationCurve,
+        );
+
         // Resolve expanded state
         final bool autoExpanded = layout.containerBreakpoint.index >=
             widget.autoExpandBreakpoint.index;
         final bool resolvedExpanded = widget.isExpanded ??
             (widget.enableRailToggle ? _internalExpanded : autoExpanded);
 
-        final double targetWidth =
-            resolvedExpanded ? widget.expandedWidth : widget.collapsedWidth;
+        final double targetWidth = resolvedExpanded
+            ? styleSpec.expandedWidth
+            : styleSpec.collapsedWidth;
 
         // Ensure target width does not exceed bounded parent width
         final double effectiveWidth = layout.constraints.hasBoundedWidth
             ? targetWidth.clamp(0.0, layout.constraints.maxWidth)
             : targetWidth;
 
-        final Duration duration = reducedMotion
-            ? Duration.zero
-            : (widget.animationDuration ?? AdaptiveMotion.standard);
-
-        final AdaptiveThemeData theme = AdaptiveTheme.of(ctx);
-        final AdaptiveSidebarStyle effectiveStyle =
-            widget.style != AdaptiveSidebarStyle.classicModern
-                ? widget.style
-                : (theme.sidebarTheme.style ?? widget.style);
-
-        final AdaptiveSidebarStyleSpec styleSpec =
-            AdaptiveSidebarStyleSpec.resolve(
-          context: ctx,
-          style: effectiveStyle,
-          customBackgroundColor: widget.backgroundColor,
-          customSelectedColor: widget.selectedColor,
-          customIndicatorColor: widget.indicatorColor,
-          customBorder: widget.border,
-          customElevation: widget.elevation,
-        );
+        final Duration duration =
+            reducedMotion ? Duration.zero : styleSpec.animationDuration;
 
         final bool hasOverlay = Overlay.maybeOf(ctx) != null;
 
@@ -234,11 +270,9 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
 
           // Check if any descendant of this item is selected
           bool isAncestor = false;
-          final List<int> childIndices = [];
           if (item.hasChildren) {
             for (int c = 0; c < item.children.length; c++) {
               final int childIdx = runningIndex++;
-              childIndices.add(childIdx);
               if (widget.selectedIndex == childIdx) {
                 isAncestor = true;
               }
@@ -247,14 +281,14 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
 
           final bool isSelected = widget.selectedIndex == itemIndex;
 
-          if (i > 0 && widget.itemSpacing > 0) {
-            renderedTiles.add(SizedBox(height: widget.itemSpacing));
+          if (i > 0 && styleSpec.itemSpacing > 0) {
+            renderedTiles.add(SizedBox(height: styleSpec.itemSpacing));
           }
 
           renderedTiles.add(
             AdaptiveSidebarTile(
               key: ValueKey(
-                  'sidebar_${widget.style.name}_${widget.submenuAnimation.name}_item_${item.id ?? i}'),
+                  'sidebar_${widget.model.name}_${widget.floatingMode.name}_item_${item.id ?? i}'),
               item: item,
               depth: 0,
               itemIndex: itemIndex,
@@ -263,15 +297,15 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
               isExpandedSidebar: resolvedExpanded,
               isSubmenuExpanded: isSubmenuOpen,
               onTap: item.enabled
-                  ? () => widget.onDestinationSelected?.call(itemIndex)
+                  ? () => widget._handleItemSelected(itemIndex)
                   : null,
               onSubmenuToggle: () => _toggleSubmenu(i),
               styleSpec: styleSpec,
               submenuAnimation: widget.submenuAnimation,
               duration: duration,
-              curve: widget.animationCurve,
-              indentation: widget.submenuIndentation,
-              onDestinationSelected: widget.onDestinationSelected,
+              curve: styleSpec.animationCurve,
+              indentation: styleSpec.submenuIndentation,
+              onDestinationSelected: widget._handleItemSelected,
               selectedIndex: widget.selectedIndex,
             ),
           );
@@ -284,7 +318,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
             if (widget.leading != null) ClipRect(child: widget.leading!),
             Expanded(
               child: SingleChildScrollView(
-                padding: widget.padding,
+                padding: styleSpec.padding,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -324,12 +358,10 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
         Widget surface = AnimatedContainer(
           key: const Key('adaptive_sidebar_container'),
           duration: duration,
-          curve: widget.animationCurve,
+          curve: styleSpec.animationCurve,
           width: effectiveWidth,
           decoration: BoxDecoration(
-            color: styleSpec.useBackdropFilter
-                ? styleSpec.backgroundColor
-                : styleSpec.backgroundColor,
+            color: styleSpec.backgroundColor,
             borderRadius: styleSpec.sidebarBorderRadius,
             border: styleSpec.border,
             boxShadow: styleSpec.elevation > 0.0
@@ -348,7 +380,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
           ),
         );
 
-        // Frosted Glass Backdrop Filter
+        // Frosted Glass Backdrop Filter (if configured)
         if (styleSpec.useBackdropFilter) {
           surface = ClipRRect(
             borderRadius: styleSpec.sidebarBorderRadius,

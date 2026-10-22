@@ -140,6 +140,8 @@ class AdaptiveButtonThemeData {
 @immutable
 class AdaptiveSidebarThemeData {
   const AdaptiveSidebarThemeData({
+    this.model,
+    this.floatingMode,
     this.style,
     this.backgroundColor,
     this.selectedColor,
@@ -148,9 +150,22 @@ class AdaptiveSidebarThemeData {
     this.collapsedWidth,
     this.border,
     this.elevation,
+    @Deprecated('Use model and floatingMode instead') this.legacyStyle,
   });
 
-  final AdaptiveSidebarStyle? style;
+  /// The default architectural model for sidebars.
+  final AdaptiveSidebarModel? model;
+
+  /// The default floating mode when [model] is [AdaptiveSidebarModel.floating].
+  final AdaptiveFloatingSidebarMode? floatingMode;
+
+  /// Centralized style data configuration for sidebars.
+  final AdaptiveSidebarStyleData? style;
+
+  /// Legacy visual style enum.
+  @Deprecated('Use model and floatingMode instead')
+  final AdaptiveSidebarStyle? legacyStyle;
+
   final Color? backgroundColor;
   final Color? selectedColor;
   final Color? indicatorColor;
@@ -160,7 +175,9 @@ class AdaptiveSidebarThemeData {
   final double? elevation;
 
   AdaptiveSidebarThemeData copyWith({
-    AdaptiveSidebarStyle? style,
+    AdaptiveSidebarModel? model,
+    AdaptiveFloatingSidebarMode? floatingMode,
+    AdaptiveSidebarStyleData? style,
     Color? backgroundColor,
     Color? selectedColor,
     Color? indicatorColor,
@@ -168,8 +185,12 @@ class AdaptiveSidebarThemeData {
     double? collapsedWidth,
     Border? border,
     double? elevation,
+    @Deprecated('Use model and floatingMode instead')
+    AdaptiveSidebarStyle? legacyStyle,
   }) {
     return AdaptiveSidebarThemeData(
+      model: model ?? this.model,
+      floatingMode: floatingMode ?? this.floatingMode,
       style: style ?? this.style,
       backgroundColor: backgroundColor ?? this.backgroundColor,
       selectedColor: selectedColor ?? this.selectedColor,
@@ -178,6 +199,7 @@ class AdaptiveSidebarThemeData {
       collapsedWidth: collapsedWidth ?? this.collapsedWidth,
       border: border ?? this.border,
       elevation: elevation ?? this.elevation,
+      legacyStyle: legacyStyle ?? this.legacyStyle,
     );
   }
 
@@ -185,7 +207,9 @@ class AdaptiveSidebarThemeData {
       AdaptiveSidebarThemeData? a, AdaptiveSidebarThemeData? b, double t) {
     if (a == null && b == null) return const AdaptiveSidebarThemeData();
     return AdaptiveSidebarThemeData(
-      style: t < 0.5 ? a?.style : b?.style,
+      model: t < 0.5 ? a?.model : b?.model,
+      floatingMode: t < 0.5 ? a?.floatingMode : b?.floatingMode,
+      style: AdaptiveSidebarStyleData.lerp(a?.style, b?.style, t),
       backgroundColor: Color.lerp(a?.backgroundColor, b?.backgroundColor, t),
       selectedColor: Color.lerp(a?.selectedColor, b?.selectedColor, t),
       indicatorColor: Color.lerp(a?.indicatorColor, b?.indicatorColor, t),
@@ -199,6 +223,7 @@ class AdaptiveSidebarThemeData {
       elevation: a?.elevation != null && b?.elevation != null
           ? a!.elevation! + (b!.elevation! - a.elevation!) * t
           : (t < 0.5 ? a?.elevation : b?.elevation),
+      legacyStyle: t < 0.5 ? a?.legacyStyle : b?.legacyStyle,
     );
   }
 
@@ -207,6 +232,8 @@ class AdaptiveSidebarThemeData {
       identical(this, other) ||
       other is AdaptiveSidebarThemeData &&
           runtimeType == other.runtimeType &&
+          model == other.model &&
+          floatingMode == other.floatingMode &&
           style == other.style &&
           backgroundColor == other.backgroundColor &&
           selectedColor == other.selectedColor &&
@@ -214,11 +241,23 @@ class AdaptiveSidebarThemeData {
           width == other.width &&
           collapsedWidth == other.collapsedWidth &&
           border == other.border &&
-          elevation == other.elevation;
+          elevation == other.elevation &&
+          legacyStyle == other.legacyStyle;
 
   @override
-  int get hashCode => Object.hash(style, backgroundColor, selectedColor,
-      indicatorColor, width, collapsedWidth, border, elevation);
+  int get hashCode => Object.hash(
+        model,
+        floatingMode,
+        style,
+        backgroundColor,
+        selectedColor,
+        indicatorColor,
+        width,
+        collapsedWidth,
+        border,
+        elevation,
+        legacyStyle,
+      );
 }
 
 /// Component-level theme overrides for [AdaptiveBottomNavigationBar].

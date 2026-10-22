@@ -335,29 +335,56 @@ Supported animations:
 
 *All animations automatically collapse to static text when `MediaQuery.disableAnimations` or reduced-motion accessibility preference is active.*
 
-### 2. AdaptiveSidebar 2.0 Navigation System
-A modern, production-ready navigation system supporting **9 distinct visual design models**, animated nested submenus, interactive dropdown popups, and responsive rail transitions.
+### 2. AdaptiveSidebar Navigation System
+A modern, production-ready navigation system simplified into **two primary architectural models** (Classic and Floating) with **three distinct floating modes**, animated nested submenus, interactive dropdown popups, and responsive rail transitions.
 
-#### Supported UI Design Models (`AdaptiveSidebarStyle`)
-- `classicModern`: Balanced spacing, crisp dividers, subtle active pill state.
-- `minimal`: Restrained borders, zero elevation, subtle typography and icon accenting.
-- `floating`: Rounded floating island sidebar with controlled outer margins and elevation shadows.
-- `glass`: Translucent surface with `BackdropFilter` Gaussian blur and high-contrast fallbacks.
-- `pillNavigation`: Capsule-shaped active indicators with animated selection background transitions.
-- `railExpandable`: Compact icon rail with interactive toggle button expanding to a full desktop sidebar.
-- `gradientAccent`: Gradient accent bar indicators and gradient fill for active destinations.
-- `darkPro`: High-contrast dark surface (`#11141E`) with slate borders and vibrant active indicators.
-- `materialExpressive`: Expressive shapes, rounded squircle items, and Material 3 interaction feedback.
+#### Primary Architecture Models (`AdaptiveSidebarModel`)
+- **`classic`**: Conventional, full-height navigation surface within its parent layout. Squared corners, zero outer margins, crisp right vertical boundary divider, and subtle active-item indicators. Ideal for Scaffolds, split views, and standard enterprise applications.
+- **`floating`**: Modern floating sidebar island with configurable outer spacing, surface shape, elevation shadow, and interaction styling.
+
+#### Floating Presentation Modes (`AdaptiveFloatingSidebarMode`)
+When using `AdaptiveSidebarModel.floating`:
+- **`elevated`** *(Default)*: Rounded outer container (16dp radius), soft elevation shadow (3dp), comfortable internal padding, and smooth active indicator pill.
+- **`inset`**: Soft rounded corners (12dp radius), restrained hairline border, zero elevation shadow, and inset surface tint for seamless surrounding layout framing.
+- **`minimal`**: Lightweight presentation with very subtle surface separation, minimal/zero shadow, compact padding, and crisp typography.
+
+#### Developer Customization (`AdaptiveSidebarStyleData`)
+Centralized, immutable style configuration supporting complete developer customization without parameter clutter:
 
 ```dart
 AdaptiveSidebar(
-  style: AdaptiveSidebarStyle.glass,
+  model: AdaptiveSidebarModel.floating,
+  floatingMode: AdaptiveFloatingSidebarMode.inset,
+  items: navigationItems,
+  selectedIndex: selectedIndex,
+  onItemSelected: (index) => setState(() => selectedIndex = index),
+  style: const AdaptiveSidebarStyleData(
+    width: 264.0,
+    collapsedWidth: 76.0,
+    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+    elevation: 2.0,
+    itemSpacing: 8.0,
+  ),
+)
+```
+
+#### 4-Tier Style Precedence
+Visual and dimension properties resolve predictably according to:
+1. **Widget-level override**: (e.g. `AdaptiveSidebar.backgroundColor`)
+2. **Style configuration**: (`AdaptiveSidebar.style` via `AdaptiveSidebarStyleData`)
+3. **Theme default**: (`AdaptiveSidebarThemeData` in `AdaptiveThemeData`)
+4. **Built-in mode default**: Sensible defaults tailored for Classic and Floating modes.
+
+```dart
+AdaptiveSidebar(
+  model: AdaptiveSidebarModel.floating,
+  floatingMode: AdaptiveFloatingSidebarMode.elevated,
   submenuAnimation: AdaptiveSubmenuAnimation.fadeSlide,
   expansionMode: AdaptiveSubmenuExpansionMode.accordion,
   selectedIndex: _currentIndex,
   isExpanded: _isExpanded,
   enableRailToggle: true,
-  onDestinationSelected: (index) => setState(() => _currentIndex = index),
+  onItemSelected: (index) => setState(() => _currentIndex = index),
   header: const SidebarBrandHeader(),
   footer: const UserProfileFooter(),
   items: [
@@ -579,7 +606,7 @@ The included example application (`example/lib/main.dart`) demonstrates real-wor
 4. **Constrained Layouts & Tokens**: Demonstrates fallback layouts under extreme parent constraints (<260dp width) alongside nested `AdaptiveTheme` token overrides.
 5. **Theme Studio (Phase 5)**: Live interactive design system inspector with light/dark toggle, seed palette picker (Royal Blue, Emerald, Crimson, Purple, Amber, Deep Teal), density preset selector, component override switcher, elevation previews, and animated transition slider.
 6. **Motion & Skeletons**: Interactive showcase demonstrating `AdaptiveText` marquees and typewriters, `AdaptiveContainer` animated property transitions, `AdaptiveBottomNavigationBar`, and `AdaptiveSkeleton` cross-fade switching.
-7. **AdaptiveSidebar 2.0 Studio**: Full exploration of all 9 visual models, accordion vs independent submenu expansion, animated flyouts, action tools, and rail navigation.
+7. **AdaptiveSidebar Studio**: Exploration of Classic and Floating models (Elevated, Inset, Minimal modes), developer style customization sliders, accordion vs independent submenus, action tools, and rail navigation.
 
 Run the example:
 

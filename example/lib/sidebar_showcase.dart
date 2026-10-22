@@ -1,11 +1,11 @@
 import 'package:adaptive_ui/adaptive_ui.dart';
 import 'package:flutter/material.dart';
 
-/// A rich, interactive showcase tab demonstrating AdaptiveSidebar 2.0.
+/// A rich, interactive showcase tab demonstrating AdaptiveSidebar.
 ///
-/// Allows dynamic switching across all 9 UI design models, 5 submenu animation
-/// transitions, dropdown popup actions, accordion vs independent expansion modes,
-/// and responsive width simulation.
+/// Demonstrates the two primary visual models (Classic and Floating),
+/// three floating modes (Elevated, Inset, Minimal), developer customization
+/// via AdaptiveSidebarStyleData, animated submenus, and dropdown actions.
 class SidebarShowcaseTab extends StatefulWidget {
   const SidebarShowcaseTab({super.key, required this.layout});
 
@@ -16,10 +16,19 @@ class SidebarShowcaseTab extends StatefulWidget {
 }
 
 class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
-  AdaptiveSidebarStyle _currentStyle = AdaptiveSidebarStyle.classicModern;
+  AdaptiveSidebarModel _currentModel = AdaptiveSidebarModel.classic;
+  AdaptiveFloatingSidebarMode _floatingMode =
+      AdaptiveFloatingSidebarMode.elevated;
   AdaptiveSubmenuAnimation _currentAnim = AdaptiveSubmenuAnimation.fadeSlide;
   AdaptiveSubmenuExpansionMode _expansionMode =
       AdaptiveSubmenuExpansionMode.independent;
+
+  bool _enableCustomStyle = false;
+  double _customWidth = 240.0;
+  double _customRadius = 16.0;
+  double _customElevation = 3.0;
+  double _customItemSpacing = 6.0;
+
   bool _enableRailToggle = true;
   bool _forceExpanded = true;
   bool _darkPreview = false;
@@ -101,7 +110,7 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                 ),
                 const SizedBox(height: 4.0),
                 Text(
-                  '9 distinct design models, animated nested submenus, custom dropdowns, and responsive rail support.',
+                  'Classic and Floating models (Elevated, Inset, Minimal) with developer customization, animated submenus, and dropdowns.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -126,12 +135,13 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 1. Primary Model Switcher
             Row(
               children: [
-                const Icon(Icons.tune_rounded, size: 20.0),
+                const Icon(Icons.architecture_rounded, size: 20.0),
                 const SizedBox(width: 8.0),
                 Text(
-                  'UI Model (${_currentStyle.name})',
+                  'Primary Model',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -139,21 +149,213 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
               ],
             ),
             const SizedBox(height: 10.0),
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              children: AdaptiveSidebarStyle.values.map((style) {
-                final isSelected = _currentStyle == style;
-                return ChoiceChip(
-                  label: Text(_formatStyleName(style.name)),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) setState(() => _currentStyle = style);
-                  },
-                );
-              }).toList(),
+            SegmentedButton<AdaptiveSidebarModel>(
+              segments: const [
+                ButtonSegment(
+                  value: AdaptiveSidebarModel.classic,
+                  label: Text('Classic'),
+                  icon: Icon(Icons.dock_rounded),
+                ),
+                ButtonSegment(
+                  value: AdaptiveSidebarModel.floating,
+                  label: Text('Floating'),
+                  icon: Icon(Icons.layers_rounded),
+                ),
+              ],
+              selected: {_currentModel},
+              onSelectionChanged: (val) {
+                setState(() => _currentModel = val.first);
+              },
+            ),
+            const SizedBox(height: 16.0),
+
+            // 2. Floating Modes (Visible when model is Floating)
+            if (_currentModel == AdaptiveSidebarModel.floating) ...[
+              Row(
+                children: [
+                  const Icon(Icons.auto_awesome_rounded, size: 20.0),
+                  const SizedBox(width: 8.0),
+                  Text(
+                    'Floating Mode',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10.0),
+              Wrap(
+                spacing: 8.0,
+                children: [
+                  ChoiceChip(
+                    label: const Text('Elevated (Default)'),
+                    selected:
+                        _floatingMode == AdaptiveFloatingSidebarMode.elevated,
+                    onSelected: (v) {
+                      if (v) {
+                        setState(() => _floatingMode =
+                            AdaptiveFloatingSidebarMode.elevated);
+                      }
+                    },
+                  ),
+                  ChoiceChip(
+                    label: const Text('Inset (Framed)'),
+                    selected:
+                        _floatingMode == AdaptiveFloatingSidebarMode.inset,
+                    onSelected: (v) {
+                      if (v) {
+                        setState(() =>
+                            _floatingMode = AdaptiveFloatingSidebarMode.inset);
+                      }
+                    },
+                  ),
+                  ChoiceChip(
+                    label: const Text('Minimal (Lightweight)'),
+                    selected:
+                        _floatingMode == AdaptiveFloatingSidebarMode.minimal,
+                    onSelected: (v) {
+                      if (v) {
+                        setState(() => _floatingMode =
+                            AdaptiveFloatingSidebarMode.minimal);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16.0),
+            ],
+
+            // 3. Customization Sliders via AdaptiveSidebarStyleData
+            Container(
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(12.0),
+                border: Border.all(
+                  color: theme.dividerColor.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.tune_rounded, size: 18.0),
+                          const SizedBox(width: 8.0),
+                          Text(
+                            'Custom Style Overrides (AdaptiveSidebarStyleData)',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Switch(
+                        value: _enableCustomStyle,
+                        onChanged: (v) =>
+                            setState(() => _enableCustomStyle = v),
+                      ),
+                    ],
+                  ),
+                  if (_enableCustomStyle) ...[
+                    const Divider(height: 20.0),
+                    // Width slider
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 110.0,
+                          child: Text(
+                            'Width: ${_customWidth.toInt()}dp',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: _customWidth,
+                            min: 180.0,
+                            max: 320.0,
+                            divisions: 14,
+                            onChanged: (v) => setState(() => _customWidth = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Radius slider
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 110.0,
+                          child: Text(
+                            'Radius: ${_customRadius.toInt()}dp',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: _customRadius,
+                            min: 0.0,
+                            max: 32.0,
+                            divisions: 16,
+                            onChanged: (v) => setState(() => _customRadius = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Elevation slider
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 110.0,
+                          child: Text(
+                            'Elevation: ${_customElevation.toStringAsFixed(1)}dp',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: _customElevation,
+                            min: 0.0,
+                            max: 12.0,
+                            divisions: 12,
+                            onChanged: (v) =>
+                                setState(() => _customElevation = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Item Spacing slider
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 110.0,
+                          child: Text(
+                            'Spacing: ${_customItemSpacing.toInt()}dp',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: _customItemSpacing,
+                            min: 0.0,
+                            max: 16.0,
+                            divisions: 8,
+                            onChanged: (v) =>
+                                setState(() => _customItemSpacing = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
             const Divider(height: 28.0),
+
+            // 4. Animation & Interaction Controls
             Wrap(
               spacing: 16.0,
               runSpacing: 12.0,
@@ -190,7 +392,7 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Mode: ',
+                      'Submenu Policy: ',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
@@ -260,6 +462,15 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
             cardColor: Colors.white,
           );
 
+    final AdaptiveSidebarStyleData? customStyle = _enableCustomStyle
+        ? AdaptiveSidebarStyleData(
+            width: _customWidth,
+            borderRadius: BorderRadius.circular(_customRadius),
+            elevation: _customElevation,
+            itemSpacing: _customItemSpacing,
+          )
+        : null;
+
     return Container(
       height: 600.0,
       decoration: BoxDecoration(
@@ -276,15 +487,17 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. AdaptiveSidebar 2.0 Instance
+              // AdaptiveSidebar Instance
               AdaptiveSidebar(
-                style: _currentStyle,
+                model: _currentModel,
+                floatingMode: _floatingMode,
+                style: customStyle,
                 submenuAnimation: _currentAnim,
                 expansionMode: _expansionMode,
                 isExpanded: _forceExpanded,
                 enableRailToggle: _enableRailToggle,
                 selectedIndex: _selectedDestination,
-                onDestinationSelected: (idx) {
+                onItemSelected: (idx) {
                   setState(() {
                     _selectedDestination = idx;
                     final name = idx < _destinationLabels.length
@@ -440,11 +653,14 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                         value: 'new_workspace',
                         icon: const Icon(Icons.add_circle_outline),
                         label: const Text('New Workspace'),
-                        trailing:
-                            const Text('⌘N', style: TextStyle(fontSize: 11.0)),
+                        trailing: const Text(
+                          '⌘N',
+                          style: TextStyle(fontSize: 11.0),
+                        ),
                         onTap: () {
                           setState(
-                              () => _lastAction = 'Executed: New Workspace');
+                            () => _lastAction = 'Executed: New Workspace',
+                          );
                         },
                       ),
                       AdaptiveDropdownItem(
@@ -452,18 +668,26 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                         icon: const Icon(Icons.download_outlined),
                         label: const Text('Export Telemetry (CSV)'),
                         onTap: () {
-                          setState(() => _lastAction = 'Executed: Export CSV');
+                          setState(
+                            () => _lastAction = 'Executed: Export CSV',
+                          );
                         },
                       ),
                       const AdaptiveDropdownItem.divider(),
                       AdaptiveDropdownItem(
                         value: 'danger_purge',
-                        icon:
-                            const Icon(Icons.delete_outline, color: Colors.red),
-                        label: const Text('Purge Cache',
-                            style: TextStyle(color: Colors.red)),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                        ),
+                        label: const Text(
+                          'Purge Cache',
+                          style: TextStyle(color: Colors.red),
+                        ),
                         onTap: () {
-                          setState(() => _lastAction = 'Executed: Purge Cache');
+                          setState(
+                            () => _lastAction = 'Executed: Purge Cache',
+                          );
                         },
                       ),
                     ],
@@ -481,7 +705,7 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                 ],
               ),
 
-              // 2. Main Content Details Pane
+              // Main Content Details Pane
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -500,8 +724,9 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                               borderRadius: BorderRadius.circular(6.0),
                             ),
                             child: Text(
-                              _formatStyleName(_currentStyle.name)
-                                  .toUpperCase(),
+                              _currentModel == AdaptiveSidebarModel.classic
+                                  ? 'MODEL: CLASSIC'
+                                  : 'FLOATING: ${_floatingMode.name.toUpperCase()}',
                               style: TextStyle(
                                 fontSize: 11.0,
                                 fontWeight: FontWeight.bold,
@@ -608,32 +833,27 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
                           child: Row(
                             children: [
                               _buildMetricChip(
-                                'Backdrop Filter',
-                                _currentStyle == AdaptiveSidebarStyle.glass
-                                    ? 'Active'
-                                    : 'Off',
+                                'Primary Model',
+                                _currentModel == AdaptiveSidebarModel.classic
+                                    ? 'Classic'
+                                    : 'Floating',
                               ),
                               const SizedBox(width: 16.0),
                               _buildMetricChip(
-                                'Floating Margin',
-                                _currentStyle == AdaptiveSidebarStyle.floating
-                                    ? '12.0dp'
-                                    : '0.0dp',
+                                'Floating Mode',
+                                _currentModel == AdaptiveSidebarModel.classic
+                                    ? 'N/A'
+                                    : _floatingMode.name,
                               ),
                               const SizedBox(width: 16.0),
                               _buildMetricChip(
-                                'Active Pill',
-                                _currentStyle ==
-                                        AdaptiveSidebarStyle.pillNavigation
-                                    ? 'Capsule'
-                                    : 'Rounded',
+                                'Custom Overrides',
+                                _enableCustomStyle ? 'Active' : 'Defaults',
                               ),
                               const SizedBox(width: 16.0),
                               _buildMetricChip(
-                                'Dark Pro Contrast',
-                                _currentStyle == AdaptiveSidebarStyle.darkPro
-                                    ? 'High (0xFF11141E)'
-                                    : 'Standard',
+                                'Target Width',
+                                '${_enableCustomStyle ? _customWidth.toInt() : 240}dp',
                               ),
                             ],
                           ),
@@ -665,30 +885,5 @@ class _SidebarShowcaseTabState extends State<SidebarShowcaseTab> {
         ),
       ],
     );
-  }
-
-  String _formatStyleName(String name) {
-    switch (name) {
-      case 'classicModern':
-        return 'Classic Modern';
-      case 'minimal':
-        return 'Minimal';
-      case 'floating':
-        return 'Floating';
-      case 'glass':
-        return 'Glass';
-      case 'pillNavigation':
-        return 'Pill Navigation';
-      case 'railExpandable':
-        return 'Rail Expandable';
-      case 'gradientAccent':
-        return 'Gradient Accent';
-      case 'darkPro':
-        return 'Dark Pro';
-      case 'materialExpressive':
-        return 'Material Expressive';
-      default:
-        return name;
-    }
   }
 }

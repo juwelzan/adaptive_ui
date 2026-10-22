@@ -62,17 +62,25 @@ All thresholds are immutable, equatable, and customizable per application or sub
 - **Entrance Motions**: Supports `fadeIn`, `slideIn` (from subtle vertical offset), and `typewriter` (progressive character emission) with lifecycle-safe animation controllers.
 - **Accessibility & Semantics**: Preserves full screen-reader announcements via `Semantics(label: ...)` and collapses immediately to static text under reduced-motion mode.
 
-### H. Feature B — `AdaptiveSidebar 2.0` Modern Navigation System
-- **9 Distinct Visual Models (`AdaptiveSidebarStyle`)**:
-  1. `classicModern`: Balanced spacing, crisp dividers, subtle active pill state.
-  2. `minimal`: Restrained borders, zero elevation, subtle typography and icon accenting.
-  3. `floating`: Rounded floating island sidebar with controlled outer margins and elevation shadows.
-  4. `glass`: Translucent surface with `BackdropFilter` Gaussian blur and high-contrast fallbacks.
-  5. `pillNavigation`: Capsule-shaped active indicators with animated selection background transitions.
-  6. `railExpandable`: Compact icon rail with interactive toggle button expanding to a full desktop sidebar.
-  7. `gradientAccent`: Gradient accent bar indicators and gradient fill for active destinations.
-  8. `darkPro`: High-contrast dark surface (`#11141E`) with slate borders and vibrant active indicators.
-  9. `materialExpressive`: Expressive shapes, rounded squircle items, and Material 3 interaction feedback.
+### H. Feature B — `AdaptiveSidebar` Architecture & Customizable Floating Modes
+- **Two Primary Visual Models (`AdaptiveSidebarModel`)**:
+  1. `classic`: Clean, structured, conventional full-height sidebar. Zero outer margins, squared corners, crisp right vertical boundary divider, and subtle active-item indicators. Operates naturally inside `Scaffold`, `Row`, or application shells without forcing artificial floating boundaries.
+  2. `floating`: Modern floating sidebar island with configurable outer spacing, surface shape, elevation shadow, and interaction styling.
+- **Three Distinct Floating Modes (`AdaptiveFloatingSidebarMode`)**:
+  1. `elevated` *(Default)*: Rounded outer container (16dp radius), soft elevation shadow (3dp, 6dp blur), comfortable internal padding (14dp vertical, 10dp horizontal), 12dp outer floating margin, and pill-shaped active highlights.
+  2. `inset`: Soft rounded corners (12dp radius), restrained hairline border, zero elevation, 10dp outer margin, and inset surface tint for seamless surrounding layout framing.
+  3. `minimal`: Lightweight presentation with subtle surface separation, minimal/zero shadow, compact padding (8dp vertical, 6dp horizontal), 8dp radius, and crisp typography.
+- **Centralized Style Configuration & 4-Tier Precedence (`AdaptiveSidebarStyleData`)**:
+  - Encapsulates dimensions (`width`, `collapsedWidth`, `submenuIndentation`), geometries (`borderRadius`, `itemBorderRadius`, `outerMargin`, `padding`, `itemPadding`, `itemSpacing`), surfaces (`backgroundColor`, `border`, `elevation`, `shadowColor`, `selectedColor`, `indicatorColor`), and motion (`animationDuration`, `animationCurve`).
+  - Strict 4-tier resolution order:
+    1. Widget-level direct overrides (e.g. `AdaptiveSidebar.backgroundColor`).
+    2. Widget-level style configuration (`AdaptiveSidebar.style` via `AdaptiveSidebarStyleData`).
+    3. Theme default (`AdaptiveSidebarThemeData` in ambient `AdaptiveThemeData`).
+    4. Built-in defaults tailored for Classic and Floating modes.
+- **Rebuild & Lifecycle Optimization**:
+  - **Leaf-Tile Controller Avoidance**: Items without children do not allocate or register `AnimationController` or `CurvedAnimation` instances, freeing tickers and memory across large navigation trees.
+  - **Stable Widget Identity**: ValueKeys isolate tile re-renders; selection state updates do not trigger unnecessary rebuilds of non-selected siblings.
+  - Clean disposal of submenu controllers and dropdown overlays.
 - **Advanced Animated Submenus**:
   - 5 typed transition animations (`AdaptiveSubmenuAnimation.expand`, `fade`, `slide`, `fadeSlide`, `sizeTransition`).
   - Dual expansion policies (`AdaptiveSubmenuExpansionMode.independent` vs `.accordion`).
@@ -86,10 +94,10 @@ All thresholds are immutable, equatable, and customizable per application or sub
   - Safe screen bounding (auto-flips upward if bottom screen space is insufficient).
   - Programmatic control via `AdaptiveDropdownState` (`open()`, `close()`, `toggle()`).
   - Clean disposal: Safely unlinks and removes overlay entries when the parent widget unmounts.
-- **Responsive Modes & Width Clamping**:
+- **Responsive Modes & Constraint Safety**:
   - Smooth implicit width transitions between expanded (default 240dp) and compact rail (default 72dp) modes.
   - Interactive rail toggle button with tooltip and semantics.
-  - Safe width clamping against narrow parent constraints (guarded with `LayoutBuilder` against `RenderFlex` overflow).
+  - Safe width clamping against narrow parent constraints (guarded with `LayoutBuilder` against `RenderFlex` overflow down to <60dp).
 
 ### I. Feature C — `AdaptiveBottomNavigationBar`
 - **Material 3 Alignment**: Compact horizontal bar with centered animated indicator pill (`AnimatedContainer`), badge placement, and label visibility policies (`alwaysShow`, `onlyShowSelected`, `neverShow`).
@@ -258,14 +266,14 @@ adaptive_ui/
 | :--- | :--- | :--- | :--- | :--- |
 | **Adaptive Design System & Theme Engine** | `adaptive_design_system_test.dart` | 19 | Pass | Theme defaults, light & dark constructors, semantic color roles, `AdaptiveColors.lerp()`, typography scale, `AdaptiveTextVariant` resolution, `AdaptiveElevations` shadows, `AdaptiveDensity` multipliers, `AdaptiveThemeData.lerp()`, precedence rules (explicit prop > component theme > global token > ambient theme), `AnimatedAdaptiveTheme` transitions, reduced-motion instant snapping, RTL layout rendering, accessibility `TextScaler(2.0)`, and backward compatibility without explicit theme. |
 | **Core Token Resolution** | `adaptive_theme_test.dart` | 3 | Pass | Default token fallback, subtree overrides, nested `AdaptiveTheme` scope isolation. |
-| **AdaptiveSidebar 2.0** | `adaptive_sidebar_test.dart` | 18 | Pass | All 9 visual design models, expanded (240dp) vs collapsed (72dp) modes, narrow constraint resilience (56dp/50dp width guards without overflow), selection tap callbacks, 5 submenu animation transitions (`expand`, `fade`, `slide`, `fadeSlide`, `sizeTransition`), multi-level deep nesting (depth 2+), accordion vs independent expansion, parent ancestor highlighting, interactive rail toggle, dropdown integration, reduced-motion bypass. |
+| **AdaptiveSidebar** | `adaptive_sidebar_test.dart` | 26 | Pass | Two primary models (Classic, Floating), three Floating modes (Elevated, Inset, Minimal), developer overrides with `AdaptiveSidebarStyleData`, 4-tier style precedence, expanded (240dp) vs collapsed (72dp) modes, narrow constraint resilience (56dp/50dp width guards without overflow), selection tap callbacks (`onItemSelected` & `onDestinationSelected`), 5 submenu animation transitions (`expand`, `fade`, `slide`, `fadeSlide`, `sizeTransition`), multi-level deep nesting (depth 2+), accordion vs independent expansion, parent ancestor highlighting, interactive rail toggle, dropdown integration, reduced-motion bypass, leaf-tile controller avoidance, and legacy style migration. |
 | **AdaptiveDropdown** | `adaptive_dropdown_test.dart` | 7 | Pass | Trigger rendering, opening on tap, selecting item and callback invocation, outside barrier tap dismissal, Escape key dismissal, divider rendering, disabled item states, and safe overlay disposal. |
 | **Motion Tokens & Helpers** | `adaptive_text_animation_test.dart` | 8 | Pass | Reduced-motion resolution, duration collapsing, standard curves. |
 | **AdaptiveText Motion** | `adaptive_text_animation_test.dart`, `adaptive_text_test.dart` | 12 | Pass | Static short text, true constraint overflow marquee, typewriter, fadeIn, slideIn, controller lifecycle & TickerProviderStateMixin safety, reduced motion bypass. |
 | **AdaptiveBottomNavigationBar** | `adaptive_bottom_navigation_bar_test.dart` | 6 | Pass | Destination rendering, selection tap callback, label visibility modes (`alwaysShow`, `onlyShowSelected`, `neverShow`), touch target $\ge 48\text{dp}$, safe area padding. |
 | **AdaptiveContainer Motion** | `adaptive_container_animation_test.dart` | 4 | Pass | Animated property transitions (decoration, radii, padding, opacity), state preservation of stateful children, tap/hover callbacks, reduced-motion bypass. |
 | **AdaptiveShimmer & Skeletons** | `adaptive_shimmer_skeleton_test.dart` | 6 | Pass | GPU gradient sweep, conditional `AdaptiveSkeleton` switcher toggles, `AdaptiveSkeletonText` multi-line layout, `AdaptiveSkeletonList` item count, reduced-motion handling. |
-| **Showcase Example App** | `example/test/widget_test.dart` | 11 | Pass | 7-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, AdaptiveSidebar 2.0 Studio tab, and Phase 5 Theme Studio tab. |
+| **Showcase Example App** | `example/test/widget_test.dart` | 11 | Pass | 7-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, AdaptiveSidebar Studio tab, and Phase 5 Theme Studio tab. |
 
 ---
 
@@ -273,9 +281,9 @@ adaptive_ui/
 
 - **Static Analysis**: `flutter analyze . example` passing with **0 issues**.
 - **Code Formatting**: `dart format .` passing 100% cleanly across all Dart files.
-- **Automated Tests**: **187 tests passing** across workspace:
-  - Package Tests: **176 tests passing** (up from 157).
-  - Example App Tests: **11 tests passing** (up from 10).
+- **Automated Tests**: **195 tests passing** across workspace:
+  - Package Tests: **184 tests passing** (up from 176).
+  - Example App Tests: **11 tests passing**.
 
 ---
 

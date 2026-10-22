@@ -357,9 +357,9 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
         setState(() {
           _internalSubmenuExpanded = !_internalSubmenuExpanded;
           if (_internalSubmenuExpanded) {
-            _submenuController.forward();
+            _submenuController?.forward();
           } else {
-            _submenuController.reverse();
+            _submenuController?.reverse();
           }
         });
       }
@@ -369,17 +369,21 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
   }
 
   Widget _buildSubmenuTransition({required Widget child}) {
+    final animation = _submenuAnimation;
+    if (animation == null) {
+      return child;
+    }
     return AnimatedBuilder(
-      animation: _submenuAnimation,
+      animation: animation,
       builder: (BuildContext context, _) {
-        final bool isOffstage = _submenuAnimation.value == 0.0;
+        final bool isOffstage = animation.value == 0.0;
         final Widget transitionChild;
 
         switch (widget.submenuAnimation) {
           case AdaptiveSubmenuAnimation.expand:
           case AdaptiveSubmenuAnimation.sizeTransition:
             transitionChild = SizeTransition(
-              sizeFactor: _submenuAnimation,
+              sizeFactor: animation,
               alignment: Alignment.topCenter,
               child: child,
             );
@@ -387,10 +391,10 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
 
           case AdaptiveSubmenuAnimation.fade:
             transitionChild = SizeTransition(
-              sizeFactor: _submenuAnimation,
+              sizeFactor: animation,
               alignment: Alignment.topCenter,
               child: FadeTransition(
-                opacity: _submenuAnimation,
+                opacity: animation,
                 child: child,
               ),
             );
@@ -398,13 +402,13 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
 
           case AdaptiveSubmenuAnimation.slide:
             transitionChild = SizeTransition(
-              sizeFactor: _submenuAnimation,
+              sizeFactor: animation,
               alignment: Alignment.topCenter,
               child: SlideTransition(
                 position: Tween<Offset>(
                   begin: const Offset(0.0, -0.15),
                   end: Offset.zero,
-                ).animate(_submenuAnimation),
+                ).animate(animation),
                 child: child,
               ),
             );
@@ -412,15 +416,15 @@ class _AdaptiveSidebarTileState extends State<AdaptiveSidebarTile>
 
           case AdaptiveSubmenuAnimation.fadeSlide:
             transitionChild = SizeTransition(
-              sizeFactor: _submenuAnimation,
+              sizeFactor: animation,
               alignment: Alignment.topCenter,
               child: FadeTransition(
-                opacity: _submenuAnimation,
+                opacity: animation,
                 child: SlideTransition(
                   position: Tween<Offset>(
                     begin: const Offset(0.0, -0.1),
                     end: Offset.zero,
-                  ).animate(_submenuAnimation),
+                  ).animate(animation),
                   child: child,
                 ),
               ),
