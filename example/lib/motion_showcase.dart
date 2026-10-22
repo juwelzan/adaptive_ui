@@ -455,6 +455,7 @@ class _MotionShowcaseTabState extends State<MotionShowcaseTab> {
                   AdaptiveSidebar(
                     selectedIndex: _sidebarIndex,
                     isExpanded: _sidebarExpanded,
+                    enableMobileBottomNavigation: false,
                     onDestinationSelected: (idx) =>
                         setState(() => _sidebarIndex = idx),
                     header: ClipRect(

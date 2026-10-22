@@ -374,6 +374,7 @@ class _AdaptiveSidebarState extends State<AdaptiveSidebar> {
         final bool isCompact = availableWidth < widget.mobileBreakpoint;
         final bool shouldShowBottomNav = widget.enableMobileBottomNavigation &&
             isCompact &&
+            layout.constraints.hasBoundedWidth &&
             (bodyWidget != null || availableWidth >= 120.0);
 
         if (shouldShowBottomNav) {

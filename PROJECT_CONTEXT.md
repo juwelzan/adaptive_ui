@@ -247,11 +247,13 @@ adaptive_ui/
 │       ├── adaptive_dropdown_test.dart        # 7 dropdown unit tests
 │       ├── adaptive_text_animation_test.dart
 │       ├── adaptive_bottom_navigation_bar_test.dart
+│       ├── adaptive_forms_test.dart                   # Phase 6 forms, inputs, validation, search, selection
 │       ├── adaptive_container_animation_test.dart
 │       └── adaptive_shimmer_skeleton_test.dart
-├── example/                                   # Real-world 7-tab studio showcase (11 tests)
+├── example/                                   # Real-world 8-tab studio showcase (12 tests)
 │   ├── lib/
-│   │   ├── main.dart                          # Studio app with BLoC state & 7-tab router
+│   │   ├── main.dart                          # Studio app with BLoC state & 8-tab router
+│   │   ├── forms_showcase.dart                # Phase 6 Adaptive Forms & Input System showcase tab
 │   │   ├── theme_showcase.dart                # Phase 5 Theme Engine & Design System Studio
 │   │   ├── motion_showcase.dart               # Phase 4 motion & skeleton showcase tab
 │   │   └── sidebar_showcase.dart              # AdaptiveSidebar 2.0 Studio showcase tab
@@ -268,6 +270,7 @@ adaptive_ui/
 
 | Area | Test Suite File | Test Count | Status | Key Verifications |
 | :--- | :--- | :--- | :--- | :--- |
+| **Phase 6 Adaptive Forms & Inputs** | `adaptive_forms_test.dart` | 22 | Pass | `AdaptiveTextField` validation, required asterisks, initialValue, error/helper styles, `AdaptiveSearchField` debounced timer callbacks and clear button, `AdaptiveDropdownField` items, selection, validation and FormField state, `AdaptiveCheckbox` & `AdaptiveCheckboxFormField` tap-to-toggle and error text, `AdaptiveSwitch` & `AdaptiveSwitchFormField` tap-to-toggle and subtitle, `AdaptiveSlider` & `AdaptiveSliderFormField` value formatting, divisions, and min/max labels, `AdaptiveRadioGroup` & `AdaptiveRadioGroupFormField` responsive layouts (auto, vertical, horizontal, wrap) and value selection, `AdaptiveForm` proxying to `AdaptiveFormState` (`validate`, `save`, `reset`), `AdaptiveFormSection` multi-column wide vs single-column compact collapse, 2.0x text scaling, 48dp touch targets, narrow constraints (<120dp), and internal vs developer controller lifecycle ownership. |
 | **Adaptive Design System & Theme Engine** | `adaptive_design_system_test.dart` | 19 | Pass | Theme defaults, light & dark constructors, semantic color roles, `AdaptiveColors.lerp()`, typography scale, `AdaptiveTextVariant` resolution, `AdaptiveElevations` shadows, `AdaptiveDensity` multipliers, `AdaptiveThemeData.lerp()`, precedence rules (explicit prop > component theme > global token > ambient theme), `AnimatedAdaptiveTheme` transitions, reduced-motion instant snapping, RTL layout rendering, accessibility `TextScaler(2.0)`, and backward compatibility without explicit theme. |
 | **Core Token Resolution** | `adaptive_theme_test.dart` | 3 | Pass | Default token fallback, subtree overrides, nested `AdaptiveTheme` scope isolation. |
 | **Unified Responsive Navigation** | `adaptive_sidebar_responsive_navigation_test.dart` | 25 | Pass | Automatic breakpoint presentation switching (<600dp bottom nav, >=600dp sidebar), selection state preservation across resize, PageView index synchronization & user swipes, page state preservation via keyed subtrees, variable destination counts (1, 2, 4, 10+ items), narrow constraints (<60dp), 2.0x text scaling + long labels, RTL layout, badges & custom widget builders, overflow policies (`auto`, `menu`, `scroll`), accessible More modal bottom sheet reachability, dynamic list updates, disabled item handling, PageController ownership/disposal safety, Classic, Floating Elevated/Inset/Minimal modes, and interactive rail toggle. |
@@ -278,17 +281,17 @@ adaptive_ui/
 | **AdaptiveBottomNavigationBar** | `adaptive_bottom_navigation_bar_test.dart` | 6 | Pass | Destination rendering, selection tap callback, label visibility modes (`alwaysShow`, `onlyShowSelected`, `neverShow`), touch target $\ge 48\text{dp}$, safe area padding. |
 | **AdaptiveContainer Motion** | `adaptive_container_animation_test.dart` | 4 | Pass | Animated property transitions (decoration, radii, padding, opacity), state preservation of stateful children, tap/hover callbacks, reduced-motion bypass. |
 | **AdaptiveShimmer & Skeletons** | `adaptive_shimmer_skeleton_test.dart` | 6 | Pass | GPU gradient sweep, conditional `AdaptiveSkeleton` switcher toggles, `AdaptiveSkeletonText` multi-line layout, `AdaptiveSkeletonList` item count, reduced-motion handling. |
-| **Showcase Example App** | `example/test/widget_test.dart` | 11 | Pass | 7-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, AdaptiveSidebar Studio tab, and Phase 5 Theme Studio tab. |
+| **Showcase Example App** | `example/test/widget_test.dart` | 12 | Pass | 8-tab navigation, Rebuild Lab state isolation, state switcher, token constraints, desktop chrome adaptation, extreme window shrink, snackbar listener, Phase 4 Motion tab, AdaptiveSidebar Studio tab, Phase 5 Theme Studio tab, and Phase 6 Forms & Input System showcase tab. |
 
 ---
 
 ## 5. Current Progress & Verification Matrix
 
 - **Static Analysis**: `flutter analyze . example` passing with **0 issues**.
-- **Code Formatting**: `dart format .` passing 100% cleanly across all Dart files.
-- **Automated Tests**: **220 tests passing** across workspace:
-  - Package Tests: **209 tests passing** (up from 184).
-  - Example App Tests: **11 tests passing**.
+- **Code Formatting**: `dart format . example` passing 100% cleanly across all Dart files.
+- **Automated Tests**: **243 tests passing** across workspace:
+  - Package Tests: **231 tests passing** (up from 209).
+  - Example App Tests: **12 tests passing** (up from 11).
 
 ---
 

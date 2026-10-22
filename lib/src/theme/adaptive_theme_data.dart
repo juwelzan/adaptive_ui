@@ -91,6 +91,9 @@ class AdaptiveThemeData {
   /// Shimmer and skeleton loading-specific theme configuration.
   AdaptiveShimmerThemeData get shimmerTheme => componentThemes.shimmer;
 
+  /// Input and form field-specific theme configuration.
+  AdaptiveInputThemeData get inputTheme => componentThemes.input;
+
   AdaptiveThemeData copyWith({
     Brightness? brightness,
     AdaptiveSpacing? spacing,
@@ -106,6 +109,7 @@ class AdaptiveThemeData {
     AdaptiveSidebarThemeData? sidebarTheme,
     AdaptiveBottomNavThemeData? bottomNavTheme,
     AdaptiveShimmerThemeData? shimmerTheme,
+    AdaptiveInputThemeData? inputTheme,
   }) {
     final AdaptiveComponentThemes effectiveComponentThemes =
         (componentThemes ?? this.componentThemes).copyWith(
@@ -114,6 +118,7 @@ class AdaptiveThemeData {
       sidebar: sidebarTheme,
       bottomNav: bottomNavTheme,
       shimmer: shimmerTheme,
+      input: inputTheme,
     );
 
     return AdaptiveThemeData(

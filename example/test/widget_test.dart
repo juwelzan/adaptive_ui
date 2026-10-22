@@ -328,5 +328,60 @@ void main() {
       expect(find.text('Adaptive Typography Scale'), findsOneWidget);
       expect(find.text('Spacing, Radii & Elevation Tokens'), findsOneWidget);
     });
+
+    testWidgets(
+        'navigates to Forms tab and exercises Phase 6 form inputs & validation',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(const AdaptiveShowcaseApp());
+      await tester.pumpAndSettle();
+
+      // Navigate to Forms tab
+      await tester.tap(find.text('Forms'));
+      await tester.pumpAndSettle();
+
+      expect(
+          find.text('Phase 6: Adaptive Forms & Input System'), findsOneWidget);
+      expect(find.text('Account & Professional Profile'), findsOneWidget);
+      expect(find.text('Preferences & Project Constraints'), findsOneWidget);
+
+      // Verify form submission validation error triggers
+      await tester.tap(find.text('Validate & Submit'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Full name is required'), findsOneWidget);
+
+      // Fill in required text field
+      await tester.enterText(
+          find.widgetWithText(AdaptiveTextField, 'Full Name *'),
+          'Ada Lovelace');
+      await tester.pumpAndSettle();
+
+      // Clear search field using clear button
+      await tester.enterText(
+          find.byType(AdaptiveSearchField).first, 'Quantum Computing');
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(
+          find.text('Active Search: "Quantum Computing" (Events debounced: 1)'),
+          findsOneWidget);
+
+      final clearFinder = find.byIcon(Icons.clear);
+      if (clearFinder.evaluate().isNotEmpty) {
+        await tester.tap(clearFinder);
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+
+      // Reset form
+      await tester.ensureVisible(find.text('Reset Form'));
+      await tester.tap(find.text('Reset Form'));
+      await tester.pumpAndSettle();
+      expect(find.text('Full name is required'), findsNothing);
+    });
   });
 }

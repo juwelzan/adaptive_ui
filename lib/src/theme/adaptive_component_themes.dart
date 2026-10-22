@@ -385,6 +385,190 @@ class AdaptiveShimmerThemeData {
   int get hashCode => Object.hash(baseColor, highlightColor, duration);
 }
 
+/// Component-level theme overrides for adaptive form inputs ([AdaptiveTextField],
+/// [AdaptiveSearchField], [AdaptiveDropdownField], etc.).
+@immutable
+class AdaptiveInputThemeData {
+  const AdaptiveInputThemeData({
+    this.filled,
+    this.fillColor,
+    this.borderColor,
+    this.focusedBorderColor,
+    this.errorBorderColor,
+    this.focusedErrorBorderColor,
+    this.disabledBorderColor,
+    this.borderWidth,
+    this.focusedBorderWidth,
+    this.borderRadius,
+    this.contentPadding,
+    this.labelStyle,
+    this.hintStyle,
+    this.errorStyle,
+    this.helperStyle,
+    this.prefixIconColor,
+    this.suffixIconColor,
+    this.minHeightCompact,
+    this.minHeightRegular,
+  });
+
+  final bool? filled;
+  final Color? fillColor;
+  final Color? borderColor;
+  final Color? focusedBorderColor;
+  final Color? errorBorderColor;
+  final Color? focusedErrorBorderColor;
+  final Color? disabledBorderColor;
+  final double? borderWidth;
+  final double? focusedBorderWidth;
+  final BorderRadius? borderRadius;
+  final EdgeInsetsGeometry? contentPadding;
+  final TextStyle? labelStyle;
+  final TextStyle? hintStyle;
+  final TextStyle? errorStyle;
+  final TextStyle? helperStyle;
+  final Color? prefixIconColor;
+  final Color? suffixIconColor;
+  final double? minHeightCompact;
+  final double? minHeightRegular;
+
+  AdaptiveInputThemeData copyWith({
+    bool? filled,
+    Color? fillColor,
+    Color? borderColor,
+    Color? focusedBorderColor,
+    Color? errorBorderColor,
+    Color? focusedErrorBorderColor,
+    Color? disabledBorderColor,
+    double? borderWidth,
+    double? focusedBorderWidth,
+    BorderRadius? borderRadius,
+    EdgeInsetsGeometry? contentPadding,
+    TextStyle? labelStyle,
+    TextStyle? hintStyle,
+    TextStyle? errorStyle,
+    TextStyle? helperStyle,
+    Color? prefixIconColor,
+    Color? suffixIconColor,
+    double? minHeightCompact,
+    double? minHeightRegular,
+  }) {
+    return AdaptiveInputThemeData(
+      filled: filled ?? this.filled,
+      fillColor: fillColor ?? this.fillColor,
+      borderColor: borderColor ?? this.borderColor,
+      focusedBorderColor: focusedBorderColor ?? this.focusedBorderColor,
+      errorBorderColor: errorBorderColor ?? this.errorBorderColor,
+      focusedErrorBorderColor:
+          focusedErrorBorderColor ?? this.focusedErrorBorderColor,
+      disabledBorderColor: disabledBorderColor ?? this.disabledBorderColor,
+      borderWidth: borderWidth ?? this.borderWidth,
+      focusedBorderWidth: focusedBorderWidth ?? this.focusedBorderWidth,
+      borderRadius: borderRadius ?? this.borderRadius,
+      contentPadding: contentPadding ?? this.contentPadding,
+      labelStyle: labelStyle ?? this.labelStyle,
+      hintStyle: hintStyle ?? this.hintStyle,
+      errorStyle: errorStyle ?? this.errorStyle,
+      helperStyle: helperStyle ?? this.helperStyle,
+      prefixIconColor: prefixIconColor ?? this.prefixIconColor,
+      suffixIconColor: suffixIconColor ?? this.suffixIconColor,
+      minHeightCompact: minHeightCompact ?? this.minHeightCompact,
+      minHeightRegular: minHeightRegular ?? this.minHeightRegular,
+    );
+  }
+
+  static AdaptiveInputThemeData lerp(
+      AdaptiveInputThemeData? a, AdaptiveInputThemeData? b, double t) {
+    if (a == null && b == null) return const AdaptiveInputThemeData();
+    return AdaptiveInputThemeData(
+      filled: t < 0.5 ? a?.filled : b?.filled,
+      fillColor: Color.lerp(a?.fillColor, b?.fillColor, t),
+      borderColor: Color.lerp(a?.borderColor, b?.borderColor, t),
+      focusedBorderColor:
+          Color.lerp(a?.focusedBorderColor, b?.focusedBorderColor, t),
+      errorBorderColor: Color.lerp(a?.errorBorderColor, b?.errorBorderColor, t),
+      focusedErrorBorderColor:
+          Color.lerp(a?.focusedErrorBorderColor, b?.focusedErrorBorderColor, t),
+      disabledBorderColor:
+          Color.lerp(a?.disabledBorderColor, b?.disabledBorderColor, t),
+      borderWidth: a?.borderWidth != null && b?.borderWidth != null
+          ? a!.borderWidth! + (b!.borderWidth! - a.borderWidth!) * t
+          : (t < 0.5 ? a?.borderWidth : b?.borderWidth),
+      focusedBorderWidth:
+          a?.focusedBorderWidth != null && b?.focusedBorderWidth != null
+              ? a!.focusedBorderWidth! +
+                  (b!.focusedBorderWidth! - a.focusedBorderWidth!) * t
+              : (t < 0.5 ? a?.focusedBorderWidth : b?.focusedBorderWidth),
+      borderRadius: BorderRadius.lerp(a?.borderRadius, b?.borderRadius, t),
+      contentPadding:
+          EdgeInsetsGeometry.lerp(a?.contentPadding, b?.contentPadding, t),
+      labelStyle: TextStyle.lerp(a?.labelStyle, b?.labelStyle, t),
+      hintStyle: TextStyle.lerp(a?.hintStyle, b?.hintStyle, t),
+      errorStyle: TextStyle.lerp(a?.errorStyle, b?.errorStyle, t),
+      helperStyle: TextStyle.lerp(a?.helperStyle, b?.helperStyle, t),
+      prefixIconColor: Color.lerp(a?.prefixIconColor, b?.prefixIconColor, t),
+      suffixIconColor: Color.lerp(a?.suffixIconColor, b?.suffixIconColor, t),
+      minHeightCompact:
+          a?.minHeightCompact != null && b?.minHeightCompact != null
+              ? a!.minHeightCompact! +
+                  (b!.minHeightCompact! - a.minHeightCompact!) * t
+              : (t < 0.5 ? a?.minHeightCompact : b?.minHeightCompact),
+      minHeightRegular:
+          a?.minHeightRegular != null && b?.minHeightRegular != null
+              ? a!.minHeightRegular! +
+                  (b!.minHeightRegular! - a.minHeightRegular!) * t
+              : (t < 0.5 ? a?.minHeightRegular : b?.minHeightRegular),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdaptiveInputThemeData &&
+          runtimeType == other.runtimeType &&
+          filled == other.filled &&
+          fillColor == other.fillColor &&
+          borderColor == other.borderColor &&
+          focusedBorderColor == other.focusedBorderColor &&
+          errorBorderColor == other.errorBorderColor &&
+          focusedErrorBorderColor == other.focusedErrorBorderColor &&
+          disabledBorderColor == other.disabledBorderColor &&
+          borderWidth == other.borderWidth &&
+          focusedBorderWidth == other.focusedBorderWidth &&
+          borderRadius == other.borderRadius &&
+          contentPadding == other.contentPadding &&
+          labelStyle == other.labelStyle &&
+          hintStyle == other.hintStyle &&
+          errorStyle == other.errorStyle &&
+          helperStyle == other.helperStyle &&
+          prefixIconColor == other.prefixIconColor &&
+          suffixIconColor == other.suffixIconColor &&
+          minHeightCompact == other.minHeightCompact &&
+          minHeightRegular == other.minHeightRegular;
+
+  @override
+  int get hashCode => Object.hash(
+        filled,
+        fillColor,
+        borderColor,
+        focusedBorderColor,
+        errorBorderColor,
+        focusedErrorBorderColor,
+        disabledBorderColor,
+        borderWidth,
+        focusedBorderWidth,
+        borderRadius,
+        contentPadding,
+        labelStyle,
+        hintStyle,
+        errorStyle,
+        helperStyle,
+        prefixIconColor,
+        suffixIconColor,
+        minHeightCompact,
+        minHeightRegular,
+      );
+}
+
 /// Container bundling all component-specific adaptive themes.
 @immutable
 class AdaptiveComponentThemes {
@@ -394,6 +578,7 @@ class AdaptiveComponentThemes {
     this.sidebar = const AdaptiveSidebarThemeData(),
     this.bottomNav = const AdaptiveBottomNavThemeData(),
     this.shimmer = const AdaptiveShimmerThemeData(),
+    this.input = const AdaptiveInputThemeData(),
   });
 
   final AdaptiveCardThemeData card;
@@ -401,6 +586,7 @@ class AdaptiveComponentThemes {
   final AdaptiveSidebarThemeData sidebar;
   final AdaptiveBottomNavThemeData bottomNav;
   final AdaptiveShimmerThemeData shimmer;
+  final AdaptiveInputThemeData input;
 
   AdaptiveComponentThemes copyWith({
     AdaptiveCardThemeData? card,
@@ -408,6 +594,7 @@ class AdaptiveComponentThemes {
     AdaptiveSidebarThemeData? sidebar,
     AdaptiveBottomNavThemeData? bottomNav,
     AdaptiveShimmerThemeData? shimmer,
+    AdaptiveInputThemeData? input,
   }) {
     return AdaptiveComponentThemes(
       card: card ?? this.card,
@@ -415,6 +602,7 @@ class AdaptiveComponentThemes {
       sidebar: sidebar ?? this.sidebar,
       bottomNav: bottomNav ?? this.bottomNav,
       shimmer: shimmer ?? this.shimmer,
+      input: input ?? this.input,
     );
   }
 
@@ -426,6 +614,7 @@ class AdaptiveComponentThemes {
       sidebar: AdaptiveSidebarThemeData.lerp(a.sidebar, b.sidebar, t),
       bottomNav: AdaptiveBottomNavThemeData.lerp(a.bottomNav, b.bottomNav, t),
       shimmer: AdaptiveShimmerThemeData.lerp(a.shimmer, b.shimmer, t),
+      input: AdaptiveInputThemeData.lerp(a.input, b.input, t),
     );
   }
 
@@ -438,8 +627,10 @@ class AdaptiveComponentThemes {
           button == other.button &&
           sidebar == other.sidebar &&
           bottomNav == other.bottomNav &&
-          shimmer == other.shimmer;
+          shimmer == other.shimmer &&
+          input == other.input;
 
   @override
-  int get hashCode => Object.hash(card, button, sidebar, bottomNav, shimmer);
+  int get hashCode =>
+      Object.hash(card, button, sidebar, bottomNav, shimmer, input);
 }

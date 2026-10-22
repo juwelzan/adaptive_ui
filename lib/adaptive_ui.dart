@@ -58,10 +58,17 @@ export 'src/widgets/typography/adaptive_text_style.dart';
 // Controls Widgets
 export 'src/widgets/controls/adaptive_button.dart';
 export 'src/widgets/controls/adaptive_checkbox.dart';
+export 'src/widgets/controls/adaptive_dropdown_field.dart';
 export 'src/widgets/controls/adaptive_icon_button.dart';
+export 'src/widgets/controls/adaptive_radio_group.dart';
+export 'src/widgets/controls/adaptive_search_field.dart';
 export 'src/widgets/controls/adaptive_slider.dart';
 export 'src/widgets/controls/adaptive_switch.dart';
 export 'src/widgets/controls/adaptive_text_field.dart';
+
+// Forms Widgets
+export 'src/widgets/forms/adaptive_form.dart';
+export 'src/widgets/forms/adaptive_form_section.dart';
 
 // Surfaces Widgets
 export 'src/widgets/surfaces/adaptive_card.dart';
